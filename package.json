@@ -1,0 +1,18 @@
+{
+	"name": "freerota",
+	"displayName": "FreeRota",
+	"private": true,
+	"version": "0.1.0",
+	"workspaces": [
+		"backend",
+		"mobile",
+		"shared"
+	],
+	"scripts": {
+		"dev:backend": "npm --workspace backend run dev",
+		"dev:mobile": "npm --workspace mobile run start",
+		"build:backend": "npm --workspace backend run build",
+		"start:backend": "npm --workspace backend run start",
+		"lint": "echo 'Lint setup pending'"
+	}
+}
