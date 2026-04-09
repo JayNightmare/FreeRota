@@ -33,10 +33,17 @@ class UserRepository {
         });
     }
 
-    async updateById(id: string, updates: Partial<Pick<UserDocument, 'username' | 'displayName' | 'timezone' | 'isPublic'>>): Promise<UserDocument | null> {
+    async updateById(
+        id: string,
+        updates: Partial<Pick<UserDocument, 'username' | 'displayName' | 'timezone' | 'isPublic' | 'uiAccentColor'>>
+    ): Promise<UserDocument | null> {
         const safeUpdates = { ...updates };
         if (typeof safeUpdates.username === 'string') {
             safeUpdates.username = safeUpdates.username.toLowerCase().trim();
+        }
+
+        if (typeof safeUpdates.uiAccentColor === 'string') {
+            safeUpdates.uiAccentColor = safeUpdates.uiAccentColor.toUpperCase().trim();
         }
 
         return UserModel.findByIdAndUpdate(id, safeUpdates, { new: true }).exec();

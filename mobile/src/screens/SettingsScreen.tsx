@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Text, View, Pressable } from "react-native";
+import { useEffect, useMemo, useState } from "react";
+import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { useMutation, useQuery } from "@apollo/client";
 import { ScreenScaffold } from "../components/ScreenScaffold";
 import { FormField } from "../components/FormField";
@@ -8,10 +9,13 @@ import { StateNotice } from "../components/StateNotice";
 import {
 	CREATE_SHIFT_TYPE_MUTATION,
 	DELETE_SHIFT_TYPE_MUTATION,
+	ME_QUERY,
 	MY_SHIFT_TYPES_QUERY,
+	UPDATE_ACCOUNT_MUTATION,
 	UPDATE_SHIFT_TYPE_MUTATION,
 } from "../graphql/operations";
 import { useTheme } from "../theme/useTheme";
+import { getAutoContrastTextColor } from "../theme/themes";
 import { toUserErrorMessage } from "../utils/errors";
 
 interface ShiftTypeItem {
@@ -24,7 +28,14 @@ interface MyShiftTypesQuery {
 	myShiftTypes: ShiftTypeItem[];
 }
 
-const COLOR_PRESETS = [
+interface MeQuery {
+	me: {
+		id: string;
+		uiAccentColor: string | null;
+	};
+}
+
+const SHIFT_TYPE_COLOR_PRESETS = [
 	"#1E3A8A",
 	"#0F766E",
 	"#92400E",
@@ -39,16 +50,153 @@ const COLOR_PRESETS = [
 	"#4C1D95",
 ] as const;
 
+const APPARENCE_COLOR_PRESETS = [
+	"#142248",
+	"#14532D",
+	"#0E7490",
+	"#7C2D12",
+	"#7F1D1D",
+	"#4C1D95",
+	"#0369A1",
+	"#B45309",
+	"#BE185D",
+	"#1D4ED8",
+	"#0F766E",
+	"#6D28D9",
+] as const;
+
+const HEX_COLOR_REGEX = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
+
+type SettingsCategoryKey = "APPARENCE" | "SHIFT_TYPES";
+
+const SETTINGS_CATEGORIES: Array<{
+	key: SettingsCategoryKey;
+	label: string;
+	description: string;
+}> = [
+	{
+		key: "APPARENCE",
+		label: "Apparence",
+		description: "Theme and UI color personalization",
+	},
+	{
+		key: "SHIFT_TYPES",
+		label: "Shift Types",
+		description: "Tag names and chip colors",
+	},
+];
+
+function normalizeHexColor(value: string): string | null {
+	const trimmed = value.trim();
+	if (!trimmed) {
+		return null;
+	}
+
+	if (!HEX_COLOR_REGEX.test(trimmed)) {
+		return null;
+	}
+
+	if (trimmed.length === 4) {
+		return `#${trimmed[1]}${trimmed[1]}${trimmed[2]}${trimmed[2]}${trimmed[3]}${trimmed[3]}`.toUpperCase();
+	}
+
+	return trimmed.toUpperCase();
+}
+
+function hslToHexColor(
+	hue: number,
+	saturation: number,
+	lightness: number,
+): string {
+	const safeHue = ((hue % 360) + 360) % 360;
+	const safeSaturation = Math.max(0, Math.min(100, saturation)) / 100;
+	const safeLightness = Math.max(0, Math.min(100, lightness)) / 100;
+
+	const chroma = (1 - Math.abs(2 * safeLightness - 1)) * safeSaturation;
+	const huePrime = safeHue / 60;
+	const x = chroma * (1 - Math.abs((huePrime % 2) - 1));
+
+	let redPrime = 0;
+	let greenPrime = 0;
+	let bluePrime = 0;
+
+	if (huePrime >= 0 && huePrime < 1) {
+		redPrime = chroma;
+		greenPrime = x;
+	} else if (huePrime >= 1 && huePrime < 2) {
+		redPrime = x;
+		greenPrime = chroma;
+	} else if (huePrime >= 2 && huePrime < 3) {
+		greenPrime = chroma;
+		bluePrime = x;
+	} else if (huePrime >= 3 && huePrime < 4) {
+		greenPrime = x;
+		bluePrime = chroma;
+	} else if (huePrime >= 4 && huePrime < 5) {
+		redPrime = x;
+		bluePrime = chroma;
+	} else {
+		redPrime = chroma;
+		bluePrime = x;
+	}
+
+	const match = safeLightness - chroma / 2;
+	const red = Math.round((redPrime + match) * 255);
+	const green = Math.round((greenPrime + match) * 255);
+	const blue = Math.round((bluePrime + match) * 255);
+
+	const toHex = (value: number): string =>
+		value.toString(16).padStart(2, "0").toUpperCase();
+	return `#${toHex(red)}${toHex(green)}${toHex(blue)}`;
+}
+
+function randomAccentColor(): string {
+	const hue = Math.floor(Math.random() * 360);
+	return hslToHexColor(hue, 72, 48);
+}
+
+function randomShiftTagColor(): string {
+	const index = Math.floor(
+		Math.random() * SHIFT_TYPE_COLOR_PRESETS.length,
+	);
+	return SHIFT_TYPE_COLOR_PRESETS[index];
+}
+
 export function SettingsScreen() {
 	const { theme } = useTheme();
+	const [activeCategory, setActiveCategory] =
+		useState<SettingsCategoryKey>("APPARENCE");
+	const [sidebarOpen, setSidebarOpen] = useState(false);
+
 	const [editingId, setEditingId] = useState<string | null>(null);
 	const [tagName, setTagName] = useState("");
 	const [selectedColor, setSelectedColor] = useState<string | null>(null);
 	const [customColor, setCustomColor] = useState("");
-	const [actionError, setActionError] = useState<string | null>(null);
+	const [shiftTypeError, setShiftTypeError] = useState<string | null>(
+		null,
+	);
 
-	const { data, loading, error, refetch } =
-		useQuery<MyShiftTypesQuery>(MY_SHIFT_TYPES_QUERY);
+	const [customAccentColor, setCustomAccentColor] = useState("");
+	const [selectedAccentPreset, setSelectedAccentPreset] = useState<
+		string | null
+	>(null);
+	const [apparenceError, setApparenceError] = useState<string | null>(
+		null,
+	);
+
+	const {
+		data: shiftTypeData,
+		loading: shiftTypeLoading,
+		error: shiftTypeLoadError,
+		refetch: refetchShiftTypes,
+	} = useQuery<MyShiftTypesQuery>(MY_SHIFT_TYPES_QUERY);
+	const {
+		data: meData,
+		loading: meLoading,
+		error: meError,
+		refetch: refetchMe,
+	} = useQuery<MeQuery>(ME_QUERY);
+
 	const [createShiftType, { loading: creating }] = useMutation(
 		CREATE_SHIFT_TYPE_MUTATION,
 	);
@@ -56,30 +204,168 @@ export function SettingsScreen() {
 		UPDATE_SHIFT_TYPE_MUTATION,
 	);
 	const [deleteShiftType] = useMutation(DELETE_SHIFT_TYPE_MUTATION);
+	const [updateAccount, { loading: updatingApparence }] = useMutation(
+		UPDATE_ACCOUNT_MUTATION,
+	);
 
-	const mutationLoading = creating || updating;
+	const shiftTypeMutationLoading = creating || updating;
+
+	useEffect(() => {
+		const normalizedAccent = normalizeHexColor(
+			meData?.me?.uiAccentColor ?? "",
+		);
+		if (
+			normalizedAccent &&
+			APPARENCE_COLOR_PRESETS.includes(
+				normalizedAccent as (typeof APPARENCE_COLOR_PRESETS)[number],
+			)
+		) {
+			setSelectedAccentPreset(normalizedAccent);
+			setCustomAccentColor("");
+			return;
+		}
+
+		setSelectedAccentPreset(null);
+		setCustomAccentColor(normalizedAccent ?? "");
+	}, [meData?.me?.uiAccentColor]);
+
+	const previewAccentColor = normalizeHexColor(
+		customAccentColor.trim() || selectedAccentPreset || "",
+	);
+	const previewAccentTextColor = previewAccentColor
+		? getAutoContrastTextColor(previewAccentColor)
+		: theme.colors.onAccent;
+
+	const activeCategoryMeta = SETTINGS_CATEGORIES.find(
+		(item) => item.key === activeCategory,
+	);
 
 	const styles = useMemo(
 		() =>
 			StyleSheet.create({
+				screenContent: {
+					flex: 1,
+					gap: theme.spacing.md,
+				},
+				scrollArea: {
+					flex: 1,
+				},
 				container: {
 					gap: theme.spacing.lg,
 				},
-				card: {
+				section: {
+					gap: theme.spacing.md,
+				},
+				sectionKicker: {
+					fontSize: theme.typography.tiny,
+					fontWeight: "800",
+					letterSpacing: 0.7,
+					textTransform: "uppercase",
+					color: theme.colors.textMuted,
+				},
+				sectionTitle: {
+					fontSize: theme.typography.body,
+					fontWeight: "800",
+					color: theme.colors.textPrimary,
+				},
+				sectionDivider: {
+					height: 1,
+					backgroundColor: theme.colors.border,
+					marginVertical: theme.spacing.sm,
+				},
+				subsectionTitle: {
+					fontSize: theme.typography.caption,
+					fontWeight: "800",
+					color: theme.colors.textSecondary,
+				},
+				topBar: {
+					flexDirection: "row",
+					alignItems: "center",
+					gap: theme.spacing.md,
+				},
+				hamburgerButton: {
+					width: 44,
+					height: 44,
+					borderRadius: theme.radius.md,
+					alignItems: "center",
+					justifyContent: "center",
 					backgroundColor: theme.colors.surface,
 					borderWidth: 1,
 					borderColor: theme.colors.border,
-					borderRadius: theme.radius.lg,
-					padding: theme.spacing.lg,
-					gap: theme.spacing.md,
 				},
-				title: {
+				topBarCopy: {
+					flex: 1,
+					gap: theme.spacing.xs,
+				},
+				topBarTitle: {
 					fontSize: theme.typography.heading,
 					fontWeight: "800",
 					color: theme.colors.textPrimary,
 				},
+				topBarSubtitle: {
+					fontSize: theme.typography.caption,
+					color: theme.colors.textMuted,
+				},
+				sidebarBackdrop: {
+					position: "absolute",
+					top: 0,
+					left: 0,
+					right: 0,
+					bottom: 0,
+					backgroundColor: "rgba(0, 0, 0, 0.26)",
+					zIndex: 20,
+				},
+				sidebarPanel: {
+					width: 248,
+					height: "100%",
+					backgroundColor: theme.colors.surface,
+					borderRightWidth: 1,
+					borderColor: theme.colors.border,
+					paddingHorizontal: theme.spacing.md,
+					paddingVertical: theme.spacing.xl,
+					gap: theme.spacing.sm,
+				},
+				sidebarHeading: {
+					fontSize: theme.typography.caption,
+					fontWeight: "800",
+					color: theme.colors.textSecondary,
+					marginBottom: theme.spacing.xs,
+				},
+				sidebarItem: {
+					paddingHorizontal: theme.spacing.md,
+					paddingVertical: theme.spacing.sm,
+					borderRadius: theme.radius.md,
+					borderWidth: 1,
+					borderColor: theme.colors.border,
+					backgroundColor:
+						theme.colors.surfaceElevated,
+					gap: theme.spacing.xs,
+				},
+				sidebarItemActive: {
+					backgroundColor:
+						theme.colors.accentBackground,
+					borderColor: theme.colors.accent,
+				},
+				sidebarItemLabel: {
+					fontSize: theme.typography.caption,
+					fontWeight: "700",
+					color: theme.colors.textPrimary,
+				},
+				sidebarItemMeta: {
+					fontSize: theme.typography.tiny,
+					color: theme.colors.textMuted,
+				},
 				subtitle: {
 					fontSize: theme.typography.caption,
+					color: theme.colors.textMuted,
+				},
+				label: {
+					fontSize: theme.typography.caption,
+					fontWeight: "700",
+					color: theme.colors.textSecondary,
+				},
+				helpText: {
+					fontSize: theme.typography.tiny,
 					color: theme.colors.textMuted,
 				},
 				colorGrid: {
@@ -97,6 +383,23 @@ export function SettingsScreen() {
 				colorChipSelected: {
 					borderWidth: 3,
 					borderColor: theme.colors.textPrimary,
+				},
+				row: {
+					flexDirection: "row",
+					gap: theme.spacing.sm,
+					flexWrap: "wrap",
+				},
+				accentPreview: {
+					paddingHorizontal: theme.spacing.md,
+					paddingVertical: theme.spacing.sm,
+					borderRadius: theme.radius.md,
+					alignSelf: "flex-start",
+					borderWidth: 1,
+					borderColor: theme.colors.border,
+				},
+				accentPreviewText: {
+					fontSize: theme.typography.caption,
+					fontWeight: "700",
 				},
 				shiftRow: {
 					flexDirection: "row",
@@ -126,27 +429,22 @@ export function SettingsScreen() {
 					fontWeight: "700",
 					color: theme.colors.textPrimary,
 				},
-				row: {
-					flexDirection: "row",
-					gap: theme.spacing.sm,
-					flexWrap: "wrap",
-				},
 			}),
 		[theme],
 	);
 
-	const resetForm = () => {
+	const resetShiftTypeForm = () => {
 		setEditingId(null);
 		setTagName("");
 		setSelectedColor(null);
 		setCustomColor("");
-		setActionError(null);
+		setShiftTypeError(null);
 	};
 
 	const saveShiftType = async () => {
-		setActionError(null);
+		setShiftTypeError(null);
 		if (!tagName.trim()) {
-			setActionError("Tag name is required.");
+			setShiftTypeError("Tag name is required.");
 			return;
 		}
 
@@ -173,10 +471,10 @@ export function SettingsScreen() {
 					},
 				});
 			}
-			resetForm();
-			await refetch();
+			resetShiftTypeForm();
+			await refetchShiftTypes();
 		} catch (mutationError) {
-			setActionError(
+			setShiftTypeError(
 				toUserErrorMessage(
 					mutationError,
 					"Unable to save shift type.",
@@ -190,19 +488,19 @@ export function SettingsScreen() {
 		setTagName(item.name);
 		setSelectedColor(item.color);
 		setCustomColor(item.color);
-		setActionError(null);
+		setShiftTypeError(null);
 	};
 
 	const removeShiftType = async (id: string) => {
-		setActionError(null);
+		setShiftTypeError(null);
 		try {
 			await deleteShiftType({ variables: { id } });
 			if (editingId === id) {
-				resetForm();
+				resetShiftTypeForm();
 			}
-			await refetch();
+			await refetchShiftTypes();
 		} catch (mutationError) {
-			setActionError(
+			setShiftTypeError(
 				toUserErrorMessage(
 					mutationError,
 					"Unable to delete shift type.",
@@ -211,199 +509,447 @@ export function SettingsScreen() {
 		}
 	};
 
-	return (
-		<ScreenScaffold>
-			<ScrollView
-				contentContainerStyle={styles.container}
-				keyboardShouldPersistTaps="handled"
-				keyboardDismissMode="on-drag"
+	const saveApparence = async () => {
+		setApparenceError(null);
+
+		const accentInputValue =
+			customAccentColor.trim() || selectedAccentPreset || "";
+		const normalizedAccentColor =
+			normalizeHexColor(accentInputValue);
+
+		if (accentInputValue && !normalizedAccentColor) {
+			setApparenceError(
+				"UI accent color must be a valid hex value like #1E3A8A.",
+			);
+			return;
+		}
+
+		try {
+			await updateAccount({
+				variables: {
+					input: {
+						uiAccentColor:
+							normalizedAccentColor,
+					},
+				},
+			});
+			await refetchMe();
+		} catch (mutationError) {
+			setApparenceError(
+				toUserErrorMessage(
+					mutationError,
+					"Unable to save apparence settings.",
+				),
+			);
+		}
+	};
+
+	const renderSidebar = () => {
+		if (!sidebarOpen) {
+			return null;
+		}
+
+		return (
+			<Pressable
+				style={styles.sidebarBackdrop}
+				onPress={() => setSidebarOpen(false)}
 			>
-				<View style={styles.card}>
-					<Text style={styles.title}>
-						Shift Type
+				<Pressable
+					style={styles.sidebarPanel}
+					onPress={() => {
+						// Keep panel open when pressing inside.
+					}}
+				>
+					<Text style={styles.sidebarHeading}>
+						Settings Categories
 					</Text>
-					<Text style={styles.subtitle}>
-						Create tags for your shift
-						chips. Tag name becomes the
-						default shift title. Leave color
-						blank for random assignment.
-					</Text>
-					<FormField
-						label="Tag Name"
-						value={tagName}
-						onChangeText={setTagName}
-						placeholder="e.g. Bar Shift"
-						autoCapitalize="words"
-					/>
-					<FormField
-						label="Color (hex)"
-						value={customColor}
-						onChangeText={setCustomColor}
-						placeholder="#1E3A8A"
-						autoCapitalize="none"
-					/>
-					<View style={styles.colorGrid}>
-						{COLOR_PRESETS.map((color) => {
-							const isSelected =
-								selectedColor ===
-									color &&
-								!customColor.trim();
-							return (
-								<Pressable
-									key={
-										color
-									}
-									onPress={() => {
-										setSelectedColor(
-											color,
-										);
-										setCustomColor(
-											"",
-										);
-									}}
-									style={[
-										styles.colorChip,
-										{
-											backgroundColor:
-												color,
-										},
-										isSelected
-											? styles.colorChipSelected
-											: undefined,
-									]}
-								/>
-							);
-						})}
-					</View>
-					<View style={styles.row}>
-						<ActionButton
-							label={
-								editingId
-									? "Save Tag"
-									: "Add Tag"
-							}
-							onPress={() =>
-								void saveShiftType()
-							}
-							loading={
-								mutationLoading
-							}
-						/>
-						{editingId ? (
-							<ActionButton
-								label="Cancel"
-								onPress={
-									resetForm
+					{SETTINGS_CATEGORIES.map((category) => {
+						const isActive =
+							category.key ===
+							activeCategory;
+						return (
+							<Pressable
+								key={
+									category.key
 								}
-								variant="muted"
-							/>
-						) : null}
-						<ActionButton
-							label="Use Random Color"
+								onPress={() => {
+									setActiveCategory(
+										category.key,
+									);
+									setSidebarOpen(
+										false,
+									);
+								}}
+								style={[
+									styles.sidebarItem,
+									isActive
+										? styles.sidebarItemActive
+										: undefined,
+								]}
+							>
+								<Text
+									style={
+										styles.sidebarItemLabel
+									}
+								>
+									{
+										category.label
+									}
+								</Text>
+								<Text
+									style={
+										styles.sidebarItemMeta
+									}
+								>
+									{
+										category.description
+									}
+								</Text>
+							</Pressable>
+						);
+					})}
+				</Pressable>
+			</Pressable>
+		);
+	};
+
+	const renderApparenceCategory = () => (
+		<View style={styles.section}>
+			<Text style={styles.sectionKicker}>Apparence</Text>
+			<Text style={styles.sectionTitle}>UI Colors</Text>
+			<Text style={styles.subtitle}>
+				Personalize app accent colors. Text contrast is
+				handled automatically.
+			</Text>
+			{meLoading ? (
+				<StateNotice
+					mode="loading"
+					message="Loading apparence settings..."
+				/>
+			) : null}
+			{meError ? (
+				<StateNotice
+					mode="error"
+					message={toUserErrorMessage(
+						meError,
+						"Unable to load apparence settings.",
+					)}
+				/>
+			) : null}
+
+			<Text style={styles.label}>UI Accent Color</Text>
+			<FormField
+				label="Accent Color (hex)"
+				value={customAccentColor}
+				onChangeText={(text) => {
+					setCustomAccentColor(text);
+					if (text.trim()) {
+						setSelectedAccentPreset(null);
+					}
+				}}
+				autoCapitalize="none"
+				placeholder="#2D5BFF"
+			/>
+			<View style={styles.colorGrid}>
+				{APPARENCE_COLOR_PRESETS.map((color) => {
+					const isSelected =
+						selectedAccentPreset ===
+							color &&
+						!customAccentColor.trim();
+					return (
+						<Pressable
+							key={color}
+							onPress={() => {
+								setSelectedAccentPreset(
+									color,
+								);
+								setCustomAccentColor(
+									"",
+								);
+							}}
+							style={[
+								styles.colorChip,
+								{
+									backgroundColor:
+										color,
+								},
+								isSelected
+									? styles.colorChipSelected
+									: undefined,
+							]}
+						/>
+					);
+				})}
+			</View>
+			<View style={styles.row}>
+				<ActionButton
+					label="Randomize Accent"
+					onPress={() => {
+						setCustomAccentColor(
+							randomAccentColor(),
+						);
+						setSelectedAccentPreset(null);
+					}}
+					variant="muted"
+				/>
+				<ActionButton
+					label="Use Theme Default"
+					onPress={() => {
+						setCustomAccentColor("");
+						setSelectedAccentPreset(null);
+					}}
+					variant="muted"
+				/>
+			</View>
+			{previewAccentColor ? (
+				<View
+					style={[
+						styles.accentPreview,
+						{
+							backgroundColor:
+								previewAccentColor,
+						},
+					]}
+				>
+					<Text
+						style={[
+							styles.accentPreviewText,
+							{
+								color: previewAccentTextColor,
+							},
+						]}
+					>
+						Accent preview
+					</Text>
+				</View>
+			) : null}
+			<Text style={styles.helpText}>
+				Changes apply globally after saving.
+			</Text>
+			{apparenceError ? (
+				<StateNotice
+					mode="error"
+					message={apparenceError}
+				/>
+			) : null}
+			<ActionButton
+				label="Save Apparence"
+				onPress={() => void saveApparence()}
+				loading={updatingApparence}
+			/>
+			<View style={styles.sectionDivider} />
+		</View>
+	);
+
+	const renderShiftTypeCategory = () => (
+		<View style={styles.section}>
+			<Text style={styles.sectionKicker}>Shift Types</Text>
+			<Text style={styles.sectionTitle}>Create Tags</Text>
+			<Text style={styles.subtitle}>
+				Create tags for your shift chips. Tag name
+				becomes the default shift title.
+			</Text>
+			<FormField
+				label="Tag Name"
+				value={tagName}
+				onChangeText={setTagName}
+				placeholder="e.g. Bar Shift"
+				autoCapitalize="words"
+			/>
+			<FormField
+				label="Color (hex)"
+				value={customColor}
+				onChangeText={setCustomColor}
+				placeholder="#1E3A8A"
+				autoCapitalize="none"
+			/>
+			<View style={styles.colorGrid}>
+				{SHIFT_TYPE_COLOR_PRESETS.map((color) => {
+					const isSelected =
+						selectedColor === color &&
+						!customColor.trim();
+					return (
+						<Pressable
+							key={color}
 							onPress={() => {
 								setSelectedColor(
-									null,
+									color,
 								);
 								setCustomColor(
 									"",
 								);
 							}}
+							style={[
+								styles.colorChip,
+								{
+									backgroundColor:
+										color,
+								},
+								isSelected
+									? styles.colorChipSelected
+									: undefined,
+							]}
+						/>
+					);
+				})}
+			</View>
+			<View style={styles.row}>
+				<ActionButton
+					label={
+						editingId
+							? "Save Tag"
+							: "Add Tag"
+					}
+					onPress={() => void saveShiftType()}
+					loading={shiftTypeMutationLoading}
+				/>
+				{editingId ? (
+					<ActionButton
+						label="Cancel"
+						onPress={resetShiftTypeForm}
+						variant="muted"
+					/>
+				) : null}
+				<ActionButton
+					label="Use Random Color"
+					onPress={() => {
+						const randomColor =
+							randomShiftTagColor();
+						setSelectedColor(randomColor);
+						setCustomColor("");
+					}}
+					variant="muted"
+				/>
+			</View>
+			{shiftTypeError ? (
+				<StateNotice
+					mode="error"
+					message={shiftTypeError}
+				/>
+			) : null}
+
+			<View style={styles.sectionDivider} />
+			<Text style={styles.subsectionTitle}>
+				Existing Tags
+			</Text>
+			{shiftTypeLoading ? (
+				<StateNotice
+					mode="loading"
+					message="Loading shift types..."
+				/>
+			) : null}
+			{shiftTypeLoadError ? (
+				<StateNotice
+					mode="error"
+					message={toUserErrorMessage(
+						shiftTypeLoadError,
+						"Unable to load shift types.",
+					)}
+				/>
+			) : null}
+			{!shiftTypeLoading &&
+			!shiftTypeLoadError &&
+			(shiftTypeData?.myShiftTypes?.length ?? 0) === 0 ? (
+				<StateNotice
+					mode="empty"
+					message="No shift tags yet."
+				/>
+			) : null}
+			{shiftTypeData?.myShiftTypes?.map((item) => (
+				<View key={item.id} style={styles.shiftRow}>
+					<View style={styles.shiftInfo}>
+						<View
+							style={[
+								styles.swatch,
+								{
+									backgroundColor:
+										item.color,
+								},
+							]}
+						/>
+						<Text style={styles.shiftName}>
+							{item.name}
+						</Text>
+					</View>
+					<View style={styles.row}>
+						<ActionButton
+							label="Edit"
 							variant="muted"
+							onPress={() =>
+								editShiftType(
+									item,
+								)
+							}
+						/>
+						<ActionButton
+							label="Delete"
+							variant="danger"
+							onPress={() =>
+								void removeShiftType(
+									item.id,
+								)
+							}
 						/>
 					</View>
-					{actionError ? (
-						<StateNotice
-							mode="error"
-							message={actionError}
+				</View>
+			))}
+		</View>
+	);
+
+	return (
+		<ScreenScaffold>
+			{renderSidebar()}
+			<View style={styles.screenContent}>
+				<View style={styles.topBar}>
+					<Pressable
+						style={styles.hamburgerButton}
+						onPress={() =>
+							setSidebarOpen(true)
+						}
+					>
+						<Ionicons
+							name="menu"
+							size={22}
+							color={
+								theme.colors
+									.textPrimary
+							}
 						/>
-					) : null}
+					</Pressable>
+					<View style={styles.topBarCopy}>
+						<Text
+							style={
+								styles.topBarTitle
+							}
+						>
+							Settings
+						</Text>
+						<Text
+							style={
+								styles.topBarSubtitle
+							}
+						>
+							{
+								activeCategoryMeta?.label
+							}
+						</Text>
+					</View>
 				</View>
 
-				<View style={styles.card}>
-					<Text style={styles.title}>
-						Existing Tags
-					</Text>
-					{loading ? (
-						<StateNotice
-							mode="loading"
-							message="Loading shift types..."
-						/>
-					) : null}
-					{error ? (
-						<StateNotice
-							mode="error"
-							message={toUserErrorMessage(
-								error,
-								"Unable to load shift types.",
-							)}
-						/>
-					) : null}
-					{!loading &&
-					!error &&
-					(data?.myShiftTypes?.length ?? 0) ===
-						0 ? (
-						<StateNotice
-							mode="empty"
-							message="No shift tags yet."
-						/>
-					) : null}
-					{data?.myShiftTypes?.map((item) => (
-						<View
-							key={item.id}
-							style={styles.shiftRow}
-						>
-							<View
-								style={
-									styles.shiftInfo
-								}
-							>
-								<View
-									style={[
-										styles.swatch,
-										{
-											backgroundColor:
-												item.color,
-										},
-									]}
-								/>
-								<Text
-									style={
-										styles.shiftName
-									}
-								>
-									{
-										item.name
-									}
-								</Text>
-							</View>
-							<View
-								style={
-									styles.row
-								}
-							>
-								<ActionButton
-									label="Edit"
-									variant="muted"
-									onPress={() =>
-										editShiftType(
-											item,
-										)
-									}
-								/>
-								<ActionButton
-									label="Delete"
-									variant="danger"
-									onPress={() =>
-										void removeShiftType(
-											item.id,
-										)
-									}
-								/>
-							</View>
-						</View>
-					))}
-				</View>
-			</ScrollView>
+				<ScrollView
+					style={styles.scrollArea}
+					contentContainerStyle={styles.container}
+					keyboardShouldPersistTaps="handled"
+					keyboardDismissMode="on-drag"
+				>
+					{activeCategory === "APPARENCE"
+						? renderApparenceCategory()
+						: null}
+					{activeCategory === "SHIFT_TYPES"
+						? renderShiftTypeCategory()
+						: null}
+				</ScrollView>
+			</View>
 		</ScreenScaffold>
 	);
 }

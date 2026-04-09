@@ -1,27 +1,31 @@
 {
-  "name": "freerota-mobile",
-  "version": "0.1.0",
-  "private": true,
-  "main": "index.js",
-  "scripts": {
-    "start": "expo start",
-    "ios": "expo run:ios",
-    "android": "expo run:android"
-  },
-  "dependencies": {
-    "@apollo/client": "^3.11.8",
-    "@react-native-async-storage/async-storage": "^2.2.0",
-    "@react-native-community/datetimepicker": "8.4.4",
-    "expo": "^54.0.0",
-    "expo-calendar": "~15.0.8",
-    "expo-image-picker": "~17.0.10",
-    "graphql": "^16.9.0",
-    "react": "19.1.0",
-    "react-native": "0.81.5",
-    "react-native-safe-area-context": "~5.6.0"
-  },
-  "devDependencies": {
-    "@types/react": "~19.1.10",
-    "typescript": "^5.7.2"
-  }
+	"name": "freerota-mobile",
+	"version": "0.1.0",
+	"private": true,
+	"main": "index.js",
+	"scripts": {
+		"start": "expo start",
+		"web": "expo start --web",
+		"build:web": "expo export --platform web",
+		"ios": "expo run:ios",
+		"android": "expo run:android"
+	},
+	"dependencies": {
+		"@apollo/client": "^3.11.8",
+		"@react-native-async-storage/async-storage": "^2.2.0",
+		"@react-native-community/datetimepicker": "8.4.4",
+		"expo": "^54.0.0",
+		"expo-calendar": "~15.0.8",
+		"expo-image-picker": "~17.0.10",
+		"graphql": "^16.9.0",
+		"react": "19.1.0",
+		"react-dom": "19.1.0",
+		"react-native": "0.81.5",
+		"react-native-safe-area-context": "~5.6.0",
+		"react-native-web": "^0.21.0"
+	},
+	"devDependencies": {
+		"@types/react": "~19.1.10",
+		"typescript": "^5.7.2"
+	}
 }

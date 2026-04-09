@@ -860,11 +860,11 @@ export function RotaScreen() {
 	const dayStateColor = (state: DayState): string => {
 		switch (state) {
 			case "EARLY":
-				return theme.colors.accentEarlyBackground;
+				return "#FFD70033"; // Gold with transparency
 			case "BUSY":
-				return theme.colors.accentBusyBackground;
+				return "#FF450033"; // OrangeRed with transparency
 			default:
-				return theme.colors.accentBackground;
+				return "transparent";
 		}
 	};
 
@@ -1534,6 +1534,16 @@ export function RotaScreen() {
 														dayStateColor(
 															dayState,
 														),
+													borderColor:
+														dayState ===
+														"EARLY"
+															? "#FFD70088"
+															: dayState ===
+																  "BUSY"
+																? "#FF450088"
+																: theme
+																		.colors
+																		.accent,
 												},
 												isToday
 													? styles.dayCellToday

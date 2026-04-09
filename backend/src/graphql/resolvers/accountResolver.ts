@@ -35,6 +35,7 @@ export const accountResolver = {
                     displayName?: string;
                     timezone?: string;
                     isPublic?: boolean;
+                    uiAccentColor?: string | null;
                 };
             },
             context: Parameters<typeof requireAuth>[0]

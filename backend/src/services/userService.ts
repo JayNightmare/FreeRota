@@ -2,6 +2,22 @@ import { userRepository } from '../repositories/userRepository.js';
 import { AppError, assertOrThrow } from '../utils/errors.js';
 import { validateUsername } from '../utils/username.js';
 
+const HEX_COLOR_REGEX = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
+
+function normalizeUiAccentColor(value?: string | null): string | null {
+    if (typeof value !== 'string') {
+        return null;
+    }
+
+    const trimmed = value.trim();
+    if (!trimmed) {
+        return null;
+    }
+
+    assertOrThrow(HEX_COLOR_REGEX.test(trimmed), 'UI accent color must be a valid hex value like #1E3A8A');
+    return trimmed.toUpperCase();
+}
+
 class UserService {
     async me(userId: string) {
         const user = await userRepository.findById(userId);
@@ -28,9 +44,16 @@ class UserService {
             displayName?: string;
             timezone?: string;
             isPublic?: boolean;
+            uiAccentColor?: string | null;
         }
     ) {
-        assertOrThrow(Object.keys(updates).length > 0, 'No updates provided');
+        const hasUpdates =
+            Object.prototype.hasOwnProperty.call(updates, 'username') ||
+            Object.prototype.hasOwnProperty.call(updates, 'displayName') ||
+            Object.prototype.hasOwnProperty.call(updates, 'timezone') ||
+            Object.prototype.hasOwnProperty.call(updates, 'isPublic') ||
+            Object.prototype.hasOwnProperty.call(updates, 'uiAccentColor');
+        assertOrThrow(hasUpdates, 'No updates provided');
 
         const sanitizedUpdates = { ...updates };
 
@@ -42,6 +65,10 @@ class UserService {
             }
 
             sanitizedUpdates.username = nextUsername;
+        }
+
+        if (Object.prototype.hasOwnProperty.call(updates, 'uiAccentColor')) {
+            sanitizedUpdates.uiAccentColor = normalizeUiAccentColor(updates.uiAccentColor);
         }
 
         const updated = await userRepository.updateById(userId, sanitizedUpdates);

@@ -354,112 +354,94 @@ export function MessagesScreen() {
 					)}
 				</View>
 
-				<View style={styles.card}>
-					<Text style={styles.title}>
-						Messages
-					</Text>
-					<FormField
-						label="Message"
-						value={messageBody}
-						onChangeText={setMessageBody}
-						placeholder="Type a message"
-						autoCapitalize="sentences"
+				<Text style={styles.title}>Messages</Text>
+				<FormField
+					label="Message"
+					value={messageBody}
+					onChangeText={setMessageBody}
+					placeholder="Type a message"
+					autoCapitalize="sentences"
+				/>
+				<ActionButton
+					label="Send"
+					onPress={() => void submitMessage()}
+					loading={sendingMessage}
+					disabled={!selectedConversationId}
+				/>
+				{loadingMessages ? (
+					<StateNotice
+						mode="loading"
+						message="Loading messages..."
 					/>
-					<ActionButton
-						label="Send"
-						onPress={() =>
-							void submitMessage()
-						}
-						loading={sendingMessage}
-						disabled={
-							!selectedConversationId
-						}
+				) : null}
+				{messagesError ? (
+					<StateNotice
+						mode="error"
+						message={toUserErrorMessage(
+							messagesError,
+							"Unable to load messages.",
+						)}
 					/>
-					{loadingMessages ? (
-						<StateNotice
-							mode="loading"
-							message="Loading messages..."
-						/>
-					) : null}
-					{messagesError ? (
-						<StateNotice
-							mode="error"
-							message={toUserErrorMessage(
-								messagesError,
-								"Unable to load messages.",
+				) : null}
+				{!selectedConversationId ? (
+					<StateNotice
+						mode="empty"
+						message="Select a conversation first."
+					/>
+				) : null}
+				{selectedConversationId &&
+				(messagesData?.messages?.length ?? 0) === 0 &&
+				!loadingMessages ? (
+					<StateNotice
+						mode="empty"
+						message="No messages yet in this thread."
+					/>
+				) : null}
+				{messagesData?.messages?.map((message) => (
+					<View
+						key={message.id}
+						style={styles.messageCard}
+					>
+						<Text
+							style={
+								styles.messageBody
+							}
+						>
+							{message.body}
+						</Text>
+						<Text
+							style={
+								styles.messageMeta
+							}
+						>
+							Sent:{" "}
+							{toLocalDateTime(
+								message.sentAt,
 							)}
-						/>
-					) : null}
-					{!selectedConversationId ? (
-						<StateNotice
-							mode="empty"
-							message="Select a conversation first."
-						/>
-					) : null}
-					{selectedConversationId &&
-					(messagesData?.messages?.length ??
-						0) === 0 &&
-					!loadingMessages ? (
-						<StateNotice
-							mode="empty"
-							message="No messages yet in this thread."
-						/>
-					) : null}
-					{messagesData?.messages?.map(
-						(message) => (
-							<View
-								key={message.id}
-								style={
-									styles.messageCard
+						</Text>
+						<Text
+							style={
+								styles.messageMeta
+							}
+						>
+							State:{" "}
+							{message.deliveryState}
+						</Text>
+						{message.recipientId === myId &&
+						message.deliveryState !==
+							"READ" ? (
+							<ActionButton
+								label="Mark Read"
+								onPress={() =>
+									void markRead(
+										message,
+									)
 								}
-							>
-								<Text
-									style={
-										styles.messageBody
-									}
-								>
-									{
-										message.body
-									}
-								</Text>
-								<Text
-									style={
-										styles.messageMeta
-									}
-								>
-									Sent:{" "}
-									{toLocalDateTime(
-										message.sentAt,
-									)}
-								</Text>
-								<Text
-									style={
-										styles.messageMeta
-									}
-								>
-									State:{" "}
-									{
-										message.deliveryState
-									}
-								</Text>
-								{message.recipientId ===
-									myId &&
-								message.deliveryState !==
-									"READ" ? (
-									<ActionButton
-										label="Mark Read"
-										onPress={() =>
-											void markRead(
-												message,
-											)
-										}
-										variant="muted"
-									/>
-								) : null}
-							</View>
-						),
-					)}
-				</View>
+								variant="muted"
+							/>
+						) : null}
+					</View>
+				))}
 			</ScrollView>
 		</ScreenScaffold>
 	);

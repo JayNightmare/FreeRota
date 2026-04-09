@@ -25,6 +25,7 @@ export const ME_QUERY = gql`
 			displayName
 			timezone
 			isPublic
+			uiAccentColor
 		}
 	}
 `;
@@ -37,6 +38,7 @@ export const UPDATE_ACCOUNT_MUTATION = gql`
 			displayName
 			timezone
 			isPublic
+			uiAccentColor
 		}
 	}
 `;

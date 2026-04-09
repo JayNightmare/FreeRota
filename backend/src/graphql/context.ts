@@ -25,7 +25,8 @@ export async function buildContext(ctx: YogaInitialContext): Promise<GraphQLCont
                 username: user.username,
                 displayName: user.displayName,
                 isPublic: user.isPublic,
-                timezone: user.timezone
+                timezone: user.timezone,
+                uiAccentColor: user.uiAccentColor
             }
         };
     } catch {

@@ -11,7 +11,9 @@
 	"scripts": {
 		"dev:backend": "npm --workspace backend run dev",
 		"dev:mobile": "npm --workspace mobile run start",
+		"dev:web": "npm --workspace mobile run web",
 		"build:backend": "npm --workspace backend run build",
+		"build:web": "npm --workspace mobile run build:web",
 		"start:backend": "npm --workspace backend run start",
 		"lint": "echo 'Lint setup pending'"
 	}

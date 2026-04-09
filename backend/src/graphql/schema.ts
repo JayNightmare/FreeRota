@@ -15,6 +15,7 @@ const typeDefs = /* GraphQL */ `
     displayName: String!
     timezone: String!
     isPublic: Boolean!
+    uiAccentColor: String
     createdAt: DateTime!
     updatedAt: DateTime!
   }
@@ -153,6 +154,7 @@ const typeDefs = /* GraphQL */ `
     displayName: String
     timezone: String
     isPublic: Boolean
+    uiAccentColor: String
   }
 
   input CreateRotaEntryInput {

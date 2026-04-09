@@ -51,6 +51,28 @@ Set `EXPO_PUBLIC_GRAPHQL_URL` in `mobile/.env` to a backend URL reachable by you
 npm run dev:mobile
 ```
 
+### 6. Run web app locally (tester preview)
+
+Use this when you want to validate the same app flow in a browser before app store distribution.
+
+```bash
+npm run dev:web
+```
+
+### 7. Build web app for testers
+
+Set `EXPO_PUBLIC_GRAPHQL_URL` in `mobile/.env` to your deployed backend GraphQL endpoint, then build:
+
+```bash
+npm run build:web
+```
+
+Static files are generated in `mobile/dist`.
+
+For production-like tester rollout details (CORS, environment strategy, and hosting options), see `docs/web-tester-deployment.md`.
+
+For a full setup walkthrough targeting Render backend + GitHub Pages frontend (including Actions workflow), see `docs/render-github-pages-setup.md`.
+
 ## Implemented in this initial slice
 
 - Account registration, login, profile update, account soft-delete

@@ -8,6 +8,7 @@ const userSchema = new Schema(
         displayName: { type: String, required: true, trim: true },
         timezone: { type: String, required: true, default: 'UTC' },
         isPublic: { type: Boolean, required: true, default: false },
+        uiAccentColor: { type: String, default: null, trim: true },
         deletedAt: { type: Date, default: null }
     },
     {

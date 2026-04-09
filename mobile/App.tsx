@@ -304,13 +304,13 @@ function AppShell() {
 export default function App() {
 	return (
 		<ApolloProvider client={apolloClient}>
-			<ThemeProvider>
-				<AuthProvider>
+			<AuthProvider>
+				<ThemeProvider>
 					<SafeAreaProvider>
 						<AppShell />
 					</SafeAreaProvider>
-				</AuthProvider>
-			</ThemeProvider>
+				</ThemeProvider>
+			</AuthProvider>
 		</ApolloProvider>
 	);
 }
