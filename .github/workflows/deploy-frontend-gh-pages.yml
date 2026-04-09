@@ -23,6 +23,9 @@ concurrency:
 jobs:
     build:
         runs-on: ubuntu-latest
+        env:
+            EXPO_PUBLIC_GRAPHQL_URL: https://freerota.onrender.com/graphql
+            FRONTEND_DOMAIN: rota.nexusgit.info
         steps:
             - name: Checkout repository
               uses: actions/checkout@v4
@@ -37,20 +40,14 @@ jobs:
               run: npm ci
 
             - name: Build Expo web bundle
-              env:
-                  EXPO_PUBLIC_GRAPHQL_URL: ${{ secrets.EXPO_PUBLIC_GRAPHQL_URL }}
-              run: |
-                  if [ -z "${EXPO_PUBLIC_GRAPHQL_URL}" ]; then
-                    echo "Missing required repository variable: EXPO_PUBLIC_GRAPHQL_URL"
-                    echo "Set it to your Render backend GraphQL URL, e.g. https://your-backend.onrender.com/graphql"
-                    exit 1
-                  fi
-
-                  npm run build:web
+              run: npm run build:web
 
             - name: Make Expo asset paths GitHub Pages safe
               run: |
-                  node -e "const fs=require('fs');const p='mobile/dist/index.html';let c=fs.readFileSync(p,'utf8');c=c.replace(/([=\"'])\/_expo\//g,'$1./_expo/');fs.writeFileSync(p,c);"
+                  node -e "const fs=require('fs');const p='mobile/dist/index.html';let c=fs.readFileSync(p,'utf8');c=c.replace(/\"\/_expo\//g,'\"./_expo/').replace(/'\/_expo\//g,\"'./_expo/\");fs.writeFileSync(p,c);"
+
+            - name: Add GitHub Pages custom domain file
+              run: echo "${FRONTEND_DOMAIN}" > mobile/dist/CNAME
 
             - name: Add SPA fallback
               run: cp mobile/dist/index.html mobile/dist/404.html

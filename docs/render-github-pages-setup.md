@@ -32,7 +32,7 @@ In Render service settings, add:
 1. MONGODB_URI = your MongoDB connection string
 2. JWT_SECRET = a strong secret (minimum 16 chars)
 3. JWT_EXPIRES_IN = 7d
-4. FRONTEND_ORIGIN = placeholder value for now (for example `https://example.com`)
+4. FRONTEND_ORIGIN = `https://rota.nexusgit.info`
 
 Notes:
 
@@ -43,11 +43,11 @@ Notes:
 
 1. Trigger first deploy.
 2. After deploy completes, copy your backend URL:
-      - Example: `https://freerota-backend.onrender.com`
+      - `https://freerota.onrender.com`
 3. Verify GraphQL endpoint responds:
-      - `https://freerota-backend.onrender.com/graphql`
+      - `https://freerota.onrender.com/graphql`
 
-Save this full GraphQL URL. You need it for the GitHub Pages workflow variable.
+The frontend workflow is already configured to use `https://freerota.onrender.com/graphql`.
 
 ## Part B: Frontend Deployment to GitHub Pages
 
@@ -59,13 +59,13 @@ A workflow has been added at [.github/workflows/deploy-frontend-gh-pages.yml](.g
 2. Under Build and deployment:
       - Source: GitHub Actions
 
-### 2) Add Repository Variable for Frontend Build
+### 2) Confirm Frontend Build API URL
 
-1. Open repository Settings, then Secrets and variables, then Actions.
-2. Add new repository variable:
-      - Name: EXPO_PUBLIC_GRAPHQL_URL
-      - Value: your Render GraphQL URL
-      - Example: `https://freerota-backend.onrender.com/graphql`
+1. Open [.github/workflows/deploy-frontend-gh-pages.yml](.github/workflows/deploy-frontend-gh-pages.yml).
+2. Confirm job-level environment contains:
+      - `EXPO_PUBLIC_GRAPHQL_URL: https://freerota.onrender.com/graphql`
+      - `FRONTEND_DOMAIN: rota.nexusgit.info`
+3. If backend URL changes later, update `EXPO_PUBLIC_GRAPHQL_URL` in that workflow.
 
 ### 3) Commit and Push Workflow
 
@@ -76,8 +76,9 @@ What the workflow does:
 1. Installs dependencies with npm ci.
 2. Builds static Expo web output (mobile/dist).
 3. Rewrites /\_expo asset path references to ./\_expo for GitHub Pages project-path compatibility.
-4. Copies index.html to 404.html to support SPA fallback routing.
-5. Publishes mobile/dist to GitHub Pages.
+4. Writes `CNAME` with `rota.nexusgit.info` for custom domain mapping.
+5. Copies index.html to 404.html to support SPA fallback routing.
+6. Publishes mobile/dist to GitHub Pages.
 
 ### 4) Find Your GitHub Pages URL
 
@@ -88,7 +89,7 @@ After deployment succeeds, GitHub provides the Pages URL in:
 
 Typical URL format:
 
-- `https://USERNAME.github.io/FreeRota`
+- `https://rota.nexusgit.info/`
 
 ### 5) Final CORS Update in Render
 
@@ -96,7 +97,7 @@ Now update backend CORS origin:
 
 1. Go to Render service Environment.
 2. Set FRONTEND_ORIGIN to your GitHub Pages origin (scheme + host only).
-      - Example: `https://USERNAME.github.io`
+      - `https://rota.nexusgit.info`
 3. Trigger backend redeploy.
 
 This aligns GraphQL Yoga CORS with your deployed frontend origin.
@@ -110,13 +111,13 @@ This aligns GraphQL Yoga CORS with your deployed frontend origin.
 
 ## Troubleshooting
 
-### Workflow fails with missing EXPO_PUBLIC_GRAPHQL_URL
+### Need to change API host later
 
-Set the repository variable EXPO_PUBLIC_GRAPHQL_URL in GitHub Actions variables.
+Update `EXPO_PUBLIC_GRAPHQL_URL` in [.github/workflows/deploy-frontend-gh-pages.yml](.github/workflows/deploy-frontend-gh-pages.yml).
 
 ### Frontend loads but API calls fail with CORS
 
-Set Render FRONTEND_ORIGIN to the GitHub Pages origin only (for example, `https://USERNAME.github.io`).
+Set Render FRONTEND_ORIGIN to `https://rota.nexusgit.info` (no trailing slash).
 
 ### Slow first backend response on free plan
 
