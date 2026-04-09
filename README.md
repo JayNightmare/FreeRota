@@ -1,5 +1,8 @@
 # FreeRota
 
+> [!NOTE]
+> This is an early implementation slice focused on core data flows and architecture. The code is not production-ready and may contain rough edges, hardcoded values, and incomplete features. The goal is to establish a working baseline for the main app flows and system structure, which can be iteratively improved and hardened in future development cycles.
+
 FreeRota is a work rota and schedule coordination app with:
 
 - React Native mobile client (`mobile`)
