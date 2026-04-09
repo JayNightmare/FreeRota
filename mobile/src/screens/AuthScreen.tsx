@@ -127,6 +127,13 @@ export function AuthScreen() {
 				return;
 			}
 
+			if (!email.trim()) {
+				setFormError(
+					"Email is required for registration.",
+				);
+				return;
+			}
+
 			const response = await register({
 				variables: {
 					input: {
@@ -189,8 +196,8 @@ export function AuthScreen() {
 							resetError();
 							setUsername(text);
 						}}
-						keyboardType="email-address"
 						placeholder="jane_doe"
+						autoCapitalize="none"
 					/>
 
 					<FormField
@@ -208,17 +215,18 @@ export function AuthScreen() {
 					{mode === "register" ? (
 						<>
 							<FormField
-								label="Username"
-								value={username}
+								label="Email"
+								value={email}
 								onChangeText={(
 									text,
 								) => {
 									resetError();
-									setUsername(
+									setEmail(
 										text,
 									);
 								}}
-								placeholder="jane_doe"
+								placeholder="name@example.com"
+								keyboardType="email-address"
 								autoCapitalize="none"
 							/>
 
@@ -264,7 +272,7 @@ export function AuthScreen() {
 									}
 								>
 									Public
-									profile
+									Profile
 								</Text>
 								<Switch
 									value={
