@@ -623,15 +623,10 @@ export function RotaScreen() {
 					gap: 2,
 				},
 				dayCellToday: {
-					borderWidth: 1,
-					borderColor: theme.colors.accent,
 					backgroundColor:
-						theme.colors
-							.accentTodayBackground,
+						theme.colors.accentBackground,
 				},
 				dayCellActive: {
-					borderWidth: 2,
-					borderColor: theme.colors.accent,
 					backgroundColor:
 						theme.colors.accentBackground,
 				},
