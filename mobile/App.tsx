@@ -7,6 +7,8 @@ import {
 	Text,
 	View,
 	ActivityIndicator,
+	Platform,
+	useWindowDimensions,
 } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { ApolloProvider } from "@apollo/client";
@@ -63,7 +65,12 @@ function ActiveScreen({ tab }: { tab: TabKey }) {
 function AppShell() {
 	const { theme, resolvedMode, toggleColorMode } = useTheme();
 	const { token, isBootstrapping } = useAuth();
+	const { width, height } = useWindowDimensions();
 	const [activeTab, setActiveTab] = useState<TabKey>("ROTA");
+	const isWeb = Platform.OS === "web";
+	const isPortrait = height >= width;
+	const isDesktopViewport = width >= 900;
+	const shouldBlockWebUsage = isWeb && (!isPortrait || isDesktopViewport);
 
 	const activeLabel = useMemo(
 		() =>
@@ -141,6 +148,34 @@ function AppShell() {
 					backgroundColor:
 						theme.colors.background,
 				},
+				blockedContainer: {
+					flex: 1,
+					backgroundColor:
+						theme.colors.background,
+					paddingHorizontal: theme.spacing.xl,
+					alignItems: "center",
+					justifyContent: "center",
+				},
+				blockedCard: {
+					width: "100%",
+					maxWidth: 420,
+					borderRadius: theme.radius.lg,
+					borderWidth: 1,
+					borderColor: theme.colors.border,
+					backgroundColor: theme.colors.surface,
+					padding: theme.spacing.lg,
+					gap: theme.spacing.md,
+				},
+				blockedTitle: {
+					fontSize: theme.typography.heading,
+					fontWeight: "800",
+					color: theme.colors.textPrimary,
+				},
+				blockedSubtitle: {
+					fontSize: theme.typography.caption,
+					lineHeight: 22,
+					color: theme.colors.textSecondary,
+				},
 				tabBar: {
 					flexDirection: "row",
 					gap: theme.spacing.xs,
@@ -188,6 +223,34 @@ function AppShell() {
 			}),
 		[theme],
 	);
+
+	if (shouldBlockWebUsage) {
+		const blockedMessage = isDesktopViewport
+			? "FreeRota web access is limited to phone-sized portrait screens. Please open this on a mobile device."
+			: "FreeRota supports portrait mode only. Rotate your device to portrait to continue.";
+
+		return (
+			<SafeAreaView
+				style={styles.blockedContainer}
+				edges={["top", "left", "right", "bottom"]}
+			>
+				<StatusBar
+					barStyle={statusBarStyle}
+					backgroundColor={
+						theme.colors.background
+					}
+				/>
+				<View style={styles.blockedCard}>
+					<Text style={styles.blockedTitle}>
+						Mobile Portrait Only
+					</Text>
+					<Text style={styles.blockedSubtitle}>
+						{blockedMessage}
+					</Text>
+				</View>
+			</SafeAreaView>
+		);
+	}
 
 	if (isBootstrapping) {
 		return (
