@@ -16,8 +16,6 @@ const userSchema = new Schema(
     }
 );
 
-userSchema.index({ email: 1 }, { unique: true });
-userSchema.index({ username: 1 }, { unique: true });
 userSchema.index({ isPublic: 1 });
 
 export type User = InferSchemaType<typeof userSchema>;

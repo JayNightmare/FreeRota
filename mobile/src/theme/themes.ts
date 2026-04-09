@@ -13,6 +13,11 @@ export interface ThemeTokens {
         accent: string;
         accentMuted: string;
         onAccent: string;
+        accentBackground: string;
+        accentFreeBackground: string;
+        accentBusyBackground: string;
+        accentEarlyBackground: string;
+        accentTodayBackground: string;
     };
     spacing: {
         xs: number;
@@ -74,23 +79,33 @@ export const lightTheme: ThemeTokens = {
         textMuted: "#53648A",
         accent: "#142248",
         accentMuted: "#DCE4F5",
-        onAccent: "#F8FBFF"
+        onAccent: "#F8FBFF",
+        accentBackground: "rgba(20, 34, 72, 0.1)",
+        accentFreeBackground: "rgba(20, 72, 53, 0.05)",
+        accentBusyBackground: "rgba(255, 142, 142, 0.05)",
+        accentEarlyBackground: "rgba(72, 67, 20, 0.05)",
+        accentTodayBackground: "rgba(29, 20, 72, 0.25)"
     }
 };
 
 export const darkTheme: ThemeTokens = {
     ...baseTokens,
     colors: {
-        background: "#090F1F",
-        surface: "#111A31",
-        surfaceMuted: "#17213D",
-        surfaceElevated: "#1A2747",
-        border: "#2E3A59",
+        background: "#12091f",
+        surface: "#251131",
+        surfaceMuted: "#2f173d",
+        surfaceElevated: "#3a1a47",
+        border: "#4b2e59",
         textPrimary: "#F3F7FF",
         textSecondary: "#D5DEEF",
         textMuted: "#9EABC8",
-        accent: "#8EA8FF",
-        accentMuted: "#25355F",
-        onAccent: "#081127"
+        accent: "#d78eff",
+        accentMuted: "#53255f",
+        onAccent: "#081127",
+        accentBackground: "rgba(142, 168, 255, 0.1)",
+        accentFreeBackground: "rgba(142, 255, 215, 0.05)",
+        accentBusyBackground: "rgba(255, 142, 142, 0.05)",
+        accentEarlyBackground: "rgba(72, 67, 20, 0.05)",
+        accentTodayBackground: "rgba(29, 20, 72, 0.25)"
     }
 };

@@ -41,6 +41,51 @@ export const UPDATE_ACCOUNT_MUTATION = gql`
 	}
 `;
 
+export const MY_SHIFT_TYPES_QUERY = gql`
+	query MyShiftTypes {
+		myShiftTypes {
+			id
+			userId
+			name
+			color
+			createdAt
+			updatedAt
+		}
+	}
+`;
+
+export const CREATE_SHIFT_TYPE_MUTATION = gql`
+	mutation CreateShiftType($input: CreateShiftTypeInput!) {
+		createShiftType(input: $input) {
+			id
+			userId
+			name
+			color
+			createdAt
+			updatedAt
+		}
+	}
+`;
+
+export const UPDATE_SHIFT_TYPE_MUTATION = gql`
+	mutation UpdateShiftType($id: ID!, $input: UpdateShiftTypeInput!) {
+		updateShiftType(id: $id, input: $input) {
+			id
+			userId
+			name
+			color
+			createdAt
+			updatedAt
+		}
+	}
+`;
+
+export const DELETE_SHIFT_TYPE_MUTATION = gql`
+	mutation DeleteShiftType($id: ID!) {
+		deleteShiftType(id: $id)
+	}
+`;
+
 export const DELETE_ACCOUNT_MUTATION = gql`
 	mutation DeleteAccount {
 		deleteAccount
@@ -55,6 +100,13 @@ export const MY_ROTA_QUERY = gql`
 			startUtc
 			endUtc
 			note
+			shiftTypeId
+			shiftTitle
+			shiftType {
+				id
+				name
+				color
+			}
 		}
 	}
 `;
@@ -67,6 +119,13 @@ export const CREATE_ROTA_ENTRY_MUTATION = gql`
 			startUtc
 			endUtc
 			note
+			shiftTypeId
+			shiftTitle
+			shiftType {
+				id
+				name
+				color
+			}
 		}
 	}
 `;
@@ -79,6 +138,13 @@ export const UPDATE_ROTA_ENTRY_MUTATION = gql`
 			startUtc
 			endUtc
 			note
+			shiftTypeId
+			shiftTitle
+			shiftType {
+				id
+				name
+				color
+			}
 		}
 	}
 `;
@@ -86,6 +152,90 @@ export const UPDATE_ROTA_ENTRY_MUTATION = gql`
 export const DELETE_ROTA_ENTRY_MUTATION = gql`
 	mutation DeleteRotaEntry($id: ID!) {
 		deleteRotaEntry(id: $id)
+	}
+`;
+
+export const IMPORT_ROTA_SCREENSHOT_MUTATION = gql`
+	mutation ImportRotaScreenshot($imageBase64: String!, $referenceDate: DateTime) {
+		importRotaScreenshot(imageBase64: $imageBase64, referenceDate: $referenceDate) {
+			id
+			type
+			startUtc
+			endUtc
+			note
+			shiftTypeId
+			shiftTitle
+			shiftType {
+				id
+				name
+				color
+			}
+		}
+	}
+`;
+
+export const PREVIEW_ROTA_SCREENSHOT_MUTATION = gql`
+	mutation PreviewRotaScreenshot($imageBase64: String!, $referenceDate: DateTime) {
+		previewRotaScreenshot(imageBase64: $imageBase64, referenceDate: $referenceDate) {
+			extractedText
+			entries {
+				type
+				startUtc
+				endUtc
+				note
+			}
+		}
+	}
+`;
+
+export const PREVIEW_DEVICE_CALENDAR_IMPORT_MUTATION = gql`
+	mutation PreviewDeviceCalendarImport($events: [DeviceCalendarEventInput!]!) {
+		previewDeviceCalendarImport(events: $events) {
+			entries {
+				eventId
+				calendarId
+				title
+				type
+				startUtc
+				endUtc
+				note
+				sourceType
+				recurrenceRule
+				isDuplicate
+				isConflict
+			}
+			totalCount
+			duplicateCount
+			conflictCount
+			skippedCancelledCount
+			skippedInvalidCount
+		}
+	}
+`;
+
+export const IMPORT_DEVICE_CALENDAR_MUTATION = gql`
+	mutation ImportDeviceCalendar($events: [DeviceCalendarEventInput!]!, $duplicateMode: String) {
+		importDeviceCalendar(events: $events, duplicateMode: $duplicateMode) {
+			created {
+				id
+				type
+				startUtc
+				endUtc
+				note
+				shiftTypeId
+				shiftTitle
+				shiftType {
+					id
+					name
+					color
+				}
+			}
+			totalConsidered
+			createdCount
+			skippedDuplicates
+			replacedConflicts
+			conflictCount
+		}
 	}
 `;
 

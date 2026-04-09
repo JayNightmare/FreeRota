@@ -19,6 +19,15 @@ const typeDefs = /* GraphQL */ `
     updatedAt: DateTime!
   }
 
+  type ShiftType {
+    id: ID!
+    userId: ID!
+    name: String!
+    color: String!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+  }
+
   type RotaEntry {
     id: ID!
     userId: ID!
@@ -26,10 +35,69 @@ const typeDefs = /* GraphQL */ `
     startUtc: DateTime!
     endUtc: DateTime!
     note: String
+    shiftTypeId: ID
+    shiftTitle: String
+    shiftType: ShiftType
     sourceType: String!
     recurrenceRule: String
     createdAt: DateTime!
     updatedAt: DateTime!
+  }
+
+  type RotaImportPreviewEntry {
+    type: String!
+    startUtc: DateTime!
+    endUtc: DateTime!
+    note: String
+  }
+
+  type RotaImportPreview {
+    extractedText: String!
+    entries: [RotaImportPreviewEntry!]!
+  }
+
+  input DeviceCalendarEventInput {
+    eventId: String!
+    calendarId: String!
+    title: String
+    notes: String
+    status: String
+    startUtc: DateTime!
+    endUtc: DateTime!
+    allDay: Boolean
+    recurrenceRule: String
+  }
+
+  type CalendarImportPreviewEntry {
+    eventId: String!
+    calendarId: String!
+    title: String
+    type: String!
+    startUtc: DateTime!
+    endUtc: DateTime!
+    note: String
+    sourceType: String!
+    recurrenceRule: String
+    isDuplicate: Boolean!
+    isConflict: Boolean!
+  }
+
+  type CalendarImportPreview {
+    entries: [CalendarImportPreviewEntry!]!
+    totalCount: Int!
+    duplicateCount: Int!
+    conflictCount: Int!
+    skippedCancelledCount: Int!
+    skippedInvalidCount: Int!
+  }
+
+  type CalendarImportResult {
+    created: [RotaEntry!]!
+    totalConsidered: Int!
+    createdCount: Int!
+    skippedDuplicates: Int!
+    replacedConflicts: Int!
+    conflictCount: Int!
   }
 
   type Friendship {
@@ -92,6 +160,8 @@ const typeDefs = /* GraphQL */ `
     startUtc: DateTime!
     endUtc: DateTime!
     note: String
+    shiftTypeId: ID
+    shiftTitle: String
   }
 
   input UpdateRotaEntryInput {
@@ -99,10 +169,23 @@ const typeDefs = /* GraphQL */ `
     startUtc: DateTime
     endUtc: DateTime
     note: String
+    shiftTypeId: ID
+    shiftTitle: String
+  }
+
+  input CreateShiftTypeInput {
+    name: String!
+    color: String
+  }
+
+  input UpdateShiftTypeInput {
+    name: String
+    color: String
   }
 
   type Query {
     me: User!
+    myShiftTypes: [ShiftType!]!
     userProfile(userId: ID!): User!
     myRota(rangeStartUtc: DateTime!, rangeEndUtc: DateTime!): [RotaEntry!]!
     visibleRota(userId: ID!, rangeStartUtc: DateTime!, rangeEndUtc: DateTime!): [RotaEntry!]!
@@ -124,9 +207,20 @@ const typeDefs = /* GraphQL */ `
     updateAccount(input: UpdateAccountInput!): User!
     deleteAccount: Boolean!
 
+    createShiftType(input: CreateShiftTypeInput!): ShiftType!
+    updateShiftType(id: ID!, input: UpdateShiftTypeInput!): ShiftType!
+    deleteShiftType(id: ID!): Boolean!
+
     createRotaEntry(input: CreateRotaEntryInput!): RotaEntry!
     updateRotaEntry(id: ID!, input: UpdateRotaEntryInput!): RotaEntry!
     deleteRotaEntry(id: ID!): Boolean!
+    previewRotaScreenshot(imageBase64: String!, referenceDate: DateTime): RotaImportPreview!
+    importRotaScreenshot(imageBase64: String!, referenceDate: DateTime): [RotaEntry!]!
+    previewDeviceCalendarImport(events: [DeviceCalendarEventInput!]!): CalendarImportPreview!
+    importDeviceCalendar(
+      events: [DeviceCalendarEventInput!]!
+      duplicateMode: String = "SKIP_DUPLICATES"
+    ): CalendarImportResult!
 
     sendFriendRequest(username: String!): Friendship!
     acceptFriendRequest(friendshipId: ID!): Friendship!

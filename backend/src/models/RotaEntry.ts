@@ -9,8 +9,15 @@ const rotaEntrySchema = new Schema(
         startUtc: { type: Date, required: true },
         endUtc: { type: Date, required: true },
         note: { type: String, default: '' },
+        shiftTypeId: { type: Schema.Types.ObjectId, ref: 'ShiftType', default: null },
+        shiftTitle: { type: String, default: null, trim: true, maxlength: 64 },
         sourceType: { type: String, enum: ['ONE_OFF', 'RECURRING'], default: 'ONE_OFF' },
-        recurrenceRule: { type: String, default: null }
+        recurrenceRule: { type: String, default: null },
+        integrationSource: { type: String, default: null, trim: true, maxlength: 64 },
+        externalEventId: { type: String, default: null, trim: true, maxlength: 256 },
+        externalCalendarId: { type: String, default: null, trim: true, maxlength: 256 },
+        externalInstanceStartUtc: { type: Date, default: null },
+        importFingerprint: { type: String, default: null, trim: true, maxlength: 128 }
     },
     {
         timestamps: true,
@@ -19,6 +26,7 @@ const rotaEntrySchema = new Schema(
 );
 
 rotaEntrySchema.index({ userId: 1, startUtc: 1, endUtc: 1 });
+rotaEntrySchema.index({ userId: 1, importFingerprint: 1 }, { sparse: true });
 
 export type RotaEntry = InferSchemaType<typeof rotaEntrySchema> & { userId: Types.ObjectId };
 export type RotaEntryDocument = HydratedDocument<RotaEntry>;

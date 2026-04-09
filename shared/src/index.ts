@@ -15,6 +15,16 @@ export interface RotaEntryContract {
     startUtc: string;
     endUtc: string;
     note?: string;
+    shiftTypeId?: string | null;
+    shiftTitle?: string | null;
+    shiftType?: ShiftTypeContract | null;
+}
+
+export interface ShiftTypeContract {
+    id: string;
+    userId: string;
+    name: string;
+    color: string;
 }
 
 export interface FreeWindowContract {

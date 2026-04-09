@@ -1,4 +1,6 @@
 import { rotaService } from '../../services/rotaService.js';
+import { rotaImportService } from '../../services/rotaImportService.js';
+import { calendarImportService, type DeviceCalendarEventInput } from '../../services/calendarImportService.js';
 import { privacyPolicyService } from '../../services/privacyPolicyService.js';
 import { AppError } from '../../utils/errors.js';
 import { requireAuth } from './helpers.js';
@@ -30,7 +32,16 @@ export const rotaResolver = {
     Mutation: {
         createRotaEntry: async (
             _parent: unknown,
-            args: { input: { type: 'WORK' | 'FREE'; startUtc: string; endUtc: string; note?: string } },
+            args: {
+                input: {
+                    type: 'WORK' | 'FREE';
+                    startUtc: string;
+                    endUtc: string;
+                    note?: string;
+                    shiftTypeId?: string | null;
+                    shiftTitle?: string | null;
+                };
+            },
             context: Parameters<typeof requireAuth>[0]
         ) => {
             const userId = requireAuth(context);
@@ -40,7 +51,14 @@ export const rotaResolver = {
             _parent: unknown,
             args: {
                 id: string;
-                input: { type?: 'WORK' | 'FREE'; startUtc?: string; endUtc?: string; note?: string };
+                input: {
+                    type?: 'WORK' | 'FREE';
+                    startUtc?: string;
+                    endUtc?: string;
+                    note?: string;
+                    shiftTypeId?: string | null;
+                    shiftTitle?: string | null;
+                };
             },
             context: Parameters<typeof requireAuth>[0]
         ) => {
@@ -50,6 +68,56 @@ export const rotaResolver = {
         deleteRotaEntry: async (_parent: unknown, args: { id: string }, context: Parameters<typeof requireAuth>[0]) => {
             const userId = requireAuth(context);
             return rotaService.deleteEntry(userId, args.id);
+        },
+        previewRotaScreenshot: async (
+            _parent: unknown,
+            args: { imageBase64: string; referenceDate?: string },
+            context: Parameters<typeof requireAuth>[0]
+        ) => {
+            requireAuth(context);
+            return rotaImportService.previewFromScreenshot({
+                timezone: context.authUser?.timezone ?? 'UTC',
+                imageBase64: args.imageBase64,
+                referenceDate: args.referenceDate
+            });
+        },
+        importRotaScreenshot: async (
+            _parent: unknown,
+            args: { imageBase64: string; referenceDate?: string },
+            context: Parameters<typeof requireAuth>[0]
+        ) => {
+            const userId = requireAuth(context);
+            return rotaImportService.importFromScreenshot({
+                userId,
+                timezone: context.authUser?.timezone ?? 'UTC',
+                imageBase64: args.imageBase64,
+                referenceDate: args.referenceDate
+            });
+        },
+        previewDeviceCalendarImport: async (
+            _parent: unknown,
+            args: { events: DeviceCalendarEventInput[] },
+            context: Parameters<typeof requireAuth>[0]
+        ) => {
+            const userId = requireAuth(context);
+
+            return calendarImportService.previewFromDeviceCalendar({
+                userId,
+                events: args.events
+            });
+        },
+        importDeviceCalendar: async (
+            _parent: unknown,
+            args: { events: DeviceCalendarEventInput[]; duplicateMode?: string | null },
+            context: Parameters<typeof requireAuth>[0]
+        ) => {
+            const userId = requireAuth(context);
+
+            return calendarImportService.importFromDeviceCalendar({
+                userId,
+                events: args.events,
+                duplicateMode: args.duplicateMode ?? 'SKIP_DUPLICATES'
+            });
         }
     }
 };

@@ -3,8 +3,10 @@ import { friendshipResolver } from './friendshipResolver.js';
 import { freeTimeResolver } from './freeTimeResolver.js';
 import { messageResolver } from './messageResolver.js';
 import { rotaResolver } from './rotaResolver.js';
+import { shiftTypeResolver } from './shiftTypeResolver.js';
 import { GraphQLError, GraphQLScalarType, Kind } from 'graphql';
 import { userRepository } from '../../repositories/userRepository.js';
+import { shiftTypeRepository } from '../../repositories/shiftTypeRepository.js';
 
 const dateTimeScalar = new GraphQLScalarType({
     name: 'DateTime',
@@ -53,6 +55,7 @@ export const resolvers = {
     DateTime: dateTimeScalar,
     Query: {
         ...accountResolver.Query,
+        ...shiftTypeResolver.Query,
         ...rotaResolver.Query,
         ...friendshipResolver.Query,
         ...messageResolver.Query,
@@ -60,6 +63,7 @@ export const resolvers = {
     },
     Mutation: {
         ...accountResolver.Mutation,
+        ...shiftTypeResolver.Mutation,
         ...rotaResolver.Mutation,
         ...friendshipResolver.Mutation,
         ...messageResolver.Mutation
@@ -86,7 +90,20 @@ export const resolvers = {
         }
     },
     RotaEntry: {
-        id: (parent: { _id: string }) => String(parent._id)
+        id: (parent: { _id: string }) => String(parent._id),
+        shiftTypeId: (parent: { shiftTypeId?: string | null }) =>
+            parent.shiftTypeId ? String(parent.shiftTypeId) : null,
+        shiftType: async (parent: { shiftTypeId?: string | null; userId?: string }) => {
+            if (!parent.shiftTypeId || !parent.userId) {
+                return null;
+            }
+
+            return shiftTypeRepository.findByIdForUser(String(parent.shiftTypeId), String(parent.userId));
+        }
+    },
+    ShiftType: {
+        id: (parent: { _id: string }) => String(parent._id),
+        userId: (parent: { userId: string }) => String(parent.userId)
     },
     Friendship: {
         id: (parent: { _id: string }) => String(parent._id),

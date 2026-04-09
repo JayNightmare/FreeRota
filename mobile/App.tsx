@@ -18,11 +18,12 @@ import { FriendsScreen } from "./src/screens/FriendsScreen";
 import { FreeTimeScreen } from "./src/screens/FreeTimeScreen";
 import { MessagesScreen } from "./src/screens/MessagesScreen";
 import { ProfileScreen } from "./src/screens/ProfileScreen";
+import { SettingsScreen } from "./src/screens/SettingsScreen";
 import { AuthScreen } from "./src/screens/AuthScreen";
 import { ThemeProvider } from "./src/theme/ThemeProvider";
 import { useTheme } from "./src/theme/useTheme";
 
-type TabKey = "ROTA" | "FRIENDS" | "FREE" | "MESSAGES" | "PROFILE";
+type TabKey = "ROTA" | "FRIENDS" | "FREE" | "MESSAGES" | "PROFILE" | "SETTINGS";
 
 const tabs: Array<{
 	key: TabKey;
@@ -52,6 +53,8 @@ function ActiveScreen({ tab }: { tab: TabKey }) {
 			return <MessagesScreen />;
 		case "PROFILE":
 			return <ProfileScreen />;
+		case "SETTINGS":
+			return <SettingsScreen />;
 		default:
 			return <RotaScreen />;
 	}
@@ -112,6 +115,7 @@ function AppShell() {
 					color: theme.colors.textMuted,
 				},
 				headerActions: {
+					flexDirection: "row",
 					alignItems: "flex-end",
 					gap: theme.spacing.sm,
 				},
@@ -224,6 +228,21 @@ function AppShell() {
 				</View>
 
 				<View style={styles.headerActions}>
+					<Pressable
+						style={styles.themeIconButton}
+						onPress={() =>
+							setActiveTab("SETTINGS")
+						}
+					>
+						<Ionicons
+							name="settings-outline"
+							size={20}
+							color={
+								theme.colors
+									.textPrimary
+							}
+						/>
+					</Pressable>
 					<Pressable
 						style={styles.themeIconButton}
 						onPress={toggleColorMode}
