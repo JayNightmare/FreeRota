@@ -205,7 +205,7 @@ const typeDefs = /* GraphQL */ `
 
   type Mutation {
     register(input: RegisterInput!): AuthPayload!
-    login(email: String!, password: String!): AuthPayload!
+    login(username: String!, password: String!): AuthPayload!
     updateAccount(input: UpdateAccountInput!): User!
     deleteAccount: Boolean!
 

@@ -25,18 +25,18 @@ class AuthService {
 
         const user = await userRepository.create({
             email: input.email,
-            username,
+            username: input.username,
             passwordHash,
             displayName,
             timezone: input.timezone ?? 'UTC',
             isPublic: input.isPublic ?? false
         });
 
-        return { token: signAuthToken({ _id: user._id, email: user.email }) };
+        return { token: signAuthToken({ _id: user._id, username: user.username }) };
     }
 
-    async login(email: string, password: string): Promise<{ token: string }> {
-        const user = await userRepository.findByEmail(email);
+    async login(username: string, password: string): Promise<{ token: string }> {
+        const user = await userRepository.findByUsername(username);
         if (!user || user.deletedAt) {
             throw new AppError('Invalid credentials', 'UNAUTHORIZED', 401);
         }
@@ -46,7 +46,7 @@ class AuthService {
             throw new AppError('Invalid credentials', 'UNAUTHORIZED', 401);
         }
 
-        return { token: signAuthToken({ _id: user._id, email: user.email }) };
+        return { token: signAuthToken({ _id: user._id, username: user.username }) };
     }
 }
 

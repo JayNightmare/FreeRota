@@ -5,13 +5,13 @@ import type { SignOptions } from 'jsonwebtoken';
 
 interface TokenPayload {
     sub: string;
-    email: string;
+    username: string;
 }
 
-export function signAuthToken(user: Pick<AuthenticatedUser, '_id' | 'email'>): string {
+export function signAuthToken(user: Pick<AuthenticatedUser, '_id' | 'username'>): string {
     const expiresIn = env.JWT_EXPIRES_IN as SignOptions['expiresIn'];
 
-    return jwt.sign({ sub: String(user._id), email: user.email }, env.JWT_SECRET, {
+    return jwt.sign({ sub: String(user._id), username: user.username }, env.JWT_SECRET, {
         expiresIn
     });
 }

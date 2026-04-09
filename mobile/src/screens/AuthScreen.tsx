@@ -93,8 +93,8 @@ export function AuthScreen() {
 	const handleSubmit = async (): Promise<void> => {
 		setFormError(null);
 
-		if (!email.trim() || !password.trim()) {
-			setFormError("Email and password are required.");
+		if (!username.trim() || !password.trim()) {
+			setFormError("Username and password are required.");
 			return;
 		}
 
@@ -102,7 +102,7 @@ export function AuthScreen() {
 			if (mode === "login") {
 				const response = await login({
 					variables: {
-						email: email.trim(),
+						username: username.trim(),
 						password,
 					},
 				});
@@ -183,14 +183,14 @@ export function AuthScreen() {
 					</Text>
 
 					<FormField
-						label="Email"
-						value={email}
+						label="Username"
+						value={username}
 						onChangeText={(text) => {
 							resetError();
-							setEmail(text);
+							setUsername(text);
 						}}
 						keyboardType="email-address"
-						placeholder="you@example.com"
+						placeholder="jane_doe"
 					/>
 
 					<FormField
