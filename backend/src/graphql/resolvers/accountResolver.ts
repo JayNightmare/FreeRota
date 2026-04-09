@@ -26,12 +26,12 @@ export const accountResolver = {
                 };
             }
         ) => authService.register(args.input),
-        login: async (_parent: unknown, args: { email: string; password: string }) => authService.login(args.email, args.password),
+        login: async (_parent: unknown, args: { username: string; password: string }) => authService.login(args.username, args.password),
         updateAccount: async (
             _parent: unknown,
             args: {
                 input: {
-                    username?: string;
+                    email?: string;
                     displayName?: string;
                     timezone?: string;
                     isPublic?: boolean;
