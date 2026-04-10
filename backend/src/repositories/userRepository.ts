@@ -33,6 +33,66 @@ class UserRepository {
         });
     }
 
+    async setEmailVerificationToken(userId: string, tokenHash: string, expiresAt: Date): Promise<void> {
+        await UserModel.findByIdAndUpdate(userId, {
+            emailVerificationTokenHash: tokenHash,
+            emailVerificationTokenExpiresAt: expiresAt
+        }).exec();
+    }
+
+    async clearEmailVerificationToken(userId: string): Promise<void> {
+        await UserModel.findByIdAndUpdate(userId, {
+            emailVerificationTokenHash: null,
+            emailVerificationTokenExpiresAt: null
+        }).exec();
+    }
+
+    async verifyEmailByTokenHash(tokenHash: string): Promise<UserDocument | null> {
+        return UserModel.findOneAndUpdate(
+            {
+                emailVerificationTokenHash: tokenHash,
+                emailVerificationTokenExpiresAt: { $gt: new Date() },
+                deletedAt: null
+            },
+            {
+                emailVerifiedAt: new Date(),
+                emailVerificationTokenHash: null,
+                emailVerificationTokenExpiresAt: null
+            },
+            { new: true }
+        ).exec();
+    }
+
+    async setPasswordResetToken(userId: string, tokenHash: string, expiresAt: Date): Promise<void> {
+        await UserModel.findByIdAndUpdate(userId, {
+            passwordResetTokenHash: tokenHash,
+            passwordResetTokenExpiresAt: expiresAt
+        }).exec();
+    }
+
+    async findByPasswordResetTokenHash(tokenHash: string): Promise<UserDocument | null> {
+        return UserModel.findOne({
+            passwordResetTokenHash: tokenHash,
+            passwordResetTokenExpiresAt: { $gt: new Date() },
+            deletedAt: null
+        }).exec();
+    }
+
+    async clearPasswordResetToken(userId: string): Promise<void> {
+        await UserModel.findByIdAndUpdate(userId, {
+            passwordResetTokenHash: null,
+            passwordResetTokenExpiresAt: null
+        }).exec();
+    }
+
+    async updatePasswordById(userId: string, passwordHash: string): Promise<void> {
+        await UserModel.findByIdAndUpdate(userId, {
+            passwordHash,
+            passwordResetTokenHash: null,
+            passwordResetTokenExpiresAt: null
+        }).exec();
+    }
+
     async updateById(
         id: string,
         updates: Partial<Pick<UserDocument, 'username' | 'displayName' | 'timezone' | 'isPublic' | 'uiAccentColor'>>

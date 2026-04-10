@@ -139,7 +139,7 @@ function AppShell() {
 				},
 				screenContainer: {
 					flex: 1,
-					paddingBottom: theme.spacing.sm,
+					marginBottom: theme.spacing.sm,
 				},
 				bootContainer: {
 					flex: 1,
@@ -282,9 +282,15 @@ function AppShell() {
 
 			<View style={styles.header}>
 				<View style={styles.headerCopy}>
-					<Text style={styles.title}>
-						FreeRota
-					</Text>
+					<Pressable
+						onPress={() =>
+							setActiveTab("ROTA")
+						}
+					>
+						<Text style={styles.title}>
+							FreeRota
+						</Text>
+					</Pressable>
 					<Text style={styles.subtitle}>
 						{activeLabel}
 					</Text>

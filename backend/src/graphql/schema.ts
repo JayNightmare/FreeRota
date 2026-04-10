@@ -8,6 +8,11 @@ const typeDefs = /* GraphQL */ `
     token: String!
   }
 
+  type ActionResult {
+    success: Boolean!
+    message: String!
+  }
+
   type User {
     id: ID!
     email: String!
@@ -16,6 +21,7 @@ const typeDefs = /* GraphQL */ `
     timezone: String!
     isPublic: Boolean!
     uiAccentColor: String
+    emailVerifiedAt: DateTime
     createdAt: DateTime!
     updatedAt: DateTime!
   }
@@ -204,8 +210,12 @@ const typeDefs = /* GraphQL */ `
   }
 
   type Mutation {
-    register(input: RegisterInput!): AuthPayload!
+    register(input: RegisterInput!): ActionResult!
     login(username: String!, password: String!): AuthPayload!
+    requestEmailVerification(email: String!): ActionResult!
+    verifyEmail(token: String!): AuthPayload!
+    requestPasswordReset(identifier: String!): ActionResult!
+    resetPassword(token: String!, newPassword: String!): ActionResult!
     updateAccount(input: UpdateAccountInput!): User!
     deleteAccount: Boolean!
 

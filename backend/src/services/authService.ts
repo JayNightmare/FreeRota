@@ -3,6 +3,25 @@ import { userRepository } from '../repositories/userRepository.js';
 import { AppError, assertOrThrow } from '../utils/errors.js';
 import { signAuthToken } from '../utils/jwt.js';
 import { validateUsername } from '../utils/username.js';
+import { createRandomToken, hashToken } from '../utils/token.js';
+import { emailService } from './emailService.js';
+
+const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
+const PASSWORD_RESET_TTL_MS = 30 * 60 * 1000;
+const MIN_PASSWORD_LENGTH = 8;
+
+interface ActionResult {
+    success: boolean;
+    message: string;
+}
+
+function isLikelyEmail(identifier: string): boolean {
+    return identifier.includes('@');
+}
+
+function normalizeEmail(email: string): string {
+    return email.toLowerCase().trim();
+}
 
 class AuthService {
     async register(input: {
@@ -12,27 +31,45 @@ class AuthService {
         displayName?: string;
         timezone?: string;
         isPublic?: boolean;
-    }): Promise<{ token: string }> {
-        const existing = await userRepository.findByEmail(input.email);
+    }): Promise<ActionResult> {
+        const email = normalizeEmail(input.email);
+        const existing = await userRepository.findByEmail(email);
         assertOrThrow(!existing, 'Email is already in use', 'CONFLICT', 409);
 
         const username = validateUsername(input.username);
         const existingUsername = await userRepository.findByUsername(username);
         assertOrThrow(!existingUsername, 'Username is already in use', 'CONFLICT', 409);
 
+        assertOrThrow(
+            input.password.length >= MIN_PASSWORD_LENGTH,
+            `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`
+        );
+
         const passwordHash = await bcrypt.hash(input.password, 12);
         const displayName = input.displayName?.trim() || username;
 
         const user = await userRepository.create({
-            email: input.email,
-            username: input.username,
+            email,
+            username,
             passwordHash,
             displayName,
             timezone: input.timezone ?? 'UTC',
             isPublic: input.isPublic ?? false
         });
 
-        return { token: signAuthToken({ _id: user._id, username: user.username }) };
+        const verificationToken = createRandomToken();
+        await userRepository.setEmailVerificationToken(
+            String(user._id),
+            hashToken(verificationToken),
+            new Date(Date.now() + EMAIL_VERIFICATION_TTL_MS)
+        );
+
+        await emailService.sendVerificationEmail(user.email, user.username, verificationToken);
+
+        return {
+            success: true,
+            message: 'Account created. Check your email to verify your account.'
+        };
     }
 
     async login(username: string, password: string): Promise<{ token: string }> {
@@ -46,7 +83,89 @@ class AuthService {
             throw new AppError('Invalid credentials', 'UNAUTHORIZED', 401);
         }
 
+        if (!user.emailVerifiedAt) {
+            throw new AppError('Please verify your email before signing in.', 'FORBIDDEN', 403);
+        }
+
         return { token: signAuthToken({ _id: user._id, username: user.username }) };
+    }
+
+    async requestEmailVerification(email: string): Promise<ActionResult> {
+        const normalizedEmail = normalizeEmail(email);
+        const user = await userRepository.findByEmail(normalizedEmail);
+
+        if (user && !user.deletedAt && !user.emailVerifiedAt) {
+            const verificationToken = createRandomToken();
+            await userRepository.setEmailVerificationToken(
+                String(user._id),
+                hashToken(verificationToken),
+                new Date(Date.now() + EMAIL_VERIFICATION_TTL_MS)
+            );
+            await emailService.sendVerificationEmail(user.email, user.username, verificationToken);
+        }
+
+        return {
+            success: true,
+            message: 'If an account exists, a verification email has been sent.'
+        };
+    }
+
+    async verifyEmail(token: string): Promise<{ token: string }> {
+        const sanitizedToken = token.trim();
+        assertOrThrow(Boolean(sanitizedToken), 'Verification token is required');
+
+        const user = await userRepository.verifyEmailByTokenHash(hashToken(sanitizedToken));
+        if (!user || user.deletedAt) {
+            throw new AppError('Verification link is invalid or expired.', 'BAD_REQUEST', 400);
+        }
+
+        return { token: signAuthToken({ _id: user._id, username: user.username }) };
+    }
+
+    async requestPasswordReset(identifier: string): Promise<ActionResult> {
+        const trimmedIdentifier = identifier.trim();
+        assertOrThrow(Boolean(trimmedIdentifier), 'Email or username is required');
+
+        const user = isLikelyEmail(trimmedIdentifier)
+            ? await userRepository.findByEmail(trimmedIdentifier)
+            : await userRepository.findByUsername(trimmedIdentifier);
+
+        if (user && !user.deletedAt && user.emailVerifiedAt) {
+            const resetToken = createRandomToken();
+            await userRepository.setPasswordResetToken(
+                String(user._id),
+                hashToken(resetToken),
+                new Date(Date.now() + PASSWORD_RESET_TTL_MS)
+            );
+            await emailService.sendPasswordResetEmail(user.email, user.username, resetToken);
+        }
+
+        return {
+            success: true,
+            message: 'If an account exists, a password reset email has been sent.'
+        };
+    }
+
+    async resetPassword(token: string, newPassword: string): Promise<ActionResult> {
+        const sanitizedToken = token.trim();
+        assertOrThrow(Boolean(sanitizedToken), 'Reset token is required');
+        assertOrThrow(
+            newPassword.length >= MIN_PASSWORD_LENGTH,
+            `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`
+        );
+
+        const user = await userRepository.findByPasswordResetTokenHash(hashToken(sanitizedToken));
+        if (!user || user.deletedAt) {
+            throw new AppError('Reset link is invalid or expired.', 'BAD_REQUEST', 400);
+        }
+
+        const passwordHash = await bcrypt.hash(newPassword, 12);
+        await userRepository.updatePasswordById(String(user._id), passwordHash);
+
+        return {
+            success: true,
+            message: 'Password updated successfully. You can now sign in.'
+        };
     }
 }
 

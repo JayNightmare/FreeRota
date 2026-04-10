@@ -3,7 +3,8 @@ import { gql } from "@apollo/client";
 export const REGISTER_MUTATION = gql`
 	mutation Register($input: RegisterInput!) {
 		register(input: $input) {
-			token
+			success
+			message
 		}
 	}
 `;
@@ -12,6 +13,41 @@ export const LOGIN_MUTATION = gql`
 	mutation Login($username: String!, $password: String!) {
 		login(username: $username, password: $password) {
 			token
+		}
+	}
+`;
+
+export const REQUEST_EMAIL_VERIFICATION_MUTATION = gql`
+	mutation RequestEmailVerification($email: String!) {
+		requestEmailVerification(email: $email) {
+			success
+			message
+		}
+	}
+`;
+
+export const VERIFY_EMAIL_MUTATION = gql`
+	mutation VerifyEmail($token: String!) {
+		verifyEmail(token: $token) {
+			token
+		}
+	}
+`;
+
+export const REQUEST_PASSWORD_RESET_MUTATION = gql`
+	mutation RequestPasswordReset($identifier: String!) {
+		requestPasswordReset(identifier: $identifier) {
+			success
+			message
+		}
+	}
+`;
+
+export const RESET_PASSWORD_MUTATION = gql`
+	mutation ResetPassword($token: String!, $newPassword: String!) {
+		resetPassword(token: $token, newPassword: $newPassword) {
+			success
+			message
 		}
 	}
 `;

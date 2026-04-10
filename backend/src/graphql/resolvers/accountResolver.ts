@@ -27,6 +27,13 @@ export const accountResolver = {
             }
         ) => authService.register(args.input),
         login: async (_parent: unknown, args: { username: string; password: string }) => authService.login(args.username, args.password),
+        requestEmailVerification: async (_parent: unknown, args: { email: string }) =>
+            authService.requestEmailVerification(args.email),
+        verifyEmail: async (_parent: unknown, args: { token: string }) => authService.verifyEmail(args.token),
+        requestPasswordReset: async (_parent: unknown, args: { identifier: string }) =>
+            authService.requestPasswordReset(args.identifier),
+        resetPassword: async (_parent: unknown, args: { token: string; newPassword: string }) =>
+            authService.resetPassword(args.token, args.newPassword),
         updateAccount: async (
             _parent: unknown,
             args: {

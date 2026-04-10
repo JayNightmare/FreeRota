@@ -23,8 +23,8 @@ export function ScreenScaffold({ children, style }: ScreenScaffoldProps) {
 		container: {
 			flex: 1,
 			paddingHorizontal: theme.spacing.xl,
-			paddingTop: theme.spacing.xl,
-			paddingBottom: theme.spacing.xxl,
+			marginTop: theme.spacing.xl,
+			marginBottom: theme.spacing.xxl,
 			backgroundColor: theme.colors.background,
 		},
 	});
