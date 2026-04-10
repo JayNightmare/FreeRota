@@ -1,23 +1,42 @@
 import nodemailer, { type Transporter } from 'nodemailer';
-import { MailtrapTransport } from 'mailtrap';
+import { MailtrapClient, type Address } from 'mailtrap';
 import { env } from '../config/env.js';
 
 type AuthEmailFlow = 'verify-email' | 'reset-password';
+type AuthEmailCategory = 'auth.verify-email' | 'auth.reset-password';
+type EmailDeliveryMode = 'mailtrap-api' | 'smtp';
 
 class EmailService {
-    private readonly transporter: Transporter = this.createTransporter();
+    private readonly mailtrapToken = env.MAILTRAP_TOKEN?.trim();
+
+    private readonly mailtrapClient = this.mailtrapToken
+        ? new MailtrapClient({ token: this.mailtrapToken })
+        : null;
+
+    private readonly transporter: Transporter | null = this.mailtrapClient
+        ? null
+        : this.createSmtpTransporter();
+
+    private readonly mode: EmailDeliveryMode = this.mailtrapClient
+        ? 'mailtrap-api'
+        : 'smtp';
 
     private readonly from = env.SMTP_FROM;
 
-    private createTransporter(): Transporter {
-        if (env.MAILTRAP_TOKEN?.trim()) {
-            return nodemailer.createTransport(
-                MailtrapTransport({
-                    token: env.MAILTRAP_TOKEN.trim()
-                })
-            );
+    private readonly fromAddress = this.parseFromAddress(this.from);
+
+    constructor() {
+        if (this.mode === 'mailtrap-api') {
+            console.info('[EmailService] Delivery mode: mailtrap-api');
+            return;
         }
 
+        console.info(
+            `[EmailService] Delivery mode: smtp (${env.SMTP_HOST}:${env.SMTP_PORT})`
+        );
+    }
+
+    private createSmtpTransporter(): Transporter {
         return nodemailer.createTransport({
             host: env.SMTP_HOST,
             port: env.SMTP_PORT,
@@ -36,35 +55,66 @@ class EmailService {
         const links = this.buildLinks('verify-email', token);
         const subject = 'Verify your FreeRota email';
         const message = [
-            `Hi ${username},`,
+            'Hi ' + username + ',',
             '',
             'Thanks for signing up to FreeRota.',
-            `Open this link to verify your email: ${links.appLink}`,
-            links.webLink ? `Web fallback: ${links.webLink}` : '',
+            'Open this link to verify your email: ' + links.appLink,
+            links.webLink ? 'Web fallback: ' + links.webLink : '',
             '',
             'If you did not create this account, you can ignore this email.'
         ]
             .filter(Boolean)
             .join('\n');
 
-        await this.send(email, subject, message, this.buildHtml('Verify your email', links, username));
+        await this.send(
+            email,
+            subject,
+            message,
+            this.buildHtml('Verify your email', links, username),
+            'auth.verify-email'
+        );
     }
 
     async sendPasswordResetEmail(email: string, username: string, token: string): Promise<void> {
         const links = this.buildLinks('reset-password', token);
         const subject = 'Reset your FreeRota password';
         const message = [
-            `Hi ${username},`,
+            'Hi ' + username + ',',
             '',
-            `Open this link to reset your password: ${links.appLink}`,
-            links.webLink ? `Web fallback: ${links.webLink}` : '',
+            'Open this link to reset your password: ' + links.appLink,
+            links.webLink ? 'Web fallback: ' + links.webLink : '',
             '',
             'If you did not request a password reset, you can ignore this email.'
         ]
             .filter(Boolean)
             .join('\n');
 
-        await this.send(email, subject, message, this.buildHtml('Reset your password', links, username));
+        await this.send(
+            email,
+            subject,
+            message,
+            this.buildHtml('Reset your password', links, username),
+            'auth.reset-password'
+        );
+    }
+
+    private parseFromAddress(value: string): Address {
+        const trimmed = value.trim();
+        const match = trimmed.match(/^(.*)<([^>]+)>$/);
+
+        if (!match) {
+            return { email: trimmed };
+        }
+
+        const rawName = match[1].trim();
+        const email = match[2].trim();
+
+        if (!email) {
+            return { email: trimmed };
+        }
+
+        const unquotedName = rawName.replace(/^"(.*)"$/, '$1').trim();
+        return unquotedName ? { name: unquotedName, email } : { email };
     }
 
     private buildLinks(flow: AuthEmailFlow, token: string): { appLink: string; webLink: string | null } {
@@ -76,7 +126,14 @@ class EmailService {
 
     private appendQuery(base: string, flow: AuthEmailFlow, token: string): string {
         const separator = base.includes('?') ? '&' : '?';
-        return `${base}${separator}flow=${encodeURIComponent(flow)}&token=${encodeURIComponent(token)}`;
+        return (
+            base +
+            separator +
+            'flow=' +
+            encodeURIComponent(flow) +
+            '&token=' +
+            encodeURIComponent(token)
+        );
     }
 
     private buildHtml(
@@ -85,28 +142,64 @@ class EmailService {
         username: string
     ): string {
         const webLinkHtml = links.webLink
-            ? `<p>Web fallback: <a href="${links.webLink}">${links.webLink}</a></p>`
+            ? '<p>Web fallback: <a href="' + links.webLink + '">' + links.webLink + '</a></p>'
             : '';
 
-        return `
-            <div style="font-family: Arial, sans-serif; color: #1b1b1b; line-height: 1.5;">
-                <h2>${title}</h2>
-                <p>Hi ${username},</p>
-                <p><a href="${links.appLink}">Open in FreeRota</a></p>
-                ${webLinkHtml}
-                <p>If this wasn't you, you can safely ignore this email.</p>
-            </div>
-        `;
+        return [
+            '<div style="font-family: Arial, sans-serif; color: #1b1b1b; line-height: 1.5;">',
+            '    <h2>' + title + '</h2>',
+            '    <p>Hi ' + username + ',</p>',
+            '    <p><a href="' + links.appLink + '">Open in FreeRota</a></p>',
+            '    ' + webLinkHtml,
+            '    <p>If this wasn\'t you, you can safely ignore this email.</p>',
+            '</div>'
+        ].join('\n');
     }
 
-    private async send(to: string, subject: string, text: string, html: string): Promise<void> {
-        await this.transporter.sendMail({
-            from: this.from,
-            to,
-            subject,
-            text,
-            html
-        });
+    private async send(
+        to: string,
+        subject: string,
+        text: string,
+        html: string,
+        category: AuthEmailCategory
+    ): Promise<void> {
+        try {
+            if (this.mailtrapClient) {
+                await this.mailtrapClient.send({
+                    from: this.fromAddress,
+                    to: [{ email: to }],
+                    subject,
+                    text,
+                    html,
+                    category
+                });
+                return;
+            }
+
+            if (!this.transporter) {
+                throw new Error('SMTP transporter is not configured');
+            }
+
+            await this.transporter.sendMail({
+                from: this.from,
+                to,
+                subject,
+                text,
+                html,
+                headers: {
+                    'X-Category': category
+                }
+            });
+        } catch (error) {
+            console.error('[EmailService] Send failed', {
+                mode: this.mode,
+                category,
+                to,
+                subject,
+                error
+            });
+            throw error;
+        }
     }
 }
 
