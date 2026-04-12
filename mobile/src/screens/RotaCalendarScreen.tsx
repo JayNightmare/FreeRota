@@ -702,6 +702,7 @@ export function RotaScreen() {
 					flex: 0,
 					gap: theme.spacing.sm,
 					width: "100%",
+					marginBottom: 55,
 				},
 				modalBackdrop: {
 					flex: 1,

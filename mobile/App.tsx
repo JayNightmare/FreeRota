@@ -74,7 +74,8 @@ function AppShell() {
 
 	useEffect(() => {
 		if (isWeb && typeof document !== "undefined") {
-			document.body.style.backgroundColor = theme.colors.background;
+			document.body.style.backgroundColor =
+				theme.colors.background;
 			document.body.style.margin = "0";
 			document.body.style.padding = "0";
 			document.body.style.height = "100%";
@@ -154,7 +155,7 @@ function AppShell() {
 				},
 				screenContainer: {
 					flex: 1,
-					marginBottom: theme.spacing.sm,
+					// marginBottom: theme.spacing.sm,
 				},
 				bootContainer: {
 					flex: 1,
@@ -214,7 +215,7 @@ function AppShell() {
 					flex: 1,
 					paddingHorizontal: theme.spacing.xs,
 					paddingVertical: theme.spacing.sm,
-					borderRadius: theme.radius.md,
+					borderRadius: theme.radius.pill,
 					backgroundColor: "transparent",
 					borderWidth: 1,
 					borderColor: "transparent",

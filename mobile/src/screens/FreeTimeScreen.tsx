@@ -67,6 +67,9 @@ export function FreeTimeScreen() {
 				container: {
 					gap: theme.spacing.lg,
 				},
+				content: {
+					gap: theme.spacing.lg,
+				},
 				card: {
 					backgroundColor: theme.colors.surface,
 					borderWidth: 1,
@@ -156,143 +159,158 @@ export function FreeTimeScreen() {
 				keyboardShouldPersistTaps="handled"
 				keyboardDismissMode="on-drag"
 			>
-				<View style={styles.card}>
+				<View style={styles.content}>
 					<Text style={styles.title}>
 						Free Time Finder
 					</Text>
-					<WeekRangePicker
-						rangeStartUtc={rangeStartUtc}
-						rangeEndUtc={rangeEndUtc}
-						onChangeRange={({
-							rangeStartUtc:
-								nextStart,
-							rangeEndUtc: nextEnd,
-						}) => {
-							setRangeStartUtc(
-								nextStart,
-							);
-							setRangeEndUtc(nextEnd);
-						}}
-						timezone={
-							meData?.me?.timezone ||
-							"UTC"
-						}
-					/>
-					<FormField
-						label="Minimum Duration (minutes)"
-						value={minDurationMinutes}
-						onChangeText={
-							setMinDurationMinutes
-						}
-						keyboardType="number-pad"
-					/>
-					<Text style={styles.windowMeta}>
-						Select accepted friends:
-					</Text>
-					<View style={styles.friendRow}>
-						{acceptedFriendIds.map(
-							(friendId) => (
-								<ActionButton
-									key={
-										friendId
+					<View style={styles.card}>
+						<WeekRangePicker
+							rangeStartUtc={
+								rangeStartUtc
+							}
+							rangeEndUtc={
+								rangeEndUtc
+							}
+							onChangeRange={({
+								rangeStartUtc:
+									nextStart,
+								rangeEndUtc:
+									nextEnd,
+							}) => {
+								setRangeStartUtc(
+									nextStart,
+								);
+								setRangeEndUtc(
+									nextEnd,
+								);
+							}}
+							timezone={
+								meData?.me
+									?.timezone ||
+								"UTC"
+							}
+						/>
+						<FormField
+							label="Minimum Duration (minutes)"
+							value={
+								minDurationMinutes
+							}
+							onChangeText={
+								setMinDurationMinutes
+							}
+							keyboardType="number-pad"
+						/>
+						<Text style={styles.windowMeta}>
+							Select accepted friends:
+						</Text>
+						<View style={styles.friendRow}>
+							{acceptedFriendIds.map(
+								(friendId) => (
+									<ActionButton
+										key={
+											friendId
+										}
+										label={friendId.slice(
+											0,
+											8,
+										)}
+										onPress={() =>
+											toggleFriend(
+												friendId,
+											)
+										}
+										variant={
+											selectedIds.includes(
+												friendId,
+											)
+												? "primary"
+												: "muted"
+										}
+									/>
+								),
+							)}
+						</View>
+						{acceptedFriendIds.length ===
+						0 ? (
+							<StateNotice
+								mode="empty"
+								message="No accepted friends available yet."
+							/>
+						) : null}
+						<ActionButton
+							label="Find Overlap"
+							onPress={() =>
+								void search()
+							}
+							loading={loading}
+						/>
+					</View>
+
+					<View style={styles.card}>
+						<Text style={styles.title}>
+							Available Windows
+						</Text>
+						{error ? (
+							<StateNotice
+								mode="error"
+								message={toUserErrorMessage(
+									error,
+									"Unable to search free-time overlap.",
+								)}
+							/>
+						) : null}
+						{!loading &&
+						(data?.findCommonFreeTime
+							?.length ?? 0) === 0 ? (
+							<StateNotice
+								mode="empty"
+								message="Run a search to see matching windows."
+							/>
+						) : null}
+						{data?.findCommonFreeTime?.map(
+							(window, index) => (
+								<View
+									key={`${window.startUtc}-${index}`}
+									style={
+										styles.windowCard
 									}
-									label={friendId.slice(
-										0,
-										8,
-									)}
-									onPress={() =>
-										toggleFriend(
-											friendId,
-										)
-									}
-									variant={
-										selectedIds.includes(
-											friendId,
-										)
-											? "primary"
-											: "muted"
-									}
-								/>
+								>
+									<Text
+										style={
+											styles.windowTitle
+										}
+									>
+										{formatDateTime(
+											window.startUtc,
+											meData
+												?.me
+												?.timezone ||
+												"UTC",
+										)}{" "}
+										-{" "}
+										{formatDateTime(
+											window.endUtc,
+											meData
+												?.me
+												?.timezone ||
+												"UTC",
+										)}
+									</Text>
+									<Text
+										style={
+											styles.windowMeta
+										}
+									>
+										Duration:{" "}
+										{
+											window.durationMinutes
+										}{" "}
+										minutes
+									</Text>
+								</View>
 							),
 						)}
 					</View>
-					{acceptedFriendIds.length === 0 ? (
-						<StateNotice
-							mode="empty"
-							message="No accepted friends available yet."
-						/>
-					) : null}
-					<ActionButton
-						label="Find Overlap"
-						onPress={() => void search()}
-						loading={loading}
-					/>
-				</View>
-
-				<View style={styles.card}>
-					<Text style={styles.title}>
-						Available Windows
-					</Text>
-					{error ? (
-						<StateNotice
-							mode="error"
-							message={toUserErrorMessage(
-								error,
-								"Unable to search free-time overlap.",
-							)}
-						/>
-					) : null}
-					{!loading &&
-					(data?.findCommonFreeTime?.length ??
-						0) === 0 ? (
-						<StateNotice
-							mode="empty"
-							message="Run a search to see matching windows."
-						/>
-					) : null}
-					{data?.findCommonFreeTime?.map(
-						(window, index) => (
-							<View
-								key={`${window.startUtc}-${index}`}
-								style={
-									styles.windowCard
-								}
-							>
-								<Text
-									style={
-										styles.windowTitle
-									}
-								>
-									{formatDateTime(
-										window.startUtc,
-										meData
-											?.me
-											?.timezone ||
-											"UTC",
-									)}{" "}
-									-{" "}
-									{formatDateTime(
-										window.endUtc,
-										meData
-											?.me
-											?.timezone ||
-											"UTC",
-									)}
-								</Text>
-								<Text
-									style={
-										styles.windowMeta
-									}
-								>
-									Duration:{" "}
-									{
-										window.durationMinutes
-									}{" "}
-									minutes
-								</Text>
-							</View>
-						),
-					)}
 				</View>
 			</ScrollView>
 		</ScreenScaffold>

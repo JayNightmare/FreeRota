@@ -7,6 +7,7 @@ import {
 	type ViewStyle,
 } from "react-native";
 import { useTheme } from "../theme/useTheme";
+import { ScrollView } from "react-native";
 
 interface ScreenScaffoldProps {
 	children: ReactNode;
@@ -22,10 +23,12 @@ export function ScreenScaffold({ children, style }: ScreenScaffoldProps) {
 		},
 		container: {
 			flex: 1,
-			paddingHorizontal: theme.spacing.xl,
-			marginTop: theme.spacing.xl,
-			marginBottom: theme.spacing.xxl,
 			backgroundColor: theme.colors.background,
+		},
+		childrenContent: {
+			paddingHorizontal: theme.spacing.xl,
+			paddingVertical: theme.spacing.xl,
+			flexGrow: 1,
 		},
 	});
 
@@ -34,9 +37,16 @@ export function ScreenScaffold({ children, style }: ScreenScaffoldProps) {
 			style={styles.root}
 			behavior={Platform.OS === "ios" ? "padding" : undefined}
 		>
-			<View style={[styles.container, style]}>
+			<ScrollView
+				style={styles.container}
+				contentContainerStyle={[
+					styles.childrenContent,
+					style,
+				]}
+				showsVerticalScrollIndicator={false}
+			>
 				{children}
-			</View>
+			</ScrollView>
 		</KeyboardAvoidingView>
 	);
 }

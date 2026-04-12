@@ -118,6 +118,9 @@ export function MessagesScreen() {
 				container: {
 					gap: theme.spacing.lg,
 				},
+				content: {
+					gap: theme.spacing.lg,
+				},
 				card: {
 					backgroundColor: theme.colors.surface,
 					borderWidth: 1,
@@ -244,67 +247,199 @@ export function MessagesScreen() {
 				keyboardShouldPersistTaps="handled"
 				keyboardDismissMode="on-drag"
 			>
-				<View style={styles.card}>
+				<View style={styles.content}>
 					<Text style={styles.title}>
 						Conversations
 					</Text>
+					<View style={styles.card}>
+						<FormField
+							label="Start Conversation With User ID"
+							value={targetUserId}
+							onChangeText={
+								setTargetUserId
+							}
+							placeholder="661f..."
+						/>
+						<ActionButton
+							label="Create/Open Conversation"
+							onPress={() =>
+								void createConversation()
+							}
+							loading={
+								creatingConversation
+							}
+						/>
+						{actionError ? (
+							<StateNotice
+								mode="error"
+								message={
+									actionError
+								}
+							/>
+						) : null}
+						{loadingConversations ? (
+							<StateNotice
+								mode="loading"
+								message="Loading conversations..."
+							/>
+						) : null}
+						{conversationsError ? (
+							<StateNotice
+								mode="error"
+								message={toUserErrorMessage(
+									conversationsError,
+									"Unable to load conversations.",
+								)}
+							/>
+						) : null}
+						{(conversationsData
+							?.conversations
+							?.length ?? 0) === 0 &&
+						!loadingConversations ? (
+							<StateNotice
+								mode="empty"
+								message="No conversations yet."
+							/>
+						) : null}
+						{conversationsData?.conversations?.map(
+							(conversation) => (
+								<View
+									key={
+										conversation.id
+									}
+									style={
+										styles.conversationCard
+									}
+								>
+									<Text>
+										ID:{" "}
+										{conversation.id.slice(
+											0,
+											8,
+										)}
+									</Text>
+									<Text
+										style={
+											styles.messageMeta
+										}
+									>
+										Participants:{" "}
+										{conversation.participantIds.join(
+											", ",
+										)}
+									</Text>
+									{conversation.lastMessageAt ? (
+										<Text
+											style={
+												styles.messageMeta
+											}
+										>
+											Last
+											message:{" "}
+											{toLocalDateTime(
+												conversation.lastMessageAt,
+											)}
+										</Text>
+									) : null}
+									<ActionButton
+										label={
+											selectedConversationId ===
+											conversation.id
+												? "Selected"
+												: "Open"
+										}
+										onPress={() =>
+											setSelectedConversationId(
+												conversation.id,
+											)
+										}
+										variant={
+											selectedConversationId ===
+											conversation.id
+												? "primary"
+												: "muted"
+										}
+									/>
+								</View>
+							),
+						)}
+					</View>
+				</View>
+
+				<Text style={styles.title}>Messages</Text>
+				<View style={styles.card}>
 					<FormField
-						label="Start Conversation With User ID"
-						value={targetUserId}
-						onChangeText={setTargetUserId}
-						placeholder="661f..."
+						label="Message"
+						value={messageBody}
+						onChangeText={setMessageBody}
+						placeholder="Type a message"
+						autoCapitalize="sentences"
 					/>
 					<ActionButton
-						label="Create/Open Conversation"
+						label="Send"
 						onPress={() =>
-							void createConversation()
+							void submitMessage()
 						}
-						loading={creatingConversation}
+						loading={sendingMessage}
+						disabled={
+							!selectedConversationId
+						}
 					/>
-					{actionError ? (
-						<StateNotice
-							mode="error"
-							message={actionError}
-						/>
-					) : null}
-					{loadingConversations ? (
+					{loadingMessages ? (
 						<StateNotice
 							mode="loading"
-							message="Loading conversations..."
+							message="Loading messages..."
 						/>
 					) : null}
-					{conversationsError ? (
+					{messagesError ? (
 						<StateNotice
 							mode="error"
 							message={toUserErrorMessage(
-								conversationsError,
-								"Unable to load conversations.",
+								messagesError,
+								"Unable to load messages.",
 							)}
 						/>
 					) : null}
-					{(conversationsData?.conversations
-						?.length ?? 0) === 0 &&
-					!loadingConversations ? (
+					{!selectedConversationId ? (
 						<StateNotice
 							mode="empty"
-							message="No conversations yet."
+							message="Select a conversation first."
 						/>
 					) : null}
-					{conversationsData?.conversations?.map(
-						(conversation) => (
+					{selectedConversationId &&
+					(messagesData?.messages?.length ??
+						0) === 0 &&
+					!loadingMessages ? (
+						<StateNotice
+							mode="empty"
+							message="No messages yet in this thread."
+						/>
+					) : null}
+					{messagesData?.messages?.map(
+						(message) => (
 							<View
-								key={
-									conversation.id
-								}
+								key={message.id}
 								style={
-									styles.conversationCard
+									styles.messageCard
 								}
 							>
-								<Text>
-									ID:{" "}
-									{conversation.id.slice(
-										0,
-										8,
+								<Text
+									style={
+										styles.messageBody
+									}
+								>
+									{
+										message.body
+									}
+								</Text>
+								<Text
+									style={
+										styles.messageMeta
+									}
+								>
+									Sent:{" "}
+									{toLocalDateTime(
+										message.sentAt,
 									)}
 								</Text>
 								<Text
@@ -312,136 +447,29 @@ export function MessagesScreen() {
 										styles.messageMeta
 									}
 								>
-									Participants:{" "}
-									{conversation.participantIds.join(
-										", ",
-									)}
+									State:{" "}
+									{
+										message.deliveryState
+									}
 								</Text>
-								{conversation.lastMessageAt ? (
-									<Text
-										style={
-											styles.messageMeta
+								{message.recipientId ===
+									myId &&
+								message.deliveryState !==
+									"READ" ? (
+									<ActionButton
+										label="Mark Read"
+										onPress={() =>
+											void markRead(
+												message,
+											)
 										}
-									>
-										Last
-										message:{" "}
-										{toLocalDateTime(
-											conversation.lastMessageAt,
-										)}
-									</Text>
+										variant="muted"
+									/>
 								) : null}
-								<ActionButton
-									label={
-										selectedConversationId ===
-										conversation.id
-											? "Selected"
-											: "Open"
-									}
-									onPress={() =>
-										setSelectedConversationId(
-											conversation.id,
-										)
-									}
-									variant={
-										selectedConversationId ===
-										conversation.id
-											? "primary"
-											: "muted"
-									}
-								/>
 							</View>
 						),
 					)}
 				</View>
-
-				<Text style={styles.title}>Messages</Text>
-				<FormField
-					label="Message"
-					value={messageBody}
-					onChangeText={setMessageBody}
-					placeholder="Type a message"
-					autoCapitalize="sentences"
-				/>
-				<ActionButton
-					label="Send"
-					onPress={() => void submitMessage()}
-					loading={sendingMessage}
-					disabled={!selectedConversationId}
-				/>
-				{loadingMessages ? (
-					<StateNotice
-						mode="loading"
-						message="Loading messages..."
-					/>
-				) : null}
-				{messagesError ? (
-					<StateNotice
-						mode="error"
-						message={toUserErrorMessage(
-							messagesError,
-							"Unable to load messages.",
-						)}
-					/>
-				) : null}
-				{!selectedConversationId ? (
-					<StateNotice
-						mode="empty"
-						message="Select a conversation first."
-					/>
-				) : null}
-				{selectedConversationId &&
-				(messagesData?.messages?.length ?? 0) === 0 &&
-				!loadingMessages ? (
-					<StateNotice
-						mode="empty"
-						message="No messages yet in this thread."
-					/>
-				) : null}
-				{messagesData?.messages?.map((message) => (
-					<View
-						key={message.id}
-						style={styles.messageCard}
-					>
-						<Text
-							style={
-								styles.messageBody
-							}
-						>
-							{message.body}
-						</Text>
-						<Text
-							style={
-								styles.messageMeta
-							}
-						>
-							Sent:{" "}
-							{toLocalDateTime(
-								message.sentAt,
-							)}
-						</Text>
-						<Text
-							style={
-								styles.messageMeta
-							}
-						>
-							State:{" "}
-							{message.deliveryState}
-						</Text>
-						{message.recipientId === myId &&
-						message.deliveryState !==
-							"READ" ? (
-							<ActionButton
-								label="Mark Read"
-								onPress={() =>
-									void markRead(
-										message,
-									)
-								}
-								variant="muted"
-							/>
-						) : null}
-					</View>
-				))}
 			</ScrollView>
 		</ScreenScaffold>
 	);

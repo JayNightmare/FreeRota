@@ -14,7 +14,7 @@ export function ActionButton({
 	onPress,
 	loading,
 	disabled,
-	variant = "primary"
+	variant = "primary",
 }: ActionButtonProps) {
 	const { theme } = useTheme();
 	const dangerColor = "#C94A4A";
@@ -23,6 +23,7 @@ export function ActionButton({
 		button: {
 			paddingHorizontal: theme.spacing.md,
 			paddingVertical: theme.spacing.sm,
+			height: 40,
 			borderRadius: theme.radius.md,
 			alignItems: "center",
 			justifyContent: "center",
@@ -39,18 +40,32 @@ export function ActionButton({
 					: variant === "muted"
 						? theme.colors.surfaceMuted
 						: theme.colors.accent,
-			opacity: disabled ? 0.55 : 1
+			opacity: disabled ? 0.55 : 1,
 		},
 		label: {
 			fontSize: theme.typography.caption,
 			fontWeight: "700",
-			color: variant === "muted" ? theme.colors.textPrimary : theme.colors.onAccent
-		}
+			color:
+				variant === "muted"
+					? theme.colors.textPrimary
+					: theme.colors.onAccent,
+		},
 	});
 
 	return (
-		<Pressable style={styles.button} onPress={onPress} disabled={disabled || loading}>
-			{loading ? <ActivityIndicator color={theme.colors.onAccent} size="small" /> : <Text style={styles.label}>{label}</Text>}
+		<Pressable
+			style={styles.button}
+			onPress={onPress}
+			disabled={disabled || loading}
+		>
+			{loading ? (
+				<ActivityIndicator
+					color={theme.colors.onAccent}
+					size="small"
+				/>
+			) : (
+				<Text style={styles.label}>{label}</Text>
+			)}
 		</Pressable>
 	);
 }

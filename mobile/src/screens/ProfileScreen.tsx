@@ -1,5 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import {
+	Modal,
+	Pressable,
+	ScrollView,
+	StyleSheet,
+	Switch,
+	Text,
+	View,
+} from "react-native";
 import { useMutation, useQuery } from "@apollo/client";
 import { ScreenScaffold } from "../components/ScreenScaffold";
 import { FormField } from "../components/FormField";
@@ -57,10 +65,15 @@ export function ProfileScreen() {
 	const [showChangeEmail, setShowChangeEmail] = useState(false);
 	const [newEmail, setNewEmail] = useState("");
 	const [emailPassword, setEmailPassword] = useState("");
-	const [emailReason, setEmailReason] = useState<ChangeEmailReason | null>(null);
+	const [emailReason, setEmailReason] =
+		useState<ChangeEmailReason | null>(null);
 	const [showReasonPicker, setShowReasonPicker] = useState(false);
-	const [emailChangeError, setEmailChangeError] = useState<string | null>(null);
-	const [emailChangeSuccess, setEmailChangeSuccess] = useState<string | null>(null);
+	const [emailChangeError, setEmailChangeError] = useState<string | null>(
+		null,
+	);
+	const [emailChangeSuccess, setEmailChangeSuccess] = useState<
+		string | null
+	>(null);
 
 	const { data, loading, error, refetch } = useQuery<MeQuery>(ME_QUERY);
 	const [updateAccount, { loading: updating }] = useMutation(
@@ -69,11 +82,14 @@ export function ProfileScreen() {
 	const [deleteAccount, { loading: deleting }] = useMutation(
 		DELETE_ACCOUNT_MUTATION,
 	);
-	const [verifyEmail, { loading: verifyLoading }] = useMutation(VERIFY_EMAIL_MUTATION);
-	const [requestEmailVerification, { loading: resendLoading }] = useMutation(
-		REQUEST_EMAIL_VERIFICATION_MUTATION,
+	const [verifyEmail, { loading: verifyLoading }] = useMutation(
+		VERIFY_EMAIL_MUTATION,
 	);
-	const [changeEmail, { loading: changingEmail }] = useMutation(CHANGE_EMAIL_MUTATION);
+	const [requestEmailVerification, { loading: resendLoading }] =
+		useMutation(REQUEST_EMAIL_VERIFICATION_MUTATION);
+	const [changeEmail, { loading: changingEmail }] = useMutation(
+		CHANGE_EMAIL_MUTATION,
+	);
 
 	const isVerified = Boolean(data?.me?.emailVerifiedAt);
 
@@ -92,6 +108,9 @@ export function ProfileScreen() {
 		() =>
 			StyleSheet.create({
 				container: {
+					gap: theme.spacing.lg,
+				},
+				content: {
 					gap: theme.spacing.lg,
 				},
 				card: {
@@ -173,7 +192,8 @@ export function ProfileScreen() {
 					borderRadius: theme.radius.md,
 					borderWidth: 1,
 					borderColor: theme.colors.border,
-					backgroundColor: theme.colors.surfaceElevated,
+					backgroundColor:
+						theme.colors.surfaceElevated,
 				},
 				reasonOptionSelected: {
 					borderColor: theme.colors.accent,
@@ -193,7 +213,8 @@ export function ProfileScreen() {
 					borderRadius: theme.radius.md,
 					borderWidth: 1,
 					borderColor: theme.colors.border,
-					backgroundColor: theme.colors.surfaceElevated,
+					backgroundColor:
+						theme.colors.surfaceElevated,
 				},
 				pickerButtonText: {
 					fontSize: theme.typography.caption,
@@ -266,23 +287,33 @@ export function ProfileScreen() {
 			});
 
 			if (response.data?.verifyEmail?.success) {
-				setVerifySuccess("Email verified successfully!");
+				setVerifySuccess(
+					"Email verified successfully!",
+				);
 				setVerificationCode("");
 				await refetch();
 			} else {
 				setVerifyError(
-					response.data?.verifyEmail?.message || "Unable to verify email.",
+					response.data?.verifyEmail?.message ||
+						"Unable to verify email.",
 				);
 			}
 		} catch (verifyErr) {
-			setVerifyError(toUserErrorMessage(verifyErr, "Verification failed."));
+			setVerifyError(
+				toUserErrorMessage(
+					verifyErr,
+					"Verification failed.",
+				),
+			);
 		}
 	};
 
 	const handleResendCode = async (): Promise<void> => {
 		const emailToUse = data?.me?.email;
 		if (!emailToUse) {
-			setVerifyError("Unable to determine your email address.");
+			setVerifyError(
+				"Unable to determine your email address.",
+			);
 			return;
 		}
 
@@ -294,11 +325,17 @@ export function ProfileScreen() {
 				variables: { email: emailToUse },
 			});
 			setVerifySuccess(
-				response.data?.requestEmailVerification?.message ||
+				response.data?.requestEmailVerification
+					?.message ||
 					"Verification code sent to your email.",
 			);
 		} catch (resendErr) {
-			setVerifyError(toUserErrorMessage(resendErr, "Unable to resend code."));
+			setVerifyError(
+				toUserErrorMessage(
+					resendErr,
+					"Unable to resend code.",
+				),
+			);
 		}
 	};
 
@@ -309,12 +346,16 @@ export function ProfileScreen() {
 		}
 
 		if (!emailPassword.trim()) {
-			setEmailChangeError("Password is required to confirm this change.");
+			setEmailChangeError(
+				"Password is required to confirm this change.",
+			);
 			return;
 		}
 
 		if (!emailReason) {
-			setEmailChangeError("Please select a reason for changing your email.");
+			setEmailChangeError(
+				"Please select a reason for changing your email.",
+			);
 			return;
 		}
 
@@ -344,11 +385,17 @@ export function ProfileScreen() {
 				await refetch();
 			} else {
 				setEmailChangeError(
-					response.data?.changeEmail?.message || "Unable to change email.",
+					response.data?.changeEmail?.message ||
+						"Unable to change email.",
 				);
 			}
 		} catch (changeErr) {
-			setEmailChangeError(toUserErrorMessage(changeErr, "Email change failed."));
+			setEmailChangeError(
+				toUserErrorMessage(
+					changeErr,
+					"Email change failed.",
+				),
+			);
 		}
 	};
 
@@ -370,213 +417,390 @@ export function ProfileScreen() {
 			>
 				{!isVerified && data?.me ? (
 					<View style={styles.verifyCard}>
-						<Text style={styles.title}>Verify Your Email</Text>
+						<Text style={styles.title}>
+							Verify Your Email
+						</Text>
 						<Text style={styles.helpText}>
-							A verification code was sent to {data.me.email}. Enter it below to
-							unlock friend features.
+							A verification code was
+							sent to {data.me.email}.
+							Enter it below to unlock
+							friend features.
 						</Text>
 						<FormField
 							label="Verification Code"
 							value={verificationCode}
-							onChangeText={(text) => {
-								setVerifyError(null);
-								setVerifySuccess(null);
-								setVerificationCode(text.toUpperCase().slice(0, 6));
+							onChangeText={(
+								text,
+							) => {
+								setVerifyError(
+									null,
+								);
+								setVerifySuccess(
+									null,
+								);
+								setVerificationCode(
+									text
+										.toUpperCase()
+										.slice(
+											0,
+											6,
+										),
+								);
 							}}
 							placeholder="ABC123"
 							autoCapitalize="characters"
 						/>
 						{verifyError ? (
-							<StateNotice mode="error" message={verifyError} />
+							<StateNotice
+								mode="error"
+								message={
+									verifyError
+								}
+							/>
 						) : null}
 						{verifySuccess ? (
-							<StateNotice mode="empty" message={verifySuccess} />
+							<StateNotice
+								mode="empty"
+								message={
+									verifySuccess
+								}
+							/>
 						) : null}
 						<ActionButton
 							label="Verify Email"
-							onPress={() => void handleVerifyEmail()}
+							onPress={() =>
+								void handleVerifyEmail()
+							}
 							loading={verifyLoading}
 						/>
 						<ActionButton
 							label="Resend Code"
-							onPress={() => void handleResendCode()}
+							onPress={() =>
+								void handleResendCode()
+							}
 							variant="muted"
 							loading={resendLoading}
 						/>
 					</View>
 				) : null}
 
-				<View style={styles.card}>
+				<View style={styles.content}>
 					<Text style={styles.title}>
 						Profile
 					</Text>
-					{loading ? (
-						<StateNotice
-							mode="loading"
-							message="Loading profile..."
-						/>
-					) : null}
-					{error ? (
-						<StateNotice
-							mode="error"
-							message={toUserErrorMessage(
-								error,
-								"Unable to load profile.",
-							)}
-						/>
-					) : null}
-					{data?.me ? (
-						<>
-							<View style={styles.row}>
-								<Text style={styles.meta}>
-									Email: {data.me.email}
-								</Text>
-								<Pressable onPress={() => {
-									resetChangeEmailForm();
-									setShowChangeEmail(!showChangeEmail);
-								}}>
-									<Text style={{
-										fontSize: theme.typography.tiny,
-										fontWeight: "700",
-										color: theme.colors.accent,
-									}}>
-										Change
-									</Text>
-								</Pressable>
-							</View>
-							{isVerified ? (
-								<Text style={styles.verifiedBadge}>✓ Email verified</Text>
-							) : (
-								<Text style={styles.helpText}>⚠ Email not verified</Text>
-							)}
-						</>
-					) : null}
-
-					{emailChangeSuccess ? (
-						<StateNotice mode="empty" message={emailChangeSuccess} />
-					) : null}
-
-					{showChangeEmail ? (
-						<View style={styles.card}>
-							<Text style={styles.sectionTitle}>Change Email</Text>
-							<Text style={styles.helpText}>
-								Changing your email will require re-verification.
-							</Text>
-							<FormField
-								label="New Email"
-								value={newEmail}
-								onChangeText={(text) => {
-									setEmailChangeError(null);
-									setNewEmail(text);
-								}}
-								placeholder="name@example.com"
-								keyboardType="email-address"
-								autoCapitalize="none"
+					<View style={styles.card}>
+						{loading ? (
+							<StateNotice
+								mode="loading"
+								message="Loading profile..."
 							/>
-							<FormField
-								label="Current Password"
-								value={emailPassword}
-								onChangeText={(text) => {
-									setEmailChangeError(null);
-									setEmailPassword(text);
-								}}
-								secureTextEntry
-								placeholder="••••••••"
-								autoCapitalize="none"
-							/>
-							<Text style={styles.label}>Reason for change</Text>
-							<Pressable
-								style={styles.pickerButton}
-								onPress={() => setShowReasonPicker(true)}
-							>
-								{emailReason ? (
-									<Text style={styles.pickerButtonText}>{emailReason}</Text>
-								) : (
-									<Text style={styles.pickerPlaceholder}>Select a reason…</Text>
+						) : null}
+						{error ? (
+							<StateNotice
+								mode="error"
+								message={toUserErrorMessage(
+									error,
+									"Unable to load profile.",
 								)}
-							</Pressable>
-							{emailChangeError ? (
-								<StateNotice mode="error" message={emailChangeError} />
-							) : null}
-							<View style={styles.buttonRow}>
-								<ActionButton
-									label="Confirm Change"
-									onPress={() => void handleChangeEmail()}
-									loading={changingEmail}
-								/>
-								<ActionButton
-									label="Cancel"
-									onPress={resetChangeEmailForm}
-									variant="muted"
-								/>
-							</View>
-						</View>
-					) : null}
-
-					<FormField
-						label="Username"
-						value={username}
-						onChangeText={setUsername}
-						autoCapitalize="none"
-					/>
-					<FormField
-						label="Display Name"
-						value={displayName}
-						onChangeText={setDisplayName}
-						autoCapitalize="words"
-					/>
-					<CityTimezonePicker
-						label="Timezone"
-						value={timezone}
-						onChangeValue={setTimezone}
-						placeholder="Search city"
-					/>
-					<Text style={styles.helpText}>
-						Current local time in this zone:{" "}
-						{formatTimezoneNow(
-							timezone || "UTC",
-						)}
-					</Text>
-					<View style={styles.row}>
-						<Text style={styles.label}>
-							Public profile
+							/>
+						) : null}
+						<FormField
+							label="Username"
+							value={username}
+							onChangeText={
+								setUsername
+							}
+							autoCapitalize="none"
+						/>
+						<FormField
+							label="Display Name"
+							value={displayName}
+							onChangeText={
+								setDisplayName
+							}
+							autoCapitalize="words"
+						/>
+						<CityTimezonePicker
+							label="Timezone"
+							value={timezone}
+							onChangeValue={
+								setTimezone
+							}
+							placeholder="Search city"
+						/>
+						<Text style={styles.helpText}>
+							Current local time in
+							this zone:{" "}
+							{formatTimezoneNow(
+								timezone ||
+									"UTC",
+							)}
 						</Text>
-						<Switch
-							value={isPublic}
-							onValueChange={
-								setIsPublic
-							}
-						/>
-					</View>
-					{actionError ? (
-						<StateNotice
-							mode="error"
-							message={actionError}
-						/>
-					) : null}
-					<View style={styles.buttonRow}>
-						<ActionButton
-							label="Save Changes"
-							onPress={() =>
-								void saveProfile()
-							}
-							loading={updating}
-						/>
-						<ActionButton
-							label="Sign Out"
-							onPress={() =>
-								void signOut()
-							}
-							variant="muted"
-						/>
-						<ActionButton
-							label="Delete Account"
-							onPress={() =>
-								void removeAccount()
-							}
-							loading={deleting}
-							variant="danger"
-						/>
+
+						<View style={styles.row}>
+							<Text
+								style={
+									styles.label
+								}
+							>
+								Public profile
+							</Text>
+							<Switch
+								value={isPublic}
+								onValueChange={
+									setIsPublic
+								}
+							/>
+						</View>
+						{data?.me ? (
+							<>
+								<View
+									style={
+										styles.row
+									}
+								>
+									<Text
+										style={
+											styles.meta
+										}
+									>
+										Email:{" "}
+										{
+											data
+												.me
+												.email
+										}
+									</Text>
+									<Pressable
+										onPress={() => {
+											resetChangeEmailForm();
+											setShowChangeEmail(
+												!showChangeEmail,
+											);
+										}}
+									>
+										<Text
+											style={{
+												fontSize: theme
+													.typography
+													.tiny,
+												fontWeight: "700",
+												color: theme
+													.colors
+													.accent,
+											}}
+										>
+											Change
+										</Text>
+									</Pressable>
+								</View>
+								{isVerified ? (
+									<Text
+										style={
+											styles.verifiedBadge
+										}
+									>
+										✓
+										Email
+										verified
+									</Text>
+								) : (
+									<Text
+										style={
+											styles.helpText
+										}
+									>
+										⚠
+										Email
+										not
+										verified
+									</Text>
+								)}
+							</>
+						) : null}
+
+						{emailChangeSuccess ? (
+							<StateNotice
+								mode="empty"
+								message={
+									emailChangeSuccess
+								}
+							/>
+						) : null}
+
+						{showChangeEmail ? (
+							<View
+								style={
+									styles.card
+								}
+							>
+								<Text
+									style={
+										styles.sectionTitle
+									}
+								>
+									Change
+									Email
+								</Text>
+								<Text
+									style={
+										styles.helpText
+									}
+								>
+									Changing
+									your
+									email
+									will
+									require
+									re-verification.
+								</Text>
+								<FormField
+									label="New Email"
+									value={
+										newEmail
+									}
+									onChangeText={(
+										text,
+									) => {
+										setEmailChangeError(
+											null,
+										);
+										setNewEmail(
+											text,
+										);
+									}}
+									placeholder="name@example.com"
+									keyboardType="email-address"
+									autoCapitalize="none"
+								/>
+								<FormField
+									label="Current Password"
+									value={
+										emailPassword
+									}
+									onChangeText={(
+										text,
+									) => {
+										setEmailChangeError(
+											null,
+										);
+										setEmailPassword(
+											text,
+										);
+									}}
+									secureTextEntry
+									placeholder="••••••••"
+									autoCapitalize="none"
+								/>
+								<Text
+									style={
+										styles.label
+									}
+								>
+									Reason
+									for
+									change
+								</Text>
+								<Pressable
+									style={
+										styles.pickerButton
+									}
+									onPress={() =>
+										setShowReasonPicker(
+											true,
+										)
+									}
+								>
+									{emailReason ? (
+										<Text
+											style={
+												styles.pickerButtonText
+											}
+										>
+											{
+												emailReason
+											}
+										</Text>
+									) : (
+										<Text
+											style={
+												styles.pickerPlaceholder
+											}
+										>
+											Select
+											a
+											reason…
+										</Text>
+									)}
+								</Pressable>
+								{emailChangeError ? (
+									<StateNotice
+										mode="error"
+										message={
+											emailChangeError
+										}
+									/>
+								) : null}
+								<View
+									style={
+										styles.buttonRow
+									}
+								>
+									<ActionButton
+										label="Confirm Change"
+										onPress={() =>
+											void handleChangeEmail()
+										}
+										loading={
+											changingEmail
+										}
+									/>
+									<ActionButton
+										label="Cancel"
+										onPress={
+											resetChangeEmailForm
+										}
+										variant="muted"
+									/>
+								</View>
+							</View>
+						) : null}
+						{actionError ? (
+							<StateNotice
+								mode="error"
+								message={
+									actionError
+								}
+							/>
+						) : null}
+						<View style={styles.buttonRow}>
+							<ActionButton
+								label="Save Changes"
+								onPress={() =>
+									void saveProfile()
+								}
+								loading={
+									updating
+								}
+							/>
+							<ActionButton
+								label="Sign Out"
+								onPress={() =>
+									void signOut()
+								}
+								variant="muted"
+							/>
+							<ActionButton
+								label="Delete Account"
+								onPress={() =>
+									void removeAccount()
+								}
+								loading={
+									deleting
+								}
+								variant="danger"
+							/>
+						</View>
 					</View>
 				</View>
 			</ScrollView>
@@ -585,41 +809,69 @@ export function ProfileScreen() {
 				visible={showReasonPicker}
 				transparent
 				animationType="slide"
-				onRequestClose={() => setShowReasonPicker(false)}
+				onRequestClose={() =>
+					setShowReasonPicker(false)
+				}
 			>
 				<Pressable
 					style={styles.modalOverlay}
-					onPress={() => setShowReasonPicker(false)}
+					onPress={() =>
+						setShowReasonPicker(false)
+					}
 				>
-					<Pressable style={styles.modalContent} onPress={() => {}}>
-						<Text style={styles.modalTitle}>Why are you changing your email?</Text>
+					<Pressable
+						style={styles.modalContent}
+						onPress={() => {}}
+					>
+						<Text style={styles.modalTitle}>
+							Why are you changing
+							your email?
+						</Text>
 						<ScrollView>
-							{EMAIL_CHANGE_REASONS.map((reason) => {
-								const selected = emailReason === reason;
-								return (
-									<Pressable
-										key={reason}
-										style={[
-											styles.reasonOption,
-											selected ? styles.reasonOptionSelected : undefined,
-										]}
-										onPress={() => {
-											setEmailReason(reason);
-											setEmailChangeError(null);
-											setShowReasonPicker(false);
-										}}
-									>
-										<Text
+							{EMAIL_CHANGE_REASONS.map(
+								(reason) => {
+									const selected =
+										emailReason ===
+										reason;
+									return (
+										<Pressable
+											key={
+												reason
+											}
 											style={[
-												styles.reasonText,
-												selected ? styles.reasonTextSelected : undefined,
+												styles.reasonOption,
+												selected
+													? styles.reasonOptionSelected
+													: undefined,
 											]}
+											onPress={() => {
+												setEmailReason(
+													reason,
+												);
+												setEmailChangeError(
+													null,
+												);
+												setShowReasonPicker(
+													false,
+												);
+											}}
 										>
-											{reason}
-										</Text>
-									</Pressable>
-								);
-							})}
+											<Text
+												style={[
+													styles.reasonText,
+													selected
+														? styles.reasonTextSelected
+														: undefined,
+												]}
+											>
+												{
+													reason
+												}
+											</Text>
+										</Pressable>
+									);
+								},
+							)}
 						</ScrollView>
 					</Pressable>
 				</Pressable>
