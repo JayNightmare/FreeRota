@@ -51,28 +51,33 @@ class EmailService {
         });
     }
 
-    async sendVerificationEmail(email: string, username: string, token: string): Promise<void> {
-        const links = this.buildLinks('verify-email', token);
+    async sendVerificationEmail(email: string, username: string, code: string): Promise<void> {
         const subject = 'Verify your FreeRota email';
         const message = [
             'Hi ' + username + ',',
             '',
             'Thanks for signing up to FreeRota.',
-            'Open this link to verify your email: ' + links.appLink,
-            links.webLink ? 'Web fallback: ' + links.webLink : '',
+            'Your verification code is: ' + code,
+            '',
+            'Enter this code in the app to verify your email.',
+            'This code expires in 7 days.',
             '',
             'If you did not create this account, you can ignore this email.'
-        ]
-            .filter(Boolean)
-            .join('\n');
+        ].join('\n');
 
-        await this.send(
-            email,
-            subject,
-            message,
-            this.buildHtml('Verify your email', links, username),
-            'auth.verify-email'
-        );
+        const html = [
+            '<div style="font-family: Arial, sans-serif; color: #1b1b1b; line-height: 1.5;">',
+            '    <h2>Verify your email</h2>',
+            '    <p>Hi ' + username + ',</p>',
+            '    <p>Your verification code is:</p>',
+            '    <div style="font-size: 32px; font-weight: bold; letter-spacing: 6px; padding: 16px 24px; background: #f4f4f5; border-radius: 8px; display: inline-block; margin: 8px 0;">' + code + '</div>',
+            '    <p>Enter this code in the FreeRota app to verify your account.</p>',
+            '    <p style="color: #6b7280; font-size: 13px;">This code expires in 7 days.</p>',
+            '    <p>If this wasn\'t you, you can safely ignore this email.</p>',
+            '</div>'
+        ].join('\n');
+
+        await this.send(email, subject, message, html, 'auth.verify-email');
     }
 
     async sendPasswordResetEmail(email: string, username: string, token: string): Promise<void> {

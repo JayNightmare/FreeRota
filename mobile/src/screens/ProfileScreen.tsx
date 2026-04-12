@@ -9,7 +9,9 @@ import { CityTimezonePicker } from "../components/CityTimezonePicker";
 import {
 	DELETE_ACCOUNT_MUTATION,
 	ME_QUERY,
+	REQUEST_EMAIL_VERIFICATION_MUTATION,
 	UPDATE_ACCOUNT_MUTATION,
+	VERIFY_EMAIL_MUTATION,
 } from "../graphql/operations";
 import { useTheme } from "../theme/useTheme";
 import { useAuth } from "../auth/AuthProvider";
@@ -24,6 +26,7 @@ interface MeQuery {
 		displayName: string;
 		timezone: string;
 		isPublic: boolean;
+		emailVerifiedAt: string | null;
 	};
 }
 
@@ -35,6 +38,9 @@ export function ProfileScreen() {
 	const [timezone, setTimezone] = useState("UTC");
 	const [isPublic, setIsPublic] = useState(false);
 	const [actionError, setActionError] = useState<string | null>(null);
+	const [verificationCode, setVerificationCode] = useState("");
+	const [verifyError, setVerifyError] = useState<string | null>(null);
+	const [verifySuccess, setVerifySuccess] = useState<string | null>(null);
 
 	const { data, loading, error, refetch } = useQuery<MeQuery>(ME_QUERY);
 	const [updateAccount, { loading: updating }] = useMutation(
@@ -43,6 +49,12 @@ export function ProfileScreen() {
 	const [deleteAccount, { loading: deleting }] = useMutation(
 		DELETE_ACCOUNT_MUTATION,
 	);
+	const [verifyEmail, { loading: verifyLoading }] = useMutation(VERIFY_EMAIL_MUTATION);
+	const [requestEmailVerification, { loading: resendLoading }] = useMutation(
+		REQUEST_EMAIL_VERIFICATION_MUTATION,
+	);
+
+	const isVerified = Boolean(data?.me?.emailVerifiedAt);
 
 	useEffect(() => {
 		if (!data?.me) {
@@ -65,6 +77,14 @@ export function ProfileScreen() {
 					backgroundColor: theme.colors.surface,
 					borderWidth: 1,
 					borderColor: theme.colors.border,
+					borderRadius: theme.radius.lg,
+					padding: theme.spacing.lg,
+					gap: theme.spacing.md,
+				},
+				verifyCard: {
+					backgroundColor: theme.colors.surface,
+					borderWidth: 2,
+					borderColor: theme.colors.accent,
 					borderRadius: theme.radius.lg,
 					padding: theme.spacing.lg,
 					gap: theme.spacing.md,
@@ -96,6 +116,11 @@ export function ProfileScreen() {
 					flexDirection: "row",
 					gap: theme.spacing.sm,
 					flexWrap: "wrap",
+				},
+				verifiedBadge: {
+					fontSize: theme.typography.caption,
+					fontWeight: "700",
+					color: "#16A34A",
 				},
 			}),
 		[theme],
@@ -144,6 +169,58 @@ export function ProfileScreen() {
 		}
 	};
 
+	const handleVerifyEmail = async (): Promise<void> => {
+		const code = verificationCode.trim().toUpperCase();
+		if (code.length !== 6) {
+			setVerifyError("Code must be exactly 6 characters.");
+			return;
+		}
+
+		setVerifyError(null);
+		setVerifySuccess(null);
+
+		try {
+			const response = await verifyEmail({
+				variables: { code },
+			});
+
+			if (response.data?.verifyEmail?.success) {
+				setVerifySuccess("Email verified successfully!");
+				setVerificationCode("");
+				await refetch();
+			} else {
+				setVerifyError(
+					response.data?.verifyEmail?.message || "Unable to verify email.",
+				);
+			}
+		} catch (verifyErr) {
+			setVerifyError(toUserErrorMessage(verifyErr, "Verification failed."));
+		}
+	};
+
+	const handleResendCode = async (): Promise<void> => {
+		const emailToUse = data?.me?.email;
+		if (!emailToUse) {
+			setVerifyError("Unable to determine your email address.");
+			return;
+		}
+
+		setVerifyError(null);
+		setVerifySuccess(null);
+
+		try {
+			const response = await requestEmailVerification({
+				variables: { email: emailToUse },
+			});
+			setVerifySuccess(
+				response.data?.requestEmailVerification?.message ||
+					"Verification code sent to your email.",
+			);
+		} catch (resendErr) {
+			setVerifyError(toUserErrorMessage(resendErr, "Unable to resend code."));
+		}
+	};
+
 	return (
 		<ScreenScaffold>
 			<ScrollView
@@ -151,6 +228,44 @@ export function ProfileScreen() {
 				keyboardShouldPersistTaps="handled"
 				keyboardDismissMode="on-drag"
 			>
+				{!isVerified && data?.me ? (
+					<View style={styles.verifyCard}>
+						<Text style={styles.title}>Verify Your Email</Text>
+						<Text style={styles.helpText}>
+							A verification code was sent to {data.me.email}. Enter it below to
+							unlock friend features.
+						</Text>
+						<FormField
+							label="Verification Code"
+							value={verificationCode}
+							onChangeText={(text) => {
+								setVerifyError(null);
+								setVerifySuccess(null);
+								setVerificationCode(text.toUpperCase().slice(0, 6));
+							}}
+							placeholder="ABC123"
+							autoCapitalize="characters"
+						/>
+						{verifyError ? (
+							<StateNotice mode="error" message={verifyError} />
+						) : null}
+						{verifySuccess ? (
+							<StateNotice mode="empty" message={verifySuccess} />
+						) : null}
+						<ActionButton
+							label="Verify Email"
+							onPress={() => void handleVerifyEmail()}
+							loading={verifyLoading}
+						/>
+						<ActionButton
+							label="Resend Code"
+							onPress={() => void handleResendCode()}
+							variant="muted"
+							loading={resendLoading}
+						/>
+					</View>
+				) : null}
+
 				<View style={styles.card}>
 					<Text style={styles.title}>
 						Profile
@@ -171,9 +286,16 @@ export function ProfileScreen() {
 						/>
 					) : null}
 					{data?.me ? (
-						<Text style={styles.meta}>
-							Email: {data.me.email}
-						</Text>
+						<>
+							<Text style={styles.meta}>
+								Email: {data.me.email}
+							</Text>
+							{isVerified ? (
+								<Text style={styles.verifiedBadge}>✓ Email verified</Text>
+							) : (
+								<Text style={styles.helpText}>⚠ Email not verified</Text>
+							)}
+						</>
 					) : null}
 					<FormField
 						label="Username"

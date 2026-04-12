@@ -3,8 +3,7 @@ import { gql } from "@apollo/client";
 export const REGISTER_MUTATION = gql`
 	mutation Register($input: RegisterInput!) {
 		register(input: $input) {
-			success
-			message
+			token
 		}
 	}
 `;
@@ -27,9 +26,10 @@ export const REQUEST_EMAIL_VERIFICATION_MUTATION = gql`
 `;
 
 export const VERIFY_EMAIL_MUTATION = gql`
-	mutation VerifyEmail($token: String!) {
-		verifyEmail(token: $token) {
-			token
+	mutation VerifyEmail($code: String!) {
+		verifyEmail(code: $code) {
+			success
+			message
 		}
 	}
 `;
@@ -62,6 +62,7 @@ export const ME_QUERY = gql`
 			timezone
 			isPublic
 			uiAccentColor
+			emailVerifiedAt
 		}
 	}
 `;

@@ -12,8 +12,10 @@ import {
 	ME_QUERY,
 	REJECT_FRIEND_REQUEST_MUTATION,
 	REMOVE_FRIEND_MUTATION,
+	REQUEST_EMAIL_VERIFICATION_MUTATION,
 	SEND_FRIEND_REQUEST_MUTATION,
 	UNBLOCK_USER_MUTATION,
+	VERIFY_EMAIL_MUTATION,
 } from "../graphql/operations";
 import { useTheme } from "../theme/useTheme";
 import { toUserErrorMessage } from "../utils/errors";
@@ -36,7 +38,9 @@ interface FriendshipsQuery {
 interface MeQuery {
 	me: {
 		id: string;
+		email: string;
 		username: string;
+		emailVerifiedAt: string | null;
 	};
 }
 
@@ -44,8 +48,11 @@ export function FriendsScreen() {
 	const { theme } = useTheme();
 	const [targetUsername, setTargetUsername] = useState("");
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
+	const [verificationCode, setVerificationCode] = useState("");
+	const [verifyError, setVerifyError] = useState<string | null>(null);
+	const [verifySuccess, setVerifySuccess] = useState<string | null>(null);
 
-	const { data: meData } = useQuery<MeQuery>(ME_QUERY);
+	const { data: meData, refetch: refetchMe } = useQuery<MeQuery>(ME_QUERY);
 	const { data, loading, error, refetch } = useQuery<FriendshipsQuery>(
 		FRIENDSHIPS_QUERY,
 		{
@@ -65,6 +72,12 @@ export function FriendsScreen() {
 	const [removeFriend] = useMutation(REMOVE_FRIEND_MUTATION);
 	const [blockUser] = useMutation(BLOCK_USER_MUTATION);
 	const [unblockUser] = useMutation(UNBLOCK_USER_MUTATION);
+	const [verifyEmail, { loading: verifyLoading }] = useMutation(VERIFY_EMAIL_MUTATION);
+	const [requestEmailVerification, { loading: resendLoading }] = useMutation(
+		REQUEST_EMAIL_VERIFICATION_MUTATION,
+	);
+
+	const isVerified = Boolean(meData?.me?.emailVerifiedAt);
 
 	const styles = useMemo(
 		() =>
@@ -76,6 +89,14 @@ export function FriendsScreen() {
 					backgroundColor: theme.colors.surface,
 					borderWidth: 1,
 					borderColor: theme.colors.border,
+					borderRadius: theme.radius.lg,
+					padding: theme.spacing.lg,
+					gap: theme.spacing.md,
+				},
+				verifyCard: {
+					backgroundColor: theme.colors.surface,
+					borderWidth: 2,
+					borderColor: theme.colors.accent,
 					borderRadius: theme.radius.lg,
 					padding: theme.spacing.lg,
 					gap: theme.spacing.md,
@@ -160,6 +181,58 @@ export function FriendsScreen() {
 		});
 	};
 
+	const handleVerifyEmail = async (): Promise<void> => {
+		const code = verificationCode.trim().toUpperCase();
+		if (code.length !== 6) {
+			setVerifyError("Code must be exactly 6 characters.");
+			return;
+		}
+
+		setVerifyError(null);
+		setVerifySuccess(null);
+
+		try {
+			const response = await verifyEmail({
+				variables: { code },
+			});
+
+			if (response.data?.verifyEmail?.success) {
+				setVerifySuccess("Email verified successfully!");
+				setVerificationCode("");
+				await refetchMe();
+			} else {
+				setVerifyError(
+					response.data?.verifyEmail?.message || "Unable to verify email.",
+				);
+			}
+		} catch (verifyErr) {
+			setVerifyError(toUserErrorMessage(verifyErr, "Verification failed."));
+		}
+	};
+
+	const handleResendCode = async (): Promise<void> => {
+		const emailToUse = meData?.me?.email;
+		if (!emailToUse) {
+			setVerifyError("Unable to determine your email address.");
+			return;
+		}
+
+		setVerifyError(null);
+		setVerifySuccess(null);
+
+		try {
+			const response = await requestEmailVerification({
+				variables: { email: emailToUse },
+			});
+			setVerifySuccess(
+				response.data?.requestEmailVerification?.message ||
+					"Verification code sent to your email.",
+			);
+		} catch (resendErr) {
+			setVerifyError(toUserErrorMessage(resendErr, "Unable to resend code."));
+		}
+	};
+
 	return (
 		<ScreenScaffold>
 			<ScrollView
@@ -167,6 +240,44 @@ export function FriendsScreen() {
 				keyboardShouldPersistTaps="handled"
 				keyboardDismissMode="on-drag"
 			>
+				{!isVerified ? (
+					<View style={styles.verifyCard}>
+						<Text style={styles.title}>Verify Your Email</Text>
+						<Text style={styles.subtitle}>
+							Enter the 6-character code sent to your email to unlock friend
+							features.
+						</Text>
+						<FormField
+							label="Verification Code"
+							value={verificationCode}
+							onChangeText={(text) => {
+								setVerifyError(null);
+								setVerifySuccess(null);
+								setVerificationCode(text.toUpperCase().slice(0, 6));
+							}}
+							placeholder="ABC123"
+							autoCapitalize="characters"
+						/>
+						{verifyError ? (
+							<StateNotice mode="error" message={verifyError} />
+						) : null}
+						{verifySuccess ? (
+							<StateNotice mode="empty" message={verifySuccess} />
+						) : null}
+						<ActionButton
+							label="Verify Email"
+							onPress={() => void handleVerifyEmail()}
+							loading={verifyLoading}
+						/>
+						<ActionButton
+							label="Resend Code"
+							onPress={() => void handleResendCode()}
+							variant="muted"
+							loading={resendLoading}
+						/>
+					</View>
+				) : null}
+
 				<View style={styles.card}>
 					<Text style={styles.title}>Send Friend Request</Text>
 					<Text style={styles.subtitle}>
@@ -183,7 +294,14 @@ export function FriendsScreen() {
 						label="Send Friend Request"
 						onPress={() => void sendRequest()}
 						loading={requestLoading}
+						disabled={!isVerified}
 					/>
+					{!isVerified ? (
+						<StateNotice
+							mode="empty"
+							message="Verify your email to send friend requests."
+						/>
+					) : null}
 					{myUsername ? (
 						<Text style={styles.subtitle}>Your username: {myUsername}</Text>
 					) : null}
@@ -229,6 +347,7 @@ export function FriendsScreen() {
 														}),
 													)
 												}
+												disabled={!isVerified}
 											/>
 											<ActionButton
 												label="Reject"

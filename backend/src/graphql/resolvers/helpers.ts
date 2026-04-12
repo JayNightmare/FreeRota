@@ -8,3 +8,13 @@ export function requireAuth(context: GraphQLContext): string {
 
     return String(context.authUser._id);
 }
+
+export function requireVerifiedEmail(context: GraphQLContext): string {
+    const userId = requireAuth(context);
+
+    if (!context.authUser!.emailVerifiedAt) {
+        throw new AppError('Please verify your email before using this feature.', 'FORBIDDEN', 403);
+    }
+
+    return userId;
+}

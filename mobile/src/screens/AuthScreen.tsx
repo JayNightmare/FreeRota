@@ -17,8 +17,6 @@ import { useTheme } from "../theme/useTheme";
 import {
 	LOGIN_MUTATION,
 	REGISTER_MUTATION,
-	REQUEST_EMAIL_VERIFICATION_MUTATION,
-	VERIFY_EMAIL_MUTATION,
 	REQUEST_PASSWORD_RESET_MUTATION,
 	RESET_PASSWORD_MUTATION,
 } from "../graphql/operations";
@@ -28,19 +26,12 @@ import { CityTimezonePicker } from "../components/CityTimezonePicker";
 import { getDeviceTimezone } from "../utils/time";
 import { parseAuthLink } from "../utils/authLinks";
 
-type AuthMode =
-	| "login"
-	| "register"
-	| "verify-email"
-	| "forgot-password"
-	| "reset-password";
+type AuthMode = "login" | "register" | "forgot-password" | "reset-password";
 
 function getTitle(mode: AuthMode): string {
 	switch (mode) {
 		case "register":
 			return "Create Account";
-		case "verify-email":
-			return "Verify Email";
 		case "forgot-password":
 			return "Forgot Password";
 		case "reset-password":
@@ -53,9 +44,7 @@ function getTitle(mode: AuthMode): string {
 function getSubtitle(mode: AuthMode): string {
 	switch (mode) {
 		case "register":
-			return "Create your account and verify your email to continue.";
-		case "verify-email":
-			return "Use the email link to verify and sign in.";
+			return "Create your account to get started.";
 		case "forgot-password":
 			return "Enter your email or username to request a reset link.";
 		case "reset-password":
@@ -69,8 +58,6 @@ function getSubmitLabel(mode: AuthMode): string {
 	switch (mode) {
 		case "register":
 			return "Create Account";
-		case "verify-email":
-			return "Verify Email";
 		case "forgot-password":
 			return "Send Reset Link";
 		case "reset-password":
@@ -90,8 +77,6 @@ export function AuthScreen() {
 	const [displayName, setDisplayName] = useState("");
 	const [timezone, setTimezone] = useState(getDeviceTimezone());
 	const [isPublic, setIsPublic] = useState(false);
-	const [pendingEmail, setPendingEmail] = useState("");
-	const [verificationToken, setVerificationToken] = useState("");
 	const [resetIdentifier, setResetIdentifier] = useState("");
 	const [resetToken, setResetToken] = useState("");
 	const [newPassword, setNewPassword] = useState("");
@@ -102,13 +87,6 @@ export function AuthScreen() {
 	const [login, { loading: loginLoading }] = useMutation(LOGIN_MUTATION);
 	const [register, { loading: registerLoading }] =
 		useMutation(REGISTER_MUTATION);
-	const [
-		requestEmailVerification,
-		{ loading: requestEmailVerificationLoading },
-	] = useMutation(REQUEST_EMAIL_VERIFICATION_MUTATION);
-	const [verifyEmail, { loading: verifyEmailLoading }] = useMutation(
-		VERIFY_EMAIL_MUTATION,
-	);
 	const [requestPasswordReset, { loading: requestPasswordResetLoading }] =
 		useMutation(REQUEST_PASSWORD_RESET_MUTATION);
 	const [resetPassword, { loading: resetPasswordLoading }] = useMutation(
@@ -118,8 +96,6 @@ export function AuthScreen() {
 	const loading =
 		loginLoading ||
 		registerLoading ||
-		requestEmailVerificationLoading ||
-		verifyEmailLoading ||
 		requestPasswordResetLoading ||
 		resetPasswordLoading;
 
@@ -166,10 +142,6 @@ export function AuthScreen() {
 					fontWeight: "700",
 					color: theme.colors.accent,
 				},
-				helperText: {
-					fontSize: theme.typography.tiny,
-					color: theme.colors.textSecondary,
-				},
 				forgotButton: {
 					alignSelf: "flex-end",
 					paddingVertical: theme.spacing.xs,
@@ -201,20 +173,13 @@ export function AuthScreen() {
 			}
 
 			setFormError(null);
-			if (parsed.flow === "verify-email") {
-				setMode("verify-email");
-				setVerificationToken(parsed.token);
+			if (parsed.flow === "reset-password") {
+				setMode("reset-password");
+				setResetToken(parsed.token);
 				setInfoMessage(
-					"Verification link detected. Tap Verify Email to continue.",
+					"Reset link detected. Choose a new password.",
 				);
-				return;
 			}
-
-			setMode("reset-password");
-			setResetToken(parsed.token);
-			setInfoMessage(
-				"Reset link detected. Choose a new password.",
-			);
 		};
 
 		void Linking.getInitialURL().then((url) => {
@@ -313,46 +278,11 @@ export function AuthScreen() {
 						},
 					});
 
-					const registerResult =
-						response.data?.register;
-					if (!registerResult?.success) {
-						setFormError(
-							registerResult?.message ||
-								"Unable to create account.",
-						);
-						return;
-					}
-
-					setPendingEmail(email.trim());
-					setVerificationToken("");
-					setMode("verify-email");
-					setInfoMessage(
-						registerResult.message ||
-							"Check your email for a verification link.",
-					);
-					return;
-				}
-
-				case "verify-email": {
-					if (!verificationToken.trim()) {
-						setFormError(
-							"Open the verification email link to continue.",
-						);
-						return;
-					}
-
-					const response = await verifyEmail({
-						variables: {
-							token: verificationToken.trim(),
-						},
-					});
-
 					const token: string | undefined =
-						response.data?.verifyEmail
-							?.token;
+						response.data?.register?.token;
 					if (!token) {
 						setFormError(
-							"Unable to verify email.",
+							"Unable to create account.",
 						);
 						return;
 					}
@@ -446,39 +376,6 @@ export function AuthScreen() {
 				toUserErrorMessage(
 					error,
 					"Authentication request failed.",
-				),
-			);
-		}
-	};
-
-	const handleResendVerification = async (): Promise<void> => {
-		const emailToUse = pendingEmail.trim() || email.trim();
-		if (!emailToUse) {
-			setFormError(
-				"Email is required to resend verification.",
-			);
-			return;
-		}
-
-		setFormError(null);
-		setInfoMessage(null);
-		try {
-			const response = await requestEmailVerification({
-				variables: {
-					email: emailToUse,
-				},
-			});
-			setPendingEmail(emailToUse);
-			setInfoMessage(
-				response.data?.requestEmailVerification
-					?.message ||
-					"If an account exists, a verification email has been sent.",
-			);
-		} catch (error) {
-			setFormError(
-				toUserErrorMessage(
-					error,
-					"Unable to resend verification email.",
 				),
 			);
 		}
@@ -634,52 +531,6 @@ export function AuthScreen() {
 									}
 								/>
 							</View>
-						</>
-					) : null}
-
-					{mode === "verify-email" ? (
-						<>
-							{pendingEmail ? (
-								<Text
-									style={
-										styles.helperText
-									}
-								>
-									Verification
-									email
-									sent to{" "}
-									{
-										pendingEmail
-									}
-									.
-								</Text>
-							) : null}
-							<FormField
-								label="Verification Token"
-								value={
-									verificationToken
-								}
-								onChangeText={(
-									text,
-								) => {
-									resetNotices();
-									setVerificationToken(
-										text,
-									);
-								}}
-								placeholder="From email link"
-								autoCapitalize="none"
-							/>
-							<ActionButton
-								label="Resend Verification Email"
-								onPress={() =>
-									void handleResendVerification()
-								}
-								variant="muted"
-								disabled={
-									requestEmailVerificationLoading
-								}
-							/>
 						</>
 					) : null}
 

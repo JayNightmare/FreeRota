@@ -29,7 +29,10 @@ export const accountResolver = {
         login: async (_parent: unknown, args: { username: string; password: string }) => authService.login(args.username, args.password),
         requestEmailVerification: async (_parent: unknown, args: { email: string }) =>
             authService.requestEmailVerification(args.email),
-        verifyEmail: async (_parent: unknown, args: { token: string }) => authService.verifyEmail(args.token),
+        verifyEmail: async (_parent: unknown, args: { code: string }, context: Parameters<typeof requireAuth>[0]) => {
+            const userId = requireAuth(context);
+            return authService.verifyEmail(args.code, userId);
+        },
         requestPasswordReset: async (_parent: unknown, args: { identifier: string }) =>
             authService.requestPasswordReset(args.identifier),
         resetPassword: async (_parent: unknown, args: { token: string; newPassword: string }) =>

@@ -63,6 +63,24 @@ class UserRepository {
         ).exec();
     }
 
+    async verifyEmailByUserId(userId: string, codeHash: string): Promise<UserDocument | null> {
+        return UserModel.findOneAndUpdate(
+            {
+                _id: userId,
+                emailVerificationTokenHash: codeHash,
+                emailVerificationTokenExpiresAt: { $gt: new Date() },
+                emailVerifiedAt: null,
+                deletedAt: null
+            },
+            {
+                emailVerifiedAt: new Date(),
+                emailVerificationTokenHash: null,
+                emailVerificationTokenExpiresAt: null
+            },
+            { new: true }
+        ).exec();
+    }
+
     async setPasswordResetToken(userId: string, tokenHash: string, expiresAt: Date): Promise<void> {
         await UserModel.findByIdAndUpdate(userId, {
             passwordResetTokenHash: tokenHash,

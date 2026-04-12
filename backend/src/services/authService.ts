@@ -3,10 +3,10 @@ import { userRepository } from '../repositories/userRepository.js';
 import { AppError, assertOrThrow } from '../utils/errors.js';
 import { signAuthToken } from '../utils/jwt.js';
 import { validateUsername } from '../utils/username.js';
-import { createRandomToken, hashToken } from '../utils/token.js';
+import { createRandomToken, createShortCode, hashToken } from '../utils/token.js';
 import { emailService } from './emailService.js';
 
-const EMAIL_VERIFICATION_TTL_MS = 24 * 60 * 60 * 1000;
+const EMAIL_VERIFICATION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 const PASSWORD_RESET_TTL_MS = 30 * 60 * 1000;
 const MIN_PASSWORD_LENGTH = 8;
 
@@ -31,7 +31,7 @@ class AuthService {
         displayName?: string;
         timezone?: string;
         isPublic?: boolean;
-    }): Promise<ActionResult> {
+    }): Promise<{ token: string }> {
         const email = normalizeEmail(input.email);
         const existing = await userRepository.findByEmail(email);
         assertOrThrow(!existing, 'Email is already in use', 'CONFLICT', 409);
@@ -57,19 +57,16 @@ class AuthService {
             isPublic: input.isPublic ?? false
         });
 
-        const verificationToken = createRandomToken();
+        const verificationCode = createShortCode();
         await userRepository.setEmailVerificationToken(
             String(user._id),
-            hashToken(verificationToken),
+            hashToken(verificationCode),
             new Date(Date.now() + EMAIL_VERIFICATION_TTL_MS)
         );
 
-        await emailService.sendVerificationEmail(user.email, user.username, verificationToken);
+        await emailService.sendVerificationEmail(user.email, user.username, verificationCode);
 
-        return {
-            success: true,
-            message: 'Account created. Check your email to verify your account.'
-        };
+        return { token: signAuthToken({ _id: user._id, username: user.username }) };
     }
 
     async login(username: string, password: string): Promise<{ token: string }> {
@@ -83,10 +80,6 @@ class AuthService {
             throw new AppError('Invalid credentials', 'UNAUTHORIZED', 401);
         }
 
-        if (!user.emailVerifiedAt) {
-            throw new AppError('Please verify your email before signing in.', 'FORBIDDEN', 403);
-        }
-
         return { token: signAuthToken({ _id: user._id, username: user.username }) };
     }
 
@@ -95,13 +88,13 @@ class AuthService {
         const user = await userRepository.findByEmail(normalizedEmail);
 
         if (user && !user.deletedAt && !user.emailVerifiedAt) {
-            const verificationToken = createRandomToken();
+            const verificationCode = createShortCode();
             await userRepository.setEmailVerificationToken(
                 String(user._id),
-                hashToken(verificationToken),
+                hashToken(verificationCode),
                 new Date(Date.now() + EMAIL_VERIFICATION_TTL_MS)
             );
-            await emailService.sendVerificationEmail(user.email, user.username, verificationToken);
+            await emailService.sendVerificationEmail(user.email, user.username, verificationCode);
         }
 
         return {
@@ -110,16 +103,19 @@ class AuthService {
         };
     }
 
-    async verifyEmail(token: string): Promise<{ token: string }> {
-        const sanitizedToken = token.trim();
-        assertOrThrow(Boolean(sanitizedToken), 'Verification token is required');
+    async verifyEmail(code: string, userId: string): Promise<ActionResult> {
+        const sanitizedCode = code.trim().toUpperCase();
+        assertOrThrow(sanitizedCode.length === 6, 'Verification code must be 6 characters');
 
-        const user = await userRepository.verifyEmailByTokenHash(hashToken(sanitizedToken));
-        if (!user || user.deletedAt) {
-            throw new AppError('Verification link is invalid or expired.', 'BAD_REQUEST', 400);
+        const user = await userRepository.verifyEmailByUserId(userId, hashToken(sanitizedCode));
+        if (!user) {
+            throw new AppError('Verification code is invalid or expired.', 'BAD_REQUEST', 400);
         }
 
-        return { token: signAuthToken({ _id: user._id, username: user.username }) };
+        return {
+            success: true,
+            message: 'Email verified successfully.'
+        };
     }
 
     async requestPasswordReset(identifier: string): Promise<ActionResult> {
@@ -138,6 +134,16 @@ class AuthService {
                 new Date(Date.now() + PASSWORD_RESET_TTL_MS)
             );
             await emailService.sendPasswordResetEmail(user.email, user.username, resetToken);
+        } else {
+            const reason = !user
+                ? 'user-not-found'
+                : user.deletedAt
+                    ? 'user-deleted'
+                    : 'email-not-verified';
+
+            console.info('[AuthService] Password reset email skipped', {
+                reason
+            });
         }
 
         return {
@@ -170,3 +176,4 @@ class AuthService {
 }
 
 export const authService = new AuthService();
+

@@ -1,5 +1,5 @@
 import { friendshipService } from '../../services/friendshipService.js';
-import { requireAuth } from './helpers.js';
+import { requireAuth, requireVerifiedEmail } from './helpers.js';
 
 export const friendshipResolver = {
     Query: {
@@ -18,11 +18,11 @@ export const friendshipResolver = {
     },
     Mutation: {
         sendFriendRequest: async (_parent: unknown, args: { username: string }, context: Parameters<typeof requireAuth>[0]) => {
-            const userId = requireAuth(context);
+            const userId = requireVerifiedEmail(context);
             return friendshipService.sendRequestByUsername(userId, args.username);
         },
         acceptFriendRequest: async (_parent: unknown, args: { friendshipId: string }, context: Parameters<typeof requireAuth>[0]) => {
-            const userId = requireAuth(context);
+            const userId = requireVerifiedEmail(context);
             return friendshipService.acceptRequest(userId, args.friendshipId);
         },
         rejectFriendRequest: async (_parent: unknown, args: { friendshipId: string }, context: Parameters<typeof requireAuth>[0]) => {

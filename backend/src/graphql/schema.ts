@@ -210,10 +210,10 @@ const typeDefs = /* GraphQL */ `
   }
 
   type Mutation {
-    register(input: RegisterInput!): ActionResult!
+    register(input: RegisterInput!): AuthPayload!
     login(username: String!, password: String!): AuthPayload!
     requestEmailVerification(email: String!): ActionResult!
-    verifyEmail(token: String!): AuthPayload!
+    verifyEmail(code: String!): ActionResult!
     requestPasswordReset(identifier: String!): ActionResult!
     resetPassword(token: String!, newPassword: String!): ActionResult!
     updateAccount(input: UpdateAccountInput!): User!

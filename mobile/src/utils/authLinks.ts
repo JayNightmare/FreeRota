@@ -1,4 +1,4 @@
-export type AuthLinkFlow = "verify-email" | "reset-password";
+export type AuthLinkFlow = "reset-password";
 
 export interface ParsedAuthLink {
     flow: AuthLinkFlow | null;
@@ -11,7 +11,7 @@ function normalizeFlow(value: string | null | undefined): AuthLinkFlow | null {
     }
 
     const normalized = value.trim().toLowerCase();
-    if (normalized === "verify-email" || normalized === "reset-password") {
+    if (normalized === "reset-password") {
         return normalized;
     }
 
