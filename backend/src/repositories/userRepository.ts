@@ -127,6 +127,19 @@ class UserRepository {
         return UserModel.findByIdAndUpdate(id, safeUpdates, { new: true }).exec();
     }
 
+    async updateEmailById(userId: string, newEmail: string): Promise<UserDocument | null> {
+        return UserModel.findByIdAndUpdate(
+            userId,
+            {
+                email: newEmail.toLowerCase().trim(),
+                emailVerifiedAt: null,
+                emailVerificationTokenHash: null,
+                emailVerificationTokenExpiresAt: null
+            },
+            { new: true }
+        ).exec();
+    }
+
     async softDeleteById(id: string): Promise<void> {
         await UserModel.findByIdAndUpdate(id, { deletedAt: new Date() }).exec();
     }

@@ -276,144 +276,138 @@ export function FriendsScreen() {
 							loading={resendLoading}
 						/>
 					</View>
-				) : null}
+				) : (
+					<>
+						<View style={styles.card}>
+							<Text style={styles.title}>Send Friend Request</Text>
+							<Text style={styles.subtitle}>
+								Send requests and manage accepted, pending, rejected, and blocked states.
+							</Text>
+							<FormField
+								label="Target Username"
+								value={targetUsername}
+								onChangeText={setTargetUsername}
+								placeholder="jane_doe"
+								autoCapitalize="none"
+							/>
+							<ActionButton
+								label="Send Friend Request"
+								onPress={() => void sendRequest()}
+								loading={requestLoading}
+							/>
+							{myUsername ? (
+								<Text style={styles.subtitle}>Your username: {myUsername}</Text>
+							) : null}
+							{errorMessage ? (
+								<StateNotice mode="error" message={errorMessage} />
+							) : null}
+						</View>
 
-				<View style={styles.card}>
-					<Text style={styles.title}>Send Friend Request</Text>
-					<Text style={styles.subtitle}>
-						Send requests and manage accepted, pending, rejected, and blocked states.
-					</Text>
-					<FormField
-						label="Target Username"
-						value={targetUsername}
-						onChangeText={setTargetUsername}
-						placeholder="jane_doe"
-						autoCapitalize="none"
-					/>
-					<ActionButton
-						label="Send Friend Request"
-						onPress={() => void sendRequest()}
-						loading={requestLoading}
-						disabled={!isVerified}
-					/>
-					{!isVerified ? (
-						<StateNotice
-							mode="empty"
-							message="Verify your email to send friend requests."
-						/>
-					) : null}
-					{myUsername ? (
-						<Text style={styles.subtitle}>Your username: {myUsername}</Text>
-					) : null}
-					{errorMessage ? (
-						<StateNotice mode="error" message={errorMessage} />
-					) : null}
-				</View>
+						<View style={styles.card}>
+							<Text style={styles.title}>Relationships</Text>
+							{loading ? (
+								<StateNotice mode="loading" message="Loading friendships..." />
+							) : null}
+							{error ? (
+								<StateNotice
+									mode="error"
+									message={toUserErrorMessage(error, "Unable to load friendships.")}
+								/>
+							) : null}
+							{!loading && !error && (data?.friendships?.length ?? 0) === 0 ? (
+								<StateNotice mode="empty" message="No friendships yet." />
+							) : null}
 
-				<View style={styles.card}>
-					<Text style={styles.title}>Relationships</Text>
-					{loading ? (
-						<StateNotice mode="loading" message="Loading friendships..." />
-					) : null}
-					{error ? (
-						<StateNotice
-							mode="error"
-							message={toUserErrorMessage(error, "Unable to load friendships.")}
-						/>
-					) : null}
-					{!loading && !error && (data?.friendships?.length ?? 0) === 0 ? (
-						<StateNotice mode="empty" message="No friendships yet." />
-					) : null}
+							{data?.friendships?.map((friendship) => {
+								const friendUsername = getFriendUsername(friendship);
+								const friendUserId = getFriendUserId(friendship);
+								const isIncomingPending =
+									friendship.status === "PENDING" && friendship.addresseeId === myId;
 
-					{data?.friendships?.map((friendship) => {
-						const friendUsername = getFriendUsername(friendship);
-						const friendUserId = getFriendUserId(friendship);
-						const isIncomingPending =
-							friendship.status === "PENDING" && friendship.addresseeId === myId;
+								return (
+									<View key={friendship.id} style={styles.friendCard}>
+										<Text style={styles.friendTitle}>Friend Username: {friendUsername}</Text>
+										<Text style={styles.subtitle}>Status: {friendship.status}</Text>
+										<View style={styles.row}>
+											{isIncomingPending ? (
+												<>
+													<ActionButton
+														label="Accept"
+														onPress={() =>
+															void withRefresh(() =>
+																acceptFriendRequest({
+																	variables: { friendshipId: friendship.id },
+																}),
+															)
+														}
+													/>
+													<ActionButton
+														label="Reject"
+														variant="muted"
+														onPress={() =>
+															void withRefresh(() =>
+																rejectFriendRequest({
+																	variables: { friendshipId: friendship.id },
+																}),
+															)
+														}
+													/>
+												</>
+											) : null}
 
-						return (
-							<View key={friendship.id} style={styles.friendCard}>
-								<Text style={styles.friendTitle}>Friend Username: {friendUsername}</Text>
-								<Text style={styles.subtitle}>Status: {friendship.status}</Text>
-								<View style={styles.row}>
-									{isIncomingPending ? (
-										<>
-											<ActionButton
-												label="Accept"
-												onPress={() =>
-													void withRefresh(() =>
-														acceptFriendRequest({
-															variables: { friendshipId: friendship.id },
-														}),
-													)
-												}
-												disabled={!isVerified}
-											/>
-											<ActionButton
-												label="Reject"
-												variant="muted"
-												onPress={() =>
-													void withRefresh(() =>
-														rejectFriendRequest({
-															variables: { friendshipId: friendship.id },
-														}),
-													)
-												}
-											/>
-										</>
-									) : null}
+											{friendship.status === "ACCEPTED" ? (
+												<>
+													<ActionButton
+														label="Remove"
+														variant="muted"
+														onPress={() =>
+															void withRefresh(() =>
+																removeFriend({ variables: { friendId: friendUserId } }),
+															)
+														}
+													/>
+													<ActionButton
+														label="Block"
+														variant="danger"
+														onPress={() =>
+															void withRefresh(() =>
+																blockUser({ variables: { targetUserId: friendUserId } }),
+															)
+														}
+													/>
+												</>
+											) : null}
 
-									{friendship.status === "ACCEPTED" ? (
-										<>
-											<ActionButton
-												label="Remove"
-												variant="muted"
-												onPress={() =>
-													void withRefresh(() =>
-														removeFriend({ variables: { friendId: friendUserId } }),
-													)
-												}
-											/>
-											<ActionButton
-												label="Block"
-												variant="danger"
-												onPress={() =>
-													void withRefresh(() =>
-														blockUser({ variables: { targetUserId: friendUserId } }),
-													)
-												}
-											/>
-										</>
-									) : null}
+											{friendship.status === "BLOCKED" ? (
+												<ActionButton
+													label="Unblock"
+													variant="muted"
+													onPress={() =>
+														void withRefresh(() =>
+															unblockUser({ variables: { targetUserId: friendUserId } }),
+														)
+													}
+												/>
+											) : null}
 
-									{friendship.status === "BLOCKED" ? (
-										<ActionButton
-											label="Unblock"
-											variant="muted"
-											onPress={() =>
-												void withRefresh(() =>
-													unblockUser({ variables: { targetUserId: friendUserId } }),
-												)
-											}
-										/>
-									) : null}
-
-									{friendship.status === "PENDING" && !isIncomingPending ? (
-										<ActionButton
-											label="Block"
-											variant="danger"
-											onPress={() =>
-												void withRefresh(() =>
-													blockUser({ variables: { targetUserId: friendUserId } }),
-												)
-											}
-										/>
-									) : null}
-								</View>
-							</View>
-						);
-					})}
-				</View>
+											{friendship.status === "PENDING" && !isIncomingPending ? (
+												<ActionButton
+													label="Block"
+													variant="danger"
+													onPress={() =>
+														void withRefresh(() =>
+															blockUser({ variables: { targetUserId: friendUserId } }),
+														)
+													}
+												/>
+											) : null}
+										</View>
+									</View>
+								);
+							})}
+						</View>
+					</>
+				)}
 			</ScrollView>
 		</ScreenScaffold>
 	);

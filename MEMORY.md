@@ -20,11 +20,15 @@
   - Verification UI on FriendsScreen (top card) and ProfileScreen (highlighted card)
   - AuthScreen simplified: removed `verify-email` mode and deep link flow
   - `emailVerifiedAt` added to `AuthenticatedUser` type and GraphQL context
-
-### Next Steps
-- Consider adding a verification code resend cooldown (rate limiting)
-- Add push notification when verification email is sent
-- Add email change flow (re-verification)
+- Email change feature (2026-04-12):
+  - `changeEmail` mutation: requires auth, password confirmation, and reason
+  - Resets `emailVerifiedAt` and sends new verification code to new email
+  - ProfileScreen: expandable "Change Email" section with reason picker (bottom sheet modal)
+  - Predefined reasons: switching email types, typo, old email inaccessible, privacy/security, other
+- FriendsScreen content gating (2026-04-12):
+  - All friend content hidden when unverified — only verification card shown
+- Background fix (2026-04-12):
+  - Root `View` wrapper in `App()` given `flex: 1` to fill viewport
 
 ## Key Decisions
 
@@ -38,10 +42,11 @@
 | File | Purpose |
 |------|---------|
 | `backend/src/utils/token.ts` | `createShortCode()`, `createRandomToken()`, `hashToken()` |
-| `backend/src/services/authService.ts` | Register, login, verify, password reset |
+| `backend/src/services/authService.ts` | Register, login, verify, password reset, change email |
 | `backend/src/services/emailService.ts` | Email delivery (Mailtrap API or SMTP) |
+| `backend/src/repositories/userRepository.ts` | User CRUD, email update, verification |
 | `backend/src/graphql/resolvers/helpers.ts` | `requireAuth()`, `requireVerifiedEmail()` |
 | `backend/src/types/index.ts` | `AuthenticatedUser`, `GraphQLContext` |
 | `mobile/src/screens/AuthScreen.tsx` | Login/register/password-reset flows |
-| `mobile/src/screens/FriendsScreen.tsx` | Friend management + verification UI |
-| `mobile/src/screens/ProfileScreen.tsx` | Profile editing + verification UI |
+| `mobile/src/screens/FriendsScreen.tsx` | Friend management + verification UI (gated) |
+| `mobile/src/screens/ProfileScreen.tsx` | Profile editing + verification + email change |

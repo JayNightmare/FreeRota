@@ -173,6 +173,53 @@ class AuthService {
             message: 'Password updated successfully. You can now sign in.'
         };
     }
+    async changeEmail(userId: string, input: {
+        newEmail: string;
+        password: string;
+        reason: string;
+    }): Promise<ActionResult> {
+        const user = await userRepository.findById(userId);
+        if (!user || user.deletedAt) {
+            throw new AppError('User not found', 'NOT_FOUND', 404);
+        }
+
+        const valid = await bcrypt.compare(input.password, user.passwordHash);
+        if (!valid) {
+            throw new AppError('Incorrect password.', 'UNAUTHORIZED', 401);
+        }
+
+        const newEmail = normalizeEmail(input.newEmail);
+        assertOrThrow(newEmail !== user.email, 'New email must be different from your current email.');
+
+        const existing = await userRepository.findByEmail(newEmail);
+        assertOrThrow(!existing, 'Email is already in use', 'CONFLICT', 409);
+
+        const updated = await userRepository.updateEmailById(userId, newEmail);
+        if (!updated) {
+            throw new AppError('Unable to update email', 'INTERNAL', 500);
+        }
+
+        console.info('[AuthService] Email changed', {
+            userId,
+            reason: input.reason,
+            from: user.email,
+            to: newEmail
+        });
+
+        const verificationCode = createShortCode();
+        await userRepository.setEmailVerificationToken(
+            userId,
+            hashToken(verificationCode),
+            new Date(Date.now() + EMAIL_VERIFICATION_TTL_MS)
+        );
+
+        await emailService.sendVerificationEmail(newEmail, user.username, verificationCode);
+
+        return {
+            success: true,
+            message: 'Email updated. A verification code has been sent to your new email.'
+        };
+    }
 }
 
 export const authService = new AuthService();

@@ -1,5 +1,23 @@
 # Changelog
 
+## 2026-04-12 (patch 2)
+
+### Added — Change Email
+
+- New `changeEmail` mutation: requires authenticated user, password confirmation, and a reason for the change.
+- New `ChangeEmailInput` GraphQL input type with `newEmail`, `password`, and `reason` fields.
+- New `updateEmailById` repository method that resets verification state when email changes.
+- ProfileScreen: expandable "Change Email" section with reason picker (bottom-sheet modal with 6 predefined options).
+- Changing email resets `emailVerifiedAt` and triggers a new verification code to the new address.
+
+### Changed — FriendsScreen Content Gating
+
+- **Breaking UX**: All friend request and relationship content is now fully hidden when the user's email is unverified. Previously, the content was visible but actions were disabled.
+
+### Fixed — Background Transparency
+
+- Root `View` wrapper in `App()` now includes `flex: 1` to fill the viewport, resolving the transparent background issue on web.
+
 ## 2026-04-12
 
 ### Changed — Email Verification Overhaul

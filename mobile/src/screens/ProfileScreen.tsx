@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { ScrollView, StyleSheet, Switch, Text, View } from "react-native";
+import { Modal, Pressable, ScrollView, StyleSheet, Switch, Text, View } from "react-native";
 import { useMutation, useQuery } from "@apollo/client";
 import { ScreenScaffold } from "../components/ScreenScaffold";
 import { FormField } from "../components/FormField";
@@ -7,6 +7,7 @@ import { ActionButton } from "../components/ActionButton";
 import { StateNotice } from "../components/StateNotice";
 import { CityTimezonePicker } from "../components/CityTimezonePicker";
 import {
+	CHANGE_EMAIL_MUTATION,
 	DELETE_ACCOUNT_MUTATION,
 	ME_QUERY,
 	REQUEST_EMAIL_VERIFICATION_MUTATION,
@@ -17,6 +18,17 @@ import { useTheme } from "../theme/useTheme";
 import { useAuth } from "../auth/AuthProvider";
 import { toUserErrorMessage } from "../utils/errors";
 import { formatTimezoneNow } from "../utils/time";
+
+const EMAIL_CHANGE_REASONS = [
+	"Switching to a personal email",
+	"Switching to a work email",
+	"Typo in original email",
+	"Old email no longer accessible",
+	"Privacy or security concern",
+	"Other",
+] as const;
+
+type ChangeEmailReason = (typeof EMAIL_CHANGE_REASONS)[number];
 
 interface MeQuery {
 	me: {
@@ -42,6 +54,14 @@ export function ProfileScreen() {
 	const [verifyError, setVerifyError] = useState<string | null>(null);
 	const [verifySuccess, setVerifySuccess] = useState<string | null>(null);
 
+	const [showChangeEmail, setShowChangeEmail] = useState(false);
+	const [newEmail, setNewEmail] = useState("");
+	const [emailPassword, setEmailPassword] = useState("");
+	const [emailReason, setEmailReason] = useState<ChangeEmailReason | null>(null);
+	const [showReasonPicker, setShowReasonPicker] = useState(false);
+	const [emailChangeError, setEmailChangeError] = useState<string | null>(null);
+	const [emailChangeSuccess, setEmailChangeSuccess] = useState<string | null>(null);
+
 	const { data, loading, error, refetch } = useQuery<MeQuery>(ME_QUERY);
 	const [updateAccount, { loading: updating }] = useMutation(
 		UPDATE_ACCOUNT_MUTATION,
@@ -53,6 +73,7 @@ export function ProfileScreen() {
 	const [requestEmailVerification, { loading: resendLoading }] = useMutation(
 		REQUEST_EMAIL_VERIFICATION_MUTATION,
 	);
+	const [changeEmail, { loading: changingEmail }] = useMutation(CHANGE_EMAIL_MUTATION);
 
 	const isVerified = Boolean(data?.me?.emailVerifiedAt);
 
@@ -94,6 +115,11 @@ export function ProfileScreen() {
 					fontWeight: "800",
 					color: theme.colors.textPrimary,
 				},
+				sectionTitle: {
+					fontSize: theme.typography.body,
+					fontWeight: "700",
+					color: theme.colors.textPrimary,
+				},
 				meta: {
 					fontSize: theme.typography.caption,
 					color: theme.colors.textSecondary,
@@ -121,6 +147,61 @@ export function ProfileScreen() {
 					fontSize: theme.typography.caption,
 					fontWeight: "700",
 					color: "#16A34A",
+				},
+				modalOverlay: {
+					flex: 1,
+					backgroundColor: "rgba(0,0,0,0.6)",
+					justifyContent: "flex-end",
+				},
+				modalContent: {
+					backgroundColor: theme.colors.surface,
+					borderTopLeftRadius: theme.radius.lg,
+					borderTopRightRadius: theme.radius.lg,
+					padding: theme.spacing.lg,
+					gap: theme.spacing.sm,
+					maxHeight: "60%",
+				},
+				modalTitle: {
+					fontSize: theme.typography.body,
+					fontWeight: "700",
+					color: theme.colors.textPrimary,
+					marginBottom: theme.spacing.sm,
+				},
+				reasonOption: {
+					paddingVertical: theme.spacing.md,
+					paddingHorizontal: theme.spacing.md,
+					borderRadius: theme.radius.md,
+					borderWidth: 1,
+					borderColor: theme.colors.border,
+					backgroundColor: theme.colors.surfaceElevated,
+				},
+				reasonOptionSelected: {
+					borderColor: theme.colors.accent,
+					backgroundColor: theme.colors.accent,
+				},
+				reasonText: {
+					fontSize: theme.typography.caption,
+					color: theme.colors.textPrimary,
+				},
+				reasonTextSelected: {
+					color: theme.colors.onAccent,
+					fontWeight: "700",
+				},
+				pickerButton: {
+					paddingVertical: theme.spacing.sm,
+					paddingHorizontal: theme.spacing.md,
+					borderRadius: theme.radius.md,
+					borderWidth: 1,
+					borderColor: theme.colors.border,
+					backgroundColor: theme.colors.surfaceElevated,
+				},
+				pickerButtonText: {
+					fontSize: theme.typography.caption,
+					color: theme.colors.textPrimary,
+				},
+				pickerPlaceholder: {
+					fontSize: theme.typography.caption,
+					color: theme.colors.textMuted,
 				},
 			}),
 		[theme],
@@ -221,6 +302,65 @@ export function ProfileScreen() {
 		}
 	};
 
+	const handleChangeEmail = async (): Promise<void> => {
+		if (!newEmail.trim()) {
+			setEmailChangeError("New email is required.");
+			return;
+		}
+
+		if (!emailPassword.trim()) {
+			setEmailChangeError("Password is required to confirm this change.");
+			return;
+		}
+
+		if (!emailReason) {
+			setEmailChangeError("Please select a reason for changing your email.");
+			return;
+		}
+
+		setEmailChangeError(null);
+		setEmailChangeSuccess(null);
+
+		try {
+			const response = await changeEmail({
+				variables: {
+					input: {
+						newEmail: newEmail.trim(),
+						password: emailPassword,
+						reason: emailReason,
+					},
+				},
+			});
+
+			if (response.data?.changeEmail?.success) {
+				setEmailChangeSuccess(
+					response.data.changeEmail.message ||
+						"Email updated. Check your new email for a verification code.",
+				);
+				setNewEmail("");
+				setEmailPassword("");
+				setEmailReason(null);
+				setShowChangeEmail(false);
+				await refetch();
+			} else {
+				setEmailChangeError(
+					response.data?.changeEmail?.message || "Unable to change email.",
+				);
+			}
+		} catch (changeErr) {
+			setEmailChangeError(toUserErrorMessage(changeErr, "Email change failed."));
+		}
+	};
+
+	const resetChangeEmailForm = (): void => {
+		setShowChangeEmail(false);
+		setNewEmail("");
+		setEmailPassword("");
+		setEmailReason(null);
+		setEmailChangeError(null);
+		setEmailChangeSuccess(null);
+	};
+
 	return (
 		<ScreenScaffold>
 			<ScrollView
@@ -287,9 +427,23 @@ export function ProfileScreen() {
 					) : null}
 					{data?.me ? (
 						<>
-							<Text style={styles.meta}>
-								Email: {data.me.email}
-							</Text>
+							<View style={styles.row}>
+								<Text style={styles.meta}>
+									Email: {data.me.email}
+								</Text>
+								<Pressable onPress={() => {
+									resetChangeEmailForm();
+									setShowChangeEmail(!showChangeEmail);
+								}}>
+									<Text style={{
+										fontSize: theme.typography.tiny,
+										fontWeight: "700",
+										color: theme.colors.accent,
+									}}>
+										Change
+									</Text>
+								</Pressable>
+							</View>
 							{isVerified ? (
 								<Text style={styles.verifiedBadge}>✓ Email verified</Text>
 							) : (
@@ -297,6 +451,68 @@ export function ProfileScreen() {
 							)}
 						</>
 					) : null}
+
+					{emailChangeSuccess ? (
+						<StateNotice mode="empty" message={emailChangeSuccess} />
+					) : null}
+
+					{showChangeEmail ? (
+						<View style={styles.card}>
+							<Text style={styles.sectionTitle}>Change Email</Text>
+							<Text style={styles.helpText}>
+								Changing your email will require re-verification.
+							</Text>
+							<FormField
+								label="New Email"
+								value={newEmail}
+								onChangeText={(text) => {
+									setEmailChangeError(null);
+									setNewEmail(text);
+								}}
+								placeholder="name@example.com"
+								keyboardType="email-address"
+								autoCapitalize="none"
+							/>
+							<FormField
+								label="Current Password"
+								value={emailPassword}
+								onChangeText={(text) => {
+									setEmailChangeError(null);
+									setEmailPassword(text);
+								}}
+								secureTextEntry
+								placeholder="••••••••"
+								autoCapitalize="none"
+							/>
+							<Text style={styles.label}>Reason for change</Text>
+							<Pressable
+								style={styles.pickerButton}
+								onPress={() => setShowReasonPicker(true)}
+							>
+								{emailReason ? (
+									<Text style={styles.pickerButtonText}>{emailReason}</Text>
+								) : (
+									<Text style={styles.pickerPlaceholder}>Select a reason…</Text>
+								)}
+							</Pressable>
+							{emailChangeError ? (
+								<StateNotice mode="error" message={emailChangeError} />
+							) : null}
+							<View style={styles.buttonRow}>
+								<ActionButton
+									label="Confirm Change"
+									onPress={() => void handleChangeEmail()}
+									loading={changingEmail}
+								/>
+								<ActionButton
+									label="Cancel"
+									onPress={resetChangeEmailForm}
+									variant="muted"
+								/>
+							</View>
+						</View>
+					) : null}
+
 					<FormField
 						label="Username"
 						value={username}
@@ -364,6 +580,50 @@ export function ProfileScreen() {
 					</View>
 				</View>
 			</ScrollView>
+
+			<Modal
+				visible={showReasonPicker}
+				transparent
+				animationType="slide"
+				onRequestClose={() => setShowReasonPicker(false)}
+			>
+				<Pressable
+					style={styles.modalOverlay}
+					onPress={() => setShowReasonPicker(false)}
+				>
+					<Pressable style={styles.modalContent} onPress={() => {}}>
+						<Text style={styles.modalTitle}>Why are you changing your email?</Text>
+						<ScrollView>
+							{EMAIL_CHANGE_REASONS.map((reason) => {
+								const selected = emailReason === reason;
+								return (
+									<Pressable
+										key={reason}
+										style={[
+											styles.reasonOption,
+											selected ? styles.reasonOptionSelected : undefined,
+										]}
+										onPress={() => {
+											setEmailReason(reason);
+											setEmailChangeError(null);
+											setShowReasonPicker(false);
+										}}
+									>
+										<Text
+											style={[
+												styles.reasonText,
+												selected ? styles.reasonTextSelected : undefined,
+											]}
+										>
+											{reason}
+										</Text>
+									</Pressable>
+								);
+							})}
+						</ScrollView>
+					</Pressable>
+				</Pressable>
+			</Modal>
 		</ScreenScaffold>
 	);
 }

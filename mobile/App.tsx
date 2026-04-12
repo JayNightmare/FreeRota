@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
 	Keyboard,
 	StatusBar,
@@ -72,6 +72,16 @@ function AppShell() {
 	const isDesktopViewport = width >= 900;
 	const shouldBlockWebUsage = isWeb && (!isPortrait || isDesktopViewport);
 
+	useEffect(() => {
+		if (isWeb && typeof document !== "undefined") {
+			document.body.style.backgroundColor = theme.colors.background;
+			document.body.style.margin = "0";
+			document.body.style.padding = "0";
+			document.body.style.height = "100%";
+			document.documentElement.style.height = "100%";
+		}
+	}, [isWeb, theme.colors.background]);
+
 	const activeLabel = useMemo(
 		() =>
 			tabs.find((item) => item.key === activeTab)?.label ??
@@ -88,7 +98,12 @@ function AppShell() {
 		() =>
 			StyleSheet.create({
 				root: {
+					display: "flex",
 					flex: 1,
+					backgroundColor:
+						theme.colors.background,
+				},
+				body: {
 					backgroundColor:
 						theme.colors.background,
 				},

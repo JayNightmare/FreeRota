@@ -191,6 +191,12 @@ const typeDefs = /* GraphQL */ `
     color: String
   }
 
+  input ChangeEmailInput {
+    newEmail: String!
+    password: String!
+    reason: String!
+  }
+
   type Query {
     me: User!
     myShiftTypes: [ShiftType!]!
@@ -217,6 +223,7 @@ const typeDefs = /* GraphQL */ `
     requestPasswordReset(identifier: String!): ActionResult!
     resetPassword(token: String!, newPassword: String!): ActionResult!
     updateAccount(input: UpdateAccountInput!): User!
+    changeEmail(input: ChangeEmailInput!): ActionResult!
     deleteAccount: Boolean!
 
     createShiftType(input: CreateShiftTypeInput!): ShiftType!

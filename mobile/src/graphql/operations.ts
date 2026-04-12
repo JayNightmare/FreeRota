@@ -80,6 +80,15 @@ export const UPDATE_ACCOUNT_MUTATION = gql`
 	}
 `;
 
+export const CHANGE_EMAIL_MUTATION = gql`
+	mutation ChangeEmail($input: ChangeEmailInput!) {
+		changeEmail(input: $input) {
+			success
+			message
+		}
+	}
+`;
+
 export const MY_SHIFT_TYPES_QUERY = gql`
 	query MyShiftTypes {
 		myShiftTypes {

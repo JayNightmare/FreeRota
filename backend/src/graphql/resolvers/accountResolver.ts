@@ -53,6 +53,20 @@ export const accountResolver = {
             const userId = requireAuth(context);
             return userService.updateUser(userId, args.input);
         },
+        changeEmail: async (
+            _parent: unknown,
+            args: {
+                input: {
+                    newEmail: string;
+                    password: string;
+                    reason: string;
+                };
+            },
+            context: Parameters<typeof requireAuth>[0]
+        ) => {
+            const userId = requireAuth(context);
+            return authService.changeEmail(userId, args.input);
+        },
         deleteAccount: async (_parent: unknown, _args: unknown, context: Parameters<typeof requireAuth>[0]) => {
             const userId = requireAuth(context);
             return userService.deleteAccount(userId);
