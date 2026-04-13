@@ -9,6 +9,8 @@ import {
 } from "react-native";
 import { useTheme } from "../theme/useTheme";
 
+const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
+
 interface FormFieldProps {
 	label: string;
 	value: string;
@@ -79,8 +81,6 @@ export function FormField({
 			color: theme.colors.textPrimary,
 		},
 	});
-
-	const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
 	return (
 		<View style={styles.container}>
