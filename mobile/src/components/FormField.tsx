@@ -1,4 +1,6 @@
+import { useRef } from "react";
 import {
+	Animated,
 	StyleSheet,
 	Text,
 	TextInput,
@@ -28,34 +30,73 @@ export function FormField({
 }: FormFieldProps) {
 	const { theme } = useTheme();
 
+	const focusAnim = useRef(new Animated.Value(0)).current;
+
+	const handleFocus = () => {
+		Animated.timing(focusAnim, {
+			toValue: 1,
+			duration: 200,
+			useNativeDriver: false,
+		}).start();
+	};
+
+	const handleBlur = () => {
+		Animated.timing(focusAnim, {
+			toValue: 0,
+			duration: 250,
+			useNativeDriver: false,
+		}).start();
+	};
+
+	const animatedBorderColor = focusAnim.interpolate({
+		inputRange: [0, 1],
+		outputRange: [theme.colors.border, theme.colors.tertiary],
+	});
+	
+	const animatedBgColor = focusAnim.interpolate({
+		inputRange: [0, 1],
+		outputRange: [theme.colors.surfaceMuted, theme.colors.surfaceElevated],
+	});
+
 	const styles = StyleSheet.create({
 		container: {
 			gap: theme.spacing.xs,
 		},
 		label: {
-			fontSize: theme.typography.caption,
-			fontWeight: "700",
-			color: theme.colors.textSecondary,
+			fontSize: theme.typography.tiny,
+			fontWeight: "900",
+			textTransform: "uppercase",
+			letterSpacing: 1,
+			color: theme.colors.textMuted,
 		},
 		input: {
-			borderWidth: 1,
-			borderColor: theme.colors.border,
+			borderWidth: theme.borderWidth,
 			borderRadius: theme.radius.md,
 			paddingHorizontal: theme.spacing.md,
 			paddingVertical: theme.spacing.sm,
 			fontSize: theme.typography.body,
+			fontWeight: "500",
 			color: theme.colors.textPrimary,
-			backgroundColor: theme.colors.surfaceElevated,
 		},
 	});
+
+	const AnimatedTextInput = Animated.createAnimatedComponent(TextInput);
 
 	return (
 		<View style={styles.container}>
 			<Text style={styles.label}>{label}</Text>
-			<TextInput
+			<AnimatedTextInput
 				value={value}
 				onChangeText={onChangeText}
-				style={styles.input}
+				onFocus={handleFocus}
+				onBlur={handleBlur}
+				style={[
+					styles.input,
+					{
+						borderColor: animatedBorderColor as unknown as string,
+						backgroundColor: animatedBgColor as unknown as string,
+					},
+				]}
 				autoCapitalize={autoCapitalize}
 				keyboardType={keyboardType}
 				placeholder={placeholder}

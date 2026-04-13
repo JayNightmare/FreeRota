@@ -160,9 +160,6 @@ export function FreeTimeScreen() {
 				keyboardDismissMode="on-drag"
 			>
 				<View style={styles.content}>
-					<Text style={styles.title}>
-						Free Time Finder
-					</Text>
 					<View style={styles.card}>
 						<WeekRangePicker
 							rangeStartUtc={

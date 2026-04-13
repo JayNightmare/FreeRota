@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>CHRONOS_VAULT | Rota Dashboard</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet">
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed-dim": "#d2bbff",
+                        "on-secondary-container": "#b8afff",
+                        "error-container": "#93000a",
+                        "surface-container-high": "#2a2a2a",
+                        "secondary-fixed": "#e5deff",
+                        "outline-variant": "#474553",
+                        "on-primary": "#3d147e",
+                        "background": "#0A0A0A",
+                        "secondary-fixed-dim": "#c7bfff",
+                        "tertiary": "#abd600",
+                        "primary": "#d2bbff",
+                        "surface-container-lowest": "#0e0e0e",
+                        "tertiary-fixed": "#c3f400",
+                        "tertiary-fixed-dim": "#abd600",
+                        "on-secondary-fixed": "#180065",
+                        "on-primary-fixed": "#25005a",
+                        "inverse-on-surface": "#313030",
+                        "on-tertiary-container": "#87a900",
+                        "tertiary-container": "#2c3900",
+                        "on-secondary": "#2c148e",
+                        "surface-tint": "#d2bbff",
+                        "secondary": "#c7bfff",
+                        "on-background": "#e5e2e1",
+                        "surface-container-low": "#1c1b1b",
+                        "outline": "#928f9e",
+                        "surface-container-highest": "#353534",
+                        "secondary-container": "#4635a7",
+                        "surface": "#131313",
+                        "primary-container": "#411a83",
+                        "on-tertiary-fixed": "#161e00",
+                        "inverse-surface": "#e5e2e1",
+                        "on-surface-variant": "#c9c4d5",
+                        "on-secondary-fixed-variant": "#4433a4",
+                        "on-error-container": "#ffdad6",
+                        "on-primary-container": "#ad8bf5",
+                        "on-primary-fixed-variant": "#543196",
+                        "surface-variant": "#353534",
+                        "on-error": "#690005",
+                        "surface-bright": "#3a3939",
+                        "error": "#ffb4ab",
+                        "on-tertiary-fixed-variant": "#3c4d00",
+                        "on-tertiary": "#283500",
+                        "inverse-primary": "#6c4ab0",
+                        "primary-fixed": "#eaddff",
+                        "on-surface": "#e5e2e1",
+                        "surface-container": "#201f1f",
+                        "surface-dim": "#131313"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "9999px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Space Grotesk"],
+                        "body": ["Space Grotesk"],
+                        "label": ["Space Grotesk"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+            vertical-align: middle;
+        }
+
+        body {
+            background-color: #0A0A0A;
+            color: #e5e2e1;
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .brutalist-border {
+            border: 4px solid #000000;
+        }
+
+        .industrial-shadow {
+            box-shadow: 8px 8px 0px 0px #000000;
+        }
+
+        .industrial-shadow-sm {
+            box-shadow: 4px 4px 0px 0px #000000;
+        }
+
+        .neon-glow-active {
+            box-shadow: 0 0 15px rgba(171, 214, 0, 0.3);
+        }
+    </style>
+    <style>
+        body {
+            min-height: max(884px, 100dvh);
+        }
+    </style>
+</head>
+
+<body class="min-h-screen pb-32">
+    <!-- TopAppBar -->
+    <header
+        class="fixed top-0 w-full z-50 flex items-center justify-between px-6 py-4 bg-[#0A0A0A] rounded-none border-b border-zinc-800/50 bg-zinc-900/50 backdrop-blur-xl">
+        <div class="flex items-center gap-4">
+            <button class="text-[#d2bbff] hover:bg-zinc-800 transition-colors p-2 active:scale-95 duration-100"
+                style="">
+                <span class="material-symbols-outlined" style="">menu</span>
+            </button>
+            <h1 class="text-xl font-black tracking-[-0.05em] text-[#d2bbff] font-['Space_Grotesk'] uppercase tracking-tighter font-bold"
+                style="">ROTA</h1>
+        </div>
+        <div class="flex items-center gap-4">
+            <div class="w-10 h-10 bg-primary-container brutalist-border overflow-hidden">
+                <img alt="User Profile Avatar"
+                    data-alt="close-up portrait of a futuristic worker in a dark techwear outfit with neon purple backlighting and glitch art effects"
+                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDFPmoEC8ZFIc5vl2CT46PqPh12mJMx1VmM5pPj3Qhj2dTZY3omwq1ZxImnV1RicuK7vwSnO1mQwkykoy-v5dlB1a8P9uXhC1gQ6BgnBN2HPkjxPzzBtsRc-4eoo9tQnceJqpEXwVC2XfJoUTQ4MyBkfkr_K11RvIphta7xlDtDm9GAUlMmVrnWD3UyZj-K_sMGII6w47xvCed8t8-fBRRBPSiQBfj46cXxBNtt5NqxFDNu1GRgfMm7Eku3becyK9jpLN2016dmPt9b"
+                    class="" style="">
+            </div>
+        </div>
+    </header>
+    <main class="pt-24 px-6 max-w-7xl mx-auto">
+        <!-- Dashboard Header & Actions -->
+        <div class="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
+            <div class="space-y-1">
+                <span class="text-tertiary font-bold tracking-widest text-sm uppercase" style="">System Status:
+                    Active</span>
+                <h2 class="text-6xl font-black uppercase tracking-tighter leading-none" style="">ROTA_DASH</h2>
+            </div>
+            <div class="flex flex-wrap gap-4">
+                <button
+                    class="bg-primary text-on-primary font-bold uppercase px-8 py-4 brutalist-border industrial-shadow hover:translate-x-1 hover:translate-y-1 hover:shadow-none transition-all active:scale-95"
+                    style="">
+                    Add Rota
+                </button>
+                <button
+                    class="bg-surface-container-high text-primary font-bold uppercase px-8 py-4 brutalist-border industrial-shadow-sm border-primary/20 hover:bg-zinc-800 transition-all active:scale-95"
+                    style="">
+                    Import
+                </button>
+            </div>
+        </div>
+        <!-- Metrics Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
+            <div
+                class="bg-surface-container-low brutalist-border p-6 flex flex-col justify-between h-48 industrial-shadow-sm">
+                <span class="text-zinc-500 font-bold uppercase tracking-widest text-xs" style="">Total Working
+                    Hours</span>
+                <div class="flex items-baseline gap-2">
+                    <span class="text-6xl font-black text-primary" style="">164</span>
+                    <span class="text-xl font-bold text-tertiary" style="">.50</span>
+                </div>
+                <div class="w-full bg-zinc-900 h-2">
+                    <div class="bg-tertiary h-full w-[72%]"></div>
+                </div>
+            </div>
+            <div class="bg-tertiary brutalist-border p-6 flex flex-col justify-between h-48 industrial-shadow-sm">
+                <span class="text-on-tertiary font-bold uppercase tracking-widest text-xs" style="">currently free
+                    friends</span>
+                <span class="text-6xl font-black text-on-tertiary" style="">24</span>
+                <span class="text-on-tertiary/70 text-sm font-bold" style="">SHOOT THEM A MESSAGE</span>
+            </div>
+            <div
+                class="bg-surface-container-highest brutalist-border p-6 flex flex-col justify-between h-48 industrial-shadow-sm">
+                <span class="text-primary font-bold uppercase tracking-widest text-xs" style="">Workaholic Scale</span>
+                <div class="flex items-center gap-4">
+                    <span class="material-symbols-outlined text-4xl text-primary"
+                        style="font-variation-settings: &quot;FILL&quot; 1;">verified_user</span>
+                    <span class="text-4xl font-black uppercase tracking-tighter text-white" style="">Level 04</span>
+                </div>
+                <span class="text-zinc-400 text-xs font-mono uppercase" style="">verified account</span>
+            </div>
+        </div>
+        <!-- Date Selector -->
+        <div class="mb-12 overflow-x-auto no-scrollbar">
+            <div class="flex gap-4 min-w-max pb-4">
+                <!-- Day Card -->
+                <div
+                    class="flex flex-col items-center bg-zinc-900 brutalist-border p-4 w-24 industrial-shadow-sm cursor-pointer hover:bg-zinc-800 border-zinc-800">
+                    <span class="text-zinc-500 font-bold text-xs uppercase" style="">Mon</span>
+                    <span class="text-2xl font-black" style="">12</span>
+                </div>
+                <div
+                    class="flex flex-col items-center bg-[#abd600] brutalist-border p-4 w-24 industrial-shadow border-black">
+                    <span class="text-black font-bold text-xs uppercase" style="">Tue</span>
+                    <span class="text-2xl font-black text-black" style="">13</span>
+                </div>
+                <div
+                    class="flex flex-col items-center bg-zinc-900 brutalist-border p-4 w-24 industrial-shadow-sm cursor-pointer hover:bg-zinc-800 border-zinc-800">
+                    <span class="text-zinc-500 font-bold text-xs uppercase" style="">Wed</span>
+                    <span class="text-2xl font-black" style="">14</span>
+                </div>
+                <div
+                    class="flex flex-col items-center bg-zinc-900 brutalist-border p-4 w-24 industrial-shadow-sm cursor-pointer hover:bg-zinc-800 border-zinc-800">
+                    <span class="text-zinc-500 font-bold text-xs uppercase" style="">Thu</span>
+                    <span class="text-2xl font-black" style="">15</span>
+                </div>
+                <div
+                    class="flex flex-col items-center bg-zinc-900 brutalist-border p-4 w-24 industrial-shadow-sm cursor-pointer hover:bg-zinc-800 border-zinc-800">
+                    <span class="text-zinc-500 font-bold text-xs uppercase" style="">Fri</span>
+                    <span class="text-2xl font-black" style="">16</span>
+                </div>
+                <div
+                    class="flex flex-col items-center bg-zinc-900 brutalist-border p-4 w-24 industrial-shadow-sm cursor-pointer hover:bg-zinc-800 border-zinc-800 opacity-50">
+                    <span class="text-zinc-500 font-bold text-xs uppercase" style="">Sat</span>
+                    <span class="text-2xl font-black" style="">17</span>
+                </div>
+                <div
+                    class="flex flex-col items-center bg-zinc-900 brutalist-border p-4 w-24 industrial-shadow-sm cursor-pointer hover:bg-zinc-800 border-zinc-800 opacity-50">
+                    <span class="text-zinc-500 font-bold text-xs uppercase" style="">Sun</span>
+                    <span class="text-2xl font-black" style="">18</span>
+                </div>
+            </div>
+        </div>
+        <!-- Shift Section: Busy On... -->
+        <section class="space-y-6">
+            <div class="flex items-center justify-between border-b-4 border-black pb-4">
+                <h3 class="text-3xl font-black uppercase tracking-tighter" style="">Busy On...</h3>
+                <span
+                    class="bg-tertiary-container text-tertiary px-3 py-1 text-xs font-bold brutalist-border uppercase tracking-widest"
+                    style="">3 Active Shifts</span>
+            </div>
+            <div class="grid grid-cols-1 gap-4">
+                <!-- Shift Item -->
+                <div
+                    class="bg-surface-container-low brutalist-border p-6 flex flex-col md:flex-row items-center gap-6 industrial-shadow-sm group hover:bg-surface-container-high transition-colors">
+                    <div class="w-full md:w-32 flex flex-col">
+                        <span class="text-tertiary font-black text-xl leading-none" style="">08:00</span>
+                        <span class="text-zinc-600 font-bold uppercase text-xs" style="">Start Time</span>
+                    </div>
+                    <div class="hidden md:block h-12 w-1 bg-zinc-800"></div>
+                    <div class="flex-grow">
+                        <h4 class="text-2xl font-black text-primary uppercase tracking-tight" style="">Pub Shift</h4>
+                        <p class="text-zinc-400 font-medium uppercase text-sm tracking-wide" style="">The vic</p>
+                    </div>
+                    <div class="flex items-center gap-4 w-full md:w-auto">
+                        <div class="flex -space-x-3">
+                            <div class="w-10 h-10 brutalist-border bg-zinc-800 overflow-hidden">
+                                <img alt="Team member"
+                                    data-alt="cyberpunk profile headshot of a male with neon green visor and gritty industrial background"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuDmQwn24D0MGb8zoJSmPkAn6jr3kw6r4_2bT3mLZBFrAOgN8LIEjEYfhx0tTJm_MSmCyWebKY2Qzf7mub8lwmijcd7tBhJclOP31bsjAgdnd2Gr0_8PDcBpaKAdqHhYsYpfbxb_CN_JRkWx18-ccMQjeW5PoQbkCuxn5vMASYaQg71BDKjamMfB-cWP3aXP8VwBmxRskJaJ8cH3kn-FaCB2zxe5DPbDM8mrbRIxAyc9UNuna0xC8koElyrInfyg55HZ2erYkwpWqZ6R"
+                                    class="" style="">
+                            </div>
+                            <div class="w-10 h-10 brutalist-border bg-zinc-800 overflow-hidden">
+                                <img alt="Team member"
+                                    data-alt="futuristic android face with glowing blue circuits and metallic skin texture"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuAWIqqCn1lpxpKHRxLYkfvc58znMk6ZYBPQvqcnAhxttezEZYiS22Q8dmHlDLyso7WF3IzlPgYLk1WW7_ix9k36dKj_GxZT4bxE809Ay7_1Em5wzVXVVqoVq6NHGYF-CMKI1zQoqiJ3WnybgJ3fVZ6tkaAbu0MyR3TmafUsySGZybLKOH3zo1EzdRpKJ5mdib_VRl5TzSvjHf7QD_26a0Jl2xa1g3wAMJ9KxexT_PlgDMQQLUBz_iD3G-9iXrH1UZhvB2E8Jm65koMJ"
+                                    class="" style="">
+                            </div>
+                            <div class="w-10 h-10 brutalist-border bg-zinc-700 flex items-center justify-center text-[10px] font-bold"
+                                style="">
+                                +4
+                            </div>
+                        </div>
+                        <button
+                            class="p-3 bg-zinc-900 brutalist-border hover:bg-primary hover:text-on-primary transition-colors"
+                            style="">
+                            <span class="material-symbols-outlined" style="">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- Shift Item -->
+                <div
+                    class="bg-surface-container-low brutalist-border p-6 flex flex-col md:flex-row items-center gap-6 industrial-shadow-sm group hover:bg-surface-container-high transition-colors">
+                    <div class="w-full md:w-32 flex flex-col">
+                        <span class="text-tertiary font-black text-xl leading-none" style="">14:30</span>
+                        <span class="text-zinc-600 font-bold uppercase text-xs" style="">Start Time</span>
+                    </div>
+                    <div class="hidden md:block h-12 w-1 bg-zinc-800"></div>
+                    <div class="flex-grow">
+                        <h4 class="text-2xl font-black text-primary uppercase tracking-tight" style="">RA - Research
+                        </h4>
+                        <p class="text-zinc-400 font-medium uppercase text-sm tracking-wide" style="">Kingston
+                            University</p>
+                    </div>
+                    <div class="flex items-center gap-4 w-full md:w-auto">
+                        <div class="flex -space-x-3">
+                            <div class="w-10 h-10 brutalist-border bg-zinc-800 overflow-hidden">
+                                <img alt="Team member"
+                                    data-alt="close-up of a female hacker with purple hair and high-tech glasses reflecting data screens"
+                                    src="https://lh3.googleusercontent.com/aida-public/AB6AXuD8kWs-J6pPTDYZVzvrwnFyFUWewJj-xZmbU5wIrY91vo-qJIrxzSPbc4aQ1kLkRwQTm-fPaf6oQ3itxtnKk2SswizDCuvWywvxo0EfwW7mtGnY2ormcTp9-GMaI2yoZF5eJQpUCnFE8Bd2ouwIoMETU-_L1-mpfS_mQY6zZ9X3nQlEsu5gS7SJ-md9OZFge9XfiE6pU5jg-HjDj4P3sjhibFZUZuGof2A61Z2FpVkbbGxIM-icbjGgO8iuwLtJme0kgxKtJK7rHOFs"
+                                    class="" style="">
+                            </div>
+                            <div class="w-10 h-10 brutalist-border bg-zinc-700 flex items-center justify-center text-[10px] font-bold"
+                                style="">
+                                +1
+                            </div>
+                        </div>
+                        <button
+                            class="p-3 bg-zinc-900 brutalist-border hover:bg-primary hover:text-on-primary transition-colors"
+                            style="">
+                            <span class="material-symbols-outlined" style="">chevron_right</span>
+                        </button>
+                    </div>
+                </div>
+                <!-- Shift Item (Alert State) -->
+                <div
+                    class="bg-surface-container-low brutalist-border p-6 flex flex-col md:flex-row items-center gap-6 industrial-shadow-sm border-l-[12px] border-l-error">
+                    <div class="w-full md:w-32 flex flex-col">
+                        <span class="text-error font-black text-xl leading-none" style="">12:00</span>
+                        <span class="text-zinc-600 font-bold uppercase text-xs" style="">Start Time</span>
+                    </div>
+                    <div class="hidden md:block h-12 w-1 bg-zinc-800"></div>
+                    <div class="flex-grow">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="material-symbols-outlined text-error text-sm" style="">warning</span>
+                            <span class="text-error font-black uppercase text-xs tracking-widest" style="">Urgent</span>
+                        </div>
+                        <h4 class="text-2xl font-black text-error uppercase tracking-tight" style="">Cover Shift</h4>
+                        <p class="text-zinc-400 font-medium uppercase text-sm tracking-wide" style="">Spring Grove</p>
+                    </div>
+                    <div class="flex items-center gap-4 w-full md:w-auto">
+                        <button
+                            class="bg-error text-on-error font-bold uppercase px-4 py-2 brutalist-border industrial-shadow-sm"
+                            style="">
+                            Acknowledge
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Asymmetric Decorative Element -->
+        <div class="mt-16 flex justify-end">
+            <div class="relative">
+                <div class="absolute -top-4 -left-4 w-full h-full bg-tertiary-container -z-10 brutalist-border"></div>
+                <div class="bg-zinc-900 brutalist-border p-8 max-w-sm">
+                    <h5 class="text-lg font-black uppercase text-primary mb-2" style="">Free Days?</h5>
+                    <p class="text-xs font-mono text-zinc-500 uppercase leading-relaxed" style="">Your friends, Josh and
+                        Kevin, are free on the 14th between 14:00 and 18:00. Want to plan something?</p>
+                </div>
+            </div>
+        </div>
+    </main>
+    <!-- BottomNavBar -->
+    <nav
+        class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center bg-[#0A0A0A] px-4 pb-6 rounded-none border-t-2 border-zinc-900">
+        <a class="flex flex-col items-center justify-center text-[#abd600] border-t-2 border-[#abd600] pt-2" href="#"
+            style="">
+            <span class="material-symbols-outlined"
+                style="font-variation-settings: &quot;FILL&quot; 1;">calendar_today</span>
+            <span class="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest mt-1"
+                style="">SCHEDULE</span>
+        </a>
+        <a class="flex flex-col items-center justify-center text-zinc-500 pt-2 hover:text-[#d2bbff] active:bg-[#d2bbff]/10"
+            href="#" style="">
+            <span class="material-symbols-outlined" style="">lock</span>
+            <span class="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest mt-1"
+                style="">VAULT</span>
+        </a>
+        <a class="flex flex-col items-center justify-center text-zinc-500 pt-2 hover:text-[#d2bbff] active:bg-[#d2bbff]/10"
+            href="#" style="">
+            <span class="material-symbols-outlined" style="">hub</span>
+            <span class="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest mt-1"
+                style="">NETWORK</span>
+        </a>
+        <a class="flex flex-col items-center justify-center text-zinc-500 pt-2 hover:text-[#d2bbff] active:bg-[#d2bbff]/10"
+            href="#" style="">
+            <span class="material-symbols-outlined" style="">settings</span>
+            <span class="font-['Space_Grotesk'] text-[10px] font-bold uppercase tracking-widest mt-1"
+                style="">SYSTEM</span>
+        </a>
+    </nav>
+</body>
+
+</html>

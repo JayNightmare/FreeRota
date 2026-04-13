@@ -1,5 +1,26 @@
 # Changelog
 
+## 2026-04-13 (patch 2)
+
+### Changed — Friends + Messages Merge
+
+- Combined `FriendsScreen` and `MessagesScreen` into a single tab. Clicking an accepted friend opens a chat sub-view inline.
+- Removed the **Messages** tab from the bottom nav (4 tabs remain: Rota, Friends, Free Time, Profile).
+- Chat view includes back button, message history with own/other styling, compose field.
+- `MessagesScreen.tsx` is now orphaned and can be deleted.
+
+## 2026-04-13 (patch 1)
+
+### Changed — Brutalist UI Redesign (Global)
+
+- **Breaking**: Rewrote the entire design system (`themes.ts`) to match the `Design.html` reference. All screens now inherit the Brutalist dark aesthetic.
+- Forced dark-only mode — light theme is no longer available.
+- Color palette: `#0A0A0A` background, `#d2bbff` primary purple, `#abd600` tertiary green, all from Google Material 3 spec.
+- All border radii set to `0`, border width `4px`, with industrial offset shadows (`4px 4px` and `8px 8px`).
+- Updated shared components (`ActionButton`, `FormField`, `StateNotice`, `ScreenIntroCard`) with brutalist borders, shadows, uppercase text.
+- Redesigned App header: minimal row with accent purple title on left, settings on right.
+- Redesigned bottom nav: flat dark bar with tertiary green top-border on active tab, uppercase 10px labels.
+
 ## 2026-04-12 (patch 2)
 
 ### Added — Change Email

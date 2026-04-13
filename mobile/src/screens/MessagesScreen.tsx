@@ -248,9 +248,6 @@ export function MessagesScreen() {
 				keyboardDismissMode="on-drag"
 			>
 				<View style={styles.content}>
-					<Text style={styles.title}>
-						Conversations
-					</Text>
 					<View style={styles.card}>
 						<FormField
 							label="Start Conversation With User ID"
@@ -366,7 +363,6 @@ export function MessagesScreen() {
 					</View>
 				</View>
 
-				<Text style={styles.title}>Messages</Text>
 				<View style={styles.card}>
 					<FormField
 						label="Message"

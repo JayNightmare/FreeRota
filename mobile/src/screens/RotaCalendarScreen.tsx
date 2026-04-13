@@ -14,6 +14,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as Calendar from "expo-calendar";
 import { ScreenScaffold } from "../components/ScreenScaffold";
 import { ActionButton } from "../components/ActionButton";
+
 import { DateTimePickerField } from "../components/DateTimePickerField";
 import { FormField } from "../components/FormField";
 import { StateNotice } from "../components/StateNotice";
@@ -325,6 +326,7 @@ function mapCalendarEventToImportInput(
 	};
 }
 
+
 export function RotaScreen() {
 	const { theme } = useTheme();
 	const [selectedDate, setSelectedDate] = useState(() => new Date());
@@ -539,12 +541,13 @@ export function RotaScreen() {
 					paddingBottom: theme.spacing.md,
 				},
 				card: {
-					backgroundColor: theme.colors.surface,
-					borderWidth: 1,
+					backgroundColor: theme.colors.surfaceMuted,
+					borderWidth: theme.borderWidth,
 					borderColor: theme.colors.border,
 					borderRadius: theme.radius.lg,
 					padding: theme.spacing.lg,
 					gap: theme.spacing.md,
+					...theme.shadowSm,
 				},
 				monthRow: {
 					flexDirection: "row",
@@ -558,19 +561,21 @@ export function RotaScreen() {
 					gap: theme.spacing.xs,
 					paddingHorizontal: theme.spacing.md,
 					paddingVertical: theme.spacing.sm,
-					borderRadius: theme.radius.pill,
-					borderWidth: 1,
+					borderRadius: theme.radius.md,
+					borderWidth: theme.borderWidth,
 					borderColor: theme.colors.border,
 					backgroundColor:
-						theme.colors.surfaceMuted,
+						theme.colors.surfaceElevated,
+					...theme.shadowSm,
 				},
 				monthButtonCurrent: {
-					borderWidth: 2,
-					borderColor: theme.colors.accent,
+					borderColor: theme.colors.tertiary,
+					backgroundColor: theme.colors.surfaceElevated,
 				},
 				monthButtonText: {
 					fontSize: theme.typography.body,
-					fontWeight: "800",
+					fontWeight: "900",
+					textTransform: "uppercase",
 					color: theme.colors.textPrimary,
 				},
 				todayRow: {
@@ -580,15 +585,17 @@ export function RotaScreen() {
 				todayButton: {
 					paddingHorizontal: theme.spacing.md,
 					paddingVertical: theme.spacing.sm,
-					borderRadius: theme.radius.pill,
-					borderWidth: 1,
+					borderRadius: theme.radius.md,
+					borderWidth: theme.borderWidth,
 					borderColor: theme.colors.border,
 					backgroundColor:
-						theme.colors.surfaceMuted,
+						theme.colors.surfaceElevated,
+					...theme.shadowSm,
 				},
 				todayButtonLabel: {
 					fontSize: theme.typography.caption,
-					fontWeight: "700",
+					fontWeight: "900",
+					textTransform: "uppercase",
 					color: theme.colors.textPrimary,
 				},
 				weekRow: {
@@ -602,10 +609,11 @@ export function RotaScreen() {
 					borderRadius: theme.radius.md,
 					alignItems: "center",
 					justifyContent: "center",
-					borderWidth: 1,
+					borderWidth: theme.borderWidth,
 					borderColor: theme.colors.border,
 					backgroundColor:
-						theme.colors.surfaceMuted,
+						theme.colors.surfaceElevated,
+					...theme.shadowSm,
 				},
 				daysRow: {
 					flex: 1,
@@ -616,28 +624,33 @@ export function RotaScreen() {
 					flex: 1,
 					minHeight: 64,
 					borderRadius: theme.radius.md,
+					borderWidth: theme.borderWidth,
+					borderColor: theme.colors.border,
 					paddingVertical: theme.spacing.sm,
 					paddingHorizontal: 2,
 					alignItems: "center",
 					justifyContent: "center",
 					gap: 2,
+					backgroundColor: theme.colors.surface,
 				},
 				dayCellToday: {
 					backgroundColor:
-						theme.colors.accentBackground,
+						theme.colors.accentTodayBackground,
+					borderColor: theme.colors.accent,
 				},
 				dayCellActive: {
-					backgroundColor:
-						theme.colors.accentBackground,
+					backgroundColor: theme.colors.tertiary,
+					borderColor: theme.colors.tertiary,
 				},
 				dayLabel: {
 					fontSize: theme.typography.tiny,
-					fontWeight: "700",
-					color: theme.colors.textSecondary,
+					fontWeight: "900",
+					textTransform: "uppercase",
+					color: theme.colors.textMuted,
 				},
 				dayDate: {
 					fontSize: theme.typography.caption,
-					fontWeight: "800",
+					fontWeight: "900",
 					color: theme.colors.textPrimary,
 				},
 				totalHoursRow: {
@@ -652,27 +665,32 @@ export function RotaScreen() {
 				},
 				totalHoursLabel: {
 					fontSize: theme.typography.caption,
-					fontWeight: "700",
-					color: theme.colors.textSecondary,
+					fontWeight: "900",
+					textTransform: "uppercase",
+					letterSpacing: 1,
+					color: theme.colors.textMuted,
 				},
 				totalHoursValue: {
 					fontSize: theme.typography.body,
-					fontWeight: "800",
-					color: theme.colors.textPrimary,
+					fontWeight: "900",
+					color: theme.colors.accent,
 				},
 				busyTitle: {
 					fontSize: theme.typography.heading,
-					fontWeight: "800",
+					fontWeight: "900",
+					textTransform: "uppercase",
+					letterSpacing: -1,
 					color: theme.colors.textPrimary,
 				},
 				shiftCard: {
 					flexDirection: "row",
-					borderWidth: 1,
+					borderWidth: theme.borderWidth,
 					borderColor: theme.colors.border,
 					borderRadius: theme.radius.md,
 					backgroundColor:
-						theme.colors.surfaceElevated,
+						theme.colors.surfaceMuted,
 					overflow: "hidden",
+					...theme.shadowSm,
 				},
 				shiftAccent: {
 					width: 8,
@@ -684,17 +702,22 @@ export function RotaScreen() {
 				},
 				shiftTitle: {
 					fontSize: theme.typography.body,
-					fontWeight: "800",
-					color: theme.colors.textPrimary,
+					fontWeight: "900",
+					textTransform: "uppercase",
+					color: theme.colors.accent,
 				},
 				shiftMeta: {
 					fontSize: theme.typography.caption,
+					fontWeight: "700",
+					textTransform: "uppercase",
 					color: theme.colors.textSecondary,
 				},
 				binButton: {
 					width: 44,
 					alignItems: "center",
 					justifyContent: "center",
+					borderLeftWidth: theme.borderWidth,
+					borderColor: theme.colors.border,
 				},
 				bottomRow: {
 					flexDirection: "row",
@@ -714,7 +737,7 @@ export function RotaScreen() {
 					backgroundColor: theme.colors.surface,
 					borderTopLeftRadius: theme.radius.lg,
 					borderTopRightRadius: theme.radius.lg,
-					borderWidth: 1,
+					borderWidth: theme.borderWidth,
 					borderColor: theme.colors.border,
 					maxHeight: "88%",
 					paddingHorizontal: theme.spacing.lg,
@@ -729,11 +752,14 @@ export function RotaScreen() {
 				},
 				modalTitle: {
 					fontSize: theme.typography.heading,
-					fontWeight: "800",
+					fontWeight: "900",
+					textTransform: "uppercase",
 					color: theme.colors.textPrimary,
 				},
 				modalSubtext: {
 					fontSize: theme.typography.caption,
+					fontWeight: "700",
+					textTransform: "uppercase",
 					color: theme.colors.textMuted,
 				},
 				modeRow: {
@@ -748,6 +774,7 @@ export function RotaScreen() {
 				},
 				durationHint: {
 					fontSize: theme.typography.caption,
+					fontWeight: "700",
 					color: theme.colors.textSecondary,
 				},
 				presetRow: {
@@ -758,21 +785,25 @@ export function RotaScreen() {
 				presetChip: {
 					paddingHorizontal: theme.spacing.md,
 					paddingVertical: theme.spacing.sm,
-					borderRadius: theme.radius.pill,
-					borderWidth: 1,
+					borderRadius: theme.radius.md,
+					borderWidth: theme.borderWidth,
 					borderColor: theme.colors.border,
 					backgroundColor:
-						theme.colors.surfaceMuted,
+						theme.colors.surfaceElevated,
+					...theme.shadowSm,
 				},
 				presetLabel: {
 					fontSize: theme.typography.caption,
-					fontWeight: "700",
+					fontWeight: "900",
+					textTransform: "uppercase",
 					color: theme.colors.textPrimary,
 				},
 				chipSectionLabel: {
 					fontSize: theme.typography.caption,
-					fontWeight: "700",
-					color: theme.colors.textSecondary,
+					fontWeight: "900",
+					textTransform: "uppercase",
+					letterSpacing: 1,
+					color: theme.colors.textMuted,
 				},
 				shiftTypeChipRow: {
 					flexDirection: "row",
@@ -785,15 +816,15 @@ export function RotaScreen() {
 					gap: theme.spacing.xs,
 					paddingHorizontal: theme.spacing.md,
 					paddingVertical: theme.spacing.sm,
-					borderRadius: theme.radius.pill,
-					borderWidth: 1,
+					borderRadius: theme.radius.md,
+					borderWidth: theme.borderWidth,
 					borderColor: theme.colors.border,
 					backgroundColor:
-						theme.colors.surfaceMuted,
+						theme.colors.surfaceElevated,
+					...theme.shadowSm,
 				},
 				shiftTypeChipActive: {
-					borderColor: theme.colors.textPrimary,
-					borderWidth: 2,
+					borderColor: theme.colors.accent,
 				},
 				shiftTypeDot: {
 					width: 10,
@@ -802,7 +833,8 @@ export function RotaScreen() {
 				},
 				shiftTypeChipLabel: {
 					fontSize: theme.typography.caption,
-					fontWeight: "700",
+					fontWeight: "900",
+					textTransform: "uppercase",
 					color: theme.colors.textPrimary,
 				},
 				monthModalCard: {
@@ -810,10 +842,11 @@ export function RotaScreen() {
 					marginBottom: theme.spacing.xl,
 					padding: theme.spacing.lg,
 					gap: theme.spacing.md,
-					borderWidth: 1,
+					borderWidth: theme.borderWidth,
 					borderColor: theme.colors.border,
 					borderRadius: theme.radius.lg,
 					backgroundColor: theme.colors.surface,
+					...theme.shadowSm,
 				},
 				monthHeader: {
 					flexDirection: "row",
@@ -822,7 +855,8 @@ export function RotaScreen() {
 				},
 				monthYearLabel: {
 					fontSize: theme.typography.body,
-					fontWeight: "800",
+					fontWeight: "900",
+					textTransform: "uppercase",
 					color: theme.colors.textPrimary,
 				},
 				monthGrid: {
@@ -834,19 +868,20 @@ export function RotaScreen() {
 					width: "31%",
 					paddingVertical: theme.spacing.sm,
 					alignItems: "center",
-					borderWidth: 1,
+					borderWidth: theme.borderWidth,
 					borderColor: theme.colors.border,
 					borderRadius: theme.radius.md,
 					backgroundColor:
-						theme.colors.surfaceMuted,
+						theme.colors.surfaceElevated,
 				},
 				monthCellCurrent: {
-					borderWidth: 2,
-					borderColor: theme.colors.accent,
+					borderColor: theme.colors.tertiary,
+					backgroundColor: theme.colors.surfaceElevated,
 				},
 				monthCellText: {
 					fontSize: theme.typography.caption,
-					fontWeight: "700",
+					fontWeight: "900",
+					textTransform: "uppercase",
 					color: theme.colors.textPrimary,
 				},
 			}),
@@ -1525,21 +1560,12 @@ export function RotaScreen() {
 											style={[
 												styles.dayCell,
 												{
-													borderWidth: 1,
 													backgroundColor:
-														dayStateColor(
-															dayState,
-														),
-													borderColor:
-														dayState ===
-														"EARLY"
-															? "#FFD70088"
-															: dayState ===
-																  "BUSY"
-																? "#FF450088"
-																: theme
-																		.colors
-																		.accent,
+														dayState === "EARLY"
+															? theme.colors.accentEarlyBackground
+															: dayState === "BUSY"
+																? theme.colors.accentBusyBackground
+																: theme.colors.surface,
 												},
 												isToday
 													? styles.dayCellToday

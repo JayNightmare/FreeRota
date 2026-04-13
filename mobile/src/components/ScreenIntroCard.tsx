@@ -14,29 +14,29 @@ export function ScreenIntroCard({
 
 	const styles = StyleSheet.create({
 		card: {
-			backgroundColor: theme.colors.surface,
+			backgroundColor: theme.colors.surfaceMuted,
 			borderRadius: theme.radius.lg,
 			paddingHorizontal: theme.spacing.lg,
 			paddingVertical: theme.spacing.xl,
-			borderWidth: 1,
+			borderWidth: theme.borderWidth,
 			borderColor: theme.colors.border,
-			shadowColor: "#000000",
-			shadowOpacity: 0.07,
-			shadowRadius: 12,
-			shadowOffset: { width: 0, height: 5 },
-			elevation: 4,
 			gap: theme.spacing.md,
+			...theme.shadowSm,
 		},
 		title: {
 			fontSize: 40,
 			lineHeight: 46,
-			fontWeight: "800",
-			letterSpacing: -1,
+			fontWeight: "900",
+			letterSpacing: -2,
+			textTransform: "uppercase",
 			color: theme.colors.textPrimary,
 		},
 		description: {
 			fontSize: theme.typography.body,
 			lineHeight: 28,
+			fontWeight: "500",
+			textTransform: "uppercase",
+			letterSpacing: 0.5,
 			color: theme.colors.textSecondary,
 		},
 	});

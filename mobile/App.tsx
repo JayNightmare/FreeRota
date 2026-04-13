@@ -9,7 +9,9 @@ import {
 	ActivityIndicator,
 	Platform,
 	useWindowDimensions,
+	Animated,
 } from "react-native";
+import { useRef } from "react";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { ApolloProvider } from "@apollo/client";
 import Ionicons from "@expo/vector-icons/Ionicons";
@@ -18,14 +20,13 @@ import { AuthProvider, useAuth } from "./src/auth/AuthProvider";
 import { RotaScreen } from "./src/screens/RotaScreen";
 import { FriendsScreen } from "./src/screens/FriendsScreen";
 import { FreeTimeScreen } from "./src/screens/FreeTimeScreen";
-import { MessagesScreen } from "./src/screens/MessagesScreen";
 import { ProfileScreen } from "./src/screens/ProfileScreen";
 import { SettingsScreen } from "./src/screens/SettingsScreen";
 import { AuthScreen } from "./src/screens/AuthScreen";
 import { ThemeProvider } from "./src/theme/ThemeProvider";
 import { useTheme } from "./src/theme/useTheme";
 
-type TabKey = "ROTA" | "FRIENDS" | "FREE" | "MESSAGES" | "PROFILE" | "SETTINGS";
+type TabKey = "ROTA" | "FRIENDS" | "FREE" | "PROFILE" | "SETTINGS";
 
 const tabs: Array<{
 	key: TabKey;
@@ -35,11 +36,6 @@ const tabs: Array<{
 	{ key: "ROTA", label: "Rota", icon: "calendar-outline" },
 	{ key: "FRIENDS", label: "Friends", icon: "people-outline" },
 	{ key: "FREE", label: "Free Time", icon: "time-outline" },
-	{
-		key: "MESSAGES",
-		label: "Messages",
-		icon: "chatbubble-ellipses-outline",
-	},
 	{ key: "PROFILE", label: "Profile", icon: "person-outline" },
 ];
 
@@ -51,8 +47,6 @@ function ActiveScreen({ tab }: { tab: TabKey }) {
 			return <FriendsScreen />;
 		case "FREE":
 			return <FreeTimeScreen />;
-		case "MESSAGES":
-			return <MessagesScreen />;
 		case "PROFILE":
 			return <ProfileScreen />;
 		case "SETTINGS":
@@ -60,6 +54,39 @@ function ActiveScreen({ tab }: { tab: TabKey }) {
 		default:
 			return <RotaScreen />;
 	}
+}
+
+function TabIndicator({ tab, activeTab, onSelect, theme, styles }: any) {
+	const active = tab.key === activeTab;
+	const iconColor = active ? theme.colors.tertiary : theme.colors.textMuted;
+	const scaleAnim = useRef(new Animated.Value(1)).current;
+
+	const handlePressIn = () => {
+		Animated.spring(scaleAnim, { toValue: 0.85, useNativeDriver: true }).start();
+	};
+
+	const handlePressOut = () => {
+		Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
+	};
+
+	return (
+		<Pressable
+			onPress={() => {
+				Keyboard.dismiss();
+				onSelect(tab.key);
+			}}
+			onPressIn={handlePressIn}
+			onPressOut={handlePressOut}
+			style={[
+				styles.tabButton,
+				active ? styles.tabButtonActive : undefined,
+			]}
+		>
+			<Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+				<Ionicons name={tab.icon} size={22} color={iconColor} />
+			</Animated.View>
+		</Pressable>
+	);
 }
 
 function AppShell() {
@@ -90,6 +117,17 @@ function AppShell() {
 		[activeTab],
 	);
 
+	const fadeAnim = useRef(new Animated.Value(1)).current;
+
+	useEffect(() => {
+		fadeAnim.setValue(0);
+		Animated.timing(fadeAnim, {
+			toValue: 1,
+			duration: 250,
+			useNativeDriver: true,
+		}).start();
+	}, [activeTab]);
+
 	const statusBarStyle =
 		resolvedMode === "dark" ? "light-content" : "dark-content";
 	const themeIconName = resolvedMode === "dark" ? "moon" : "sunny";
@@ -110,52 +148,57 @@ function AppShell() {
 				},
 				header: {
 					paddingHorizontal: theme.spacing.xl,
-					paddingTop: theme.spacing.lg,
+					paddingTop: theme.spacing.md,
 					paddingBottom: theme.spacing.md,
 					borderBottomWidth: 1,
 					borderBottomColor: theme.colors.border,
-					backgroundColor: theme.colors.surface,
+					backgroundColor:
+						theme.colors.background,
 					flexDirection: "row",
 					justifyContent: "space-between",
-					alignItems: "flex-start",
+					alignItems: "center",
 					columnGap: theme.spacing.md,
 				},
 				headerCopy: {
 					flex: 1,
-					gap: theme.spacing.xs,
+					flexDirection: "row",
+					alignItems: "center",
+					gap: theme.spacing.md,
 				},
 				title: {
-					fontSize: theme.typography.display,
-					lineHeight: 50,
-					fontWeight: "800",
-					letterSpacing: -1.4,
-					color: theme.colors.textPrimary,
+					fontSize: theme.typography.heading - 12,
+					lineHeight: 28,
+					fontWeight: "900",
+					letterSpacing: -1,
+					textTransform: "uppercase",
+					color: theme.colors.accent,
 				},
 				subtitle: {
 					fontSize: theme.typography.caption,
 					lineHeight: 20,
-					fontWeight: "500",
+					fontWeight: "700",
+					textTransform: "uppercase",
+					letterSpacing: 1,
 					color: theme.colors.textMuted,
 				},
 				headerActions: {
 					flexDirection: "row",
-					alignItems: "flex-end",
+					alignItems: "center",
 					gap: theme.spacing.sm,
 				},
 				themeIconButton: {
-					width: 44,
-					height: 44,
+					width: 40,
+					height: 40,
 					borderRadius: theme.radius.md,
 					alignItems: "center",
 					justifyContent: "center",
 					backgroundColor:
 						theme.colors.surfaceMuted,
-					borderWidth: 1,
+					borderWidth: theme.borderWidth,
 					borderColor: theme.colors.border,
 				},
 				screenContainer: {
 					flex: 1,
-					// marginBottom: theme.spacing.sm,
 				},
 				bootContainer: {
 					flex: 1,
@@ -176,65 +219,57 @@ function AppShell() {
 					width: "100%",
 					maxWidth: 420,
 					borderRadius: theme.radius.lg,
-					borderWidth: 1,
+					borderWidth: theme.borderWidth,
 					borderColor: theme.colors.border,
 					backgroundColor: theme.colors.surface,
 					padding: theme.spacing.lg,
 					gap: theme.spacing.md,
+					...theme.shadowSm,
 				},
 				blockedTitle: {
 					fontSize: theme.typography.heading,
-					fontWeight: "800",
+					fontWeight: "900",
+					textTransform: "uppercase",
 					color: theme.colors.textPrimary,
 				},
 				blockedSubtitle: {
 					fontSize: theme.typography.caption,
 					lineHeight: 22,
+					fontWeight: "700",
+					textTransform: "uppercase",
+					letterSpacing: 0.5,
 					color: theme.colors.textSecondary,
 				},
 				tabBar: {
 					flexDirection: "row",
-					gap: theme.spacing.xs,
-					paddingHorizontal: theme.spacing.sm,
-					paddingVertical: theme.spacing.sm,
-					marginHorizontal: theme.spacing.lg,
-					marginBottom: theme.spacing.md,
-					borderWidth: 1,
-					borderColor: theme.colors.border,
-					borderRadius: theme.radius.pill,
-					backgroundColor: theme.colors.surface,
-					justifyContent: "space-between",
-					alignItems: "center",
-					shadowColor: "#000000",
-					shadowOpacity: 0.14,
-					shadowRadius: 12,
-					shadowOffset: { width: 0, height: 6 },
-					elevation: 8,
+					backgroundColor:
+						theme.colors.background,
+					borderTopWidth: 2,
+					borderTopColor: theme.colors.surface,
+					paddingBottom: 6,
 				},
 				tabButton: {
 					flex: 1,
-					paddingHorizontal: theme.spacing.xs,
-					paddingVertical: theme.spacing.sm,
-					borderRadius: theme.radius.pill,
-					backgroundColor: "transparent",
-					borderWidth: 1,
-					borderColor: "transparent",
+					paddingTop: theme.spacing.sm,
+					paddingBottom: theme.spacing.xs,
 					flexDirection: "column",
 					alignItems: "center",
-					gap: theme.spacing.xs,
+					gap: 2,
+					borderTopWidth: 2,
+					borderTopColor: "transparent",
 				},
 				tabButtonActive: {
-					backgroundColor: theme.colors.accent,
-					borderColor: theme.colors.accent,
+					borderTopColor: theme.colors.tertiary,
 				},
 				tabLabel: {
-					fontSize: theme.typography.tiny,
+					fontSize: 10,
 					fontWeight: "700",
-					letterSpacing: 0.15,
-					color: theme.colors.textSecondary,
+					letterSpacing: 1.5,
+					textTransform: "uppercase",
+					color: theme.colors.textMuted,
 				},
 				tabLabelActive: {
-					color: theme.colors.onAccent,
+					color: theme.colors.tertiary,
 				},
 			}),
 		[theme],
@@ -344,43 +379,21 @@ function AppShell() {
 				</View>
 			</View>
 
-			<View style={styles.screenContainer}>
+			<Animated.View style={[styles.screenContainer, { opacity: fadeAnim }]}>
 				<ActiveScreen tab={activeTab} />
-			</View>
+			</Animated.View>
 
 			<View style={styles.tabBar}>
-				{tabs.map((tab) => {
-					const active = tab.key === activeTab;
-					const iconColor = active
-						? theme.colors.onAccent
-						: theme.colors.textSecondary;
-
-					return (
-						<Pressable
-							key={tab.key}
-							onPress={() => {
-								Keyboard.dismiss();
-								setActiveTab(
-									tab.key,
-								);
-							}}
-							style={[
-								styles.tabButton,
-								active
-									? styles.tabButtonActive
-									: undefined,
-							]}
-						>
-							<Ionicons
-								name={tab.icon}
-								size={18}
-								color={
-									iconColor
-								}
-							/>
-						</Pressable>
-					);
-				})}
+				{tabs.map((tab) => (
+					<TabIndicator
+						key={tab.key}
+						tab={tab}
+						activeTab={activeTab}
+						onSelect={setActiveTab}
+						theme={theme}
+						styles={styles}
+					/>
+				))}
 			</View>
 		</SafeAreaView>
 	);

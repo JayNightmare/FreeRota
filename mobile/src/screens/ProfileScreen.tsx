@@ -485,9 +485,6 @@ export function ProfileScreen() {
 				) : null}
 
 				<View style={styles.content}>
-					<Text style={styles.title}>
-						Profile
-					</Text>
 					<View style={styles.card}>
 						{loading ? (
 							<StateNotice

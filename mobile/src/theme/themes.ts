@@ -8,6 +8,14 @@ interface RgbColor {
     b: number;
 }
 
+interface ShadowTokens {
+    shadowColor: string;
+    shadowOffset: { width: number; height: number };
+    shadowOpacity: number;
+    shadowRadius: number;
+    elevation: number;
+}
+
 export interface ThemeTokens {
     colors: {
         background: string;
@@ -21,6 +29,10 @@ export interface ThemeTokens {
         accent: string;
         accentMuted: string;
         onAccent: string;
+        tertiary: string;
+        onTertiary: string;
+        error: string;
+        onError: string;
         accentBackground: string;
         accentFreeBackground: string;
         accentBusyBackground: string;
@@ -48,6 +60,9 @@ export interface ThemeTokens {
         caption: number;
         tiny: number;
     };
+    borderWidth: number;
+    shadow: ShadowTokens;
+    shadowSm: ShadowTokens;
 }
 
 interface ThemeColorOptions {
@@ -64,10 +79,10 @@ const baseTokens: Omit<ThemeTokens, "colors"> = {
         xxl: 32
     },
     radius: {
-        sm: 10,
-        md: 14,
-        lg: 18,
-        pill: 999
+        sm: 0,
+        md: 0,
+        lg: 0,
+        pill: 9999
     },
     typography: {
         display: 46,
@@ -75,50 +90,73 @@ const baseTokens: Omit<ThemeTokens, "colors"> = {
         body: 17,
         caption: 14,
         tiny: 12
-    }
+    },
+    borderWidth: 4,
+    shadow: {
+        shadowColor: "#000000",
+        shadowOffset: { width: 8, height: 8 },
+        shadowOpacity: 1,
+        shadowRadius: 0,
+        elevation: 10,
+    },
+    shadowSm: {
+        shadowColor: "#000000",
+        shadowOffset: { width: 4, height: 4 },
+        shadowOpacity: 1,
+        shadowRadius: 0,
+        elevation: 6,
+    },
 };
 
 export const lightTheme: ThemeTokens = {
     ...baseTokens,
     colors: {
-        background: "#F2F4F8",
-        surface: "#FFFFFF",
-        surfaceMuted: "#E9EDF5",
-        surfaceElevated: "#FAFBFF",
-        border: "#D2D9E6",
-        textPrimary: "#111C3D",
-        textSecondary: "#2B3C64",
-        textMuted: "#53648A",
-        accent: "#142248",
-        accentMuted: "#DCE4F5",
-        onAccent: "#F8FBFF",
-        accentBackground: "rgba(20, 34, 72, 0.1)",
-        accentFreeBackground: "rgba(20, 72, 53, 0.05)",
-        accentBusyBackground: "rgba(255, 142, 142, 0.05)",
-        accentEarlyBackground: "rgba(72, 67, 20, 0.05)",
-        accentTodayBackground: "rgba(29, 20, 72, 0.25)"
+        background: "#0A0A0A",
+        surface: "#131313",
+        surfaceMuted: "#1c1b1b",
+        surfaceElevated: "#2a2a2a",
+        border: "#27272a",
+        textPrimary: "#e5e2e1",
+        textSecondary: "#a1a1aa",
+        textMuted: "#71717a",
+        accent: "#d2bbff",
+        accentMuted: "#411a83",
+        onAccent: "#3d147e",
+        tertiary: "#abd600",
+        onTertiary: "#283500",
+        error: "#ffb4ab",
+        onError: "#690005",
+        accentBackground: "rgba(210, 187, 255, 0.1)",
+        accentFreeBackground: "rgba(171, 214, 0, 0.1)",
+        accentBusyBackground: "rgba(255, 180, 171, 0.1)",
+        accentEarlyBackground: "rgba(171, 214, 0, 0.08)",
+        accentTodayBackground: "rgba(210, 187, 255, 0.2)"
     }
 };
 
 export const darkTheme: ThemeTokens = {
     ...baseTokens,
     colors: {
-        background: "#12091f",
-        surface: "#251131",
-        surfaceMuted: "#2f173d",
-        surfaceElevated: "#3a1a47",
-        border: "#4b2e59",
-        textPrimary: "#F3F7FF",
-        textSecondary: "#D5DEEF",
-        textMuted: "#9EABC8",
-        accent: "#d78eff",
-        accentMuted: "#53255f",
-        onAccent: "#081127",
-        accentBackground: "rgba(142, 168, 255, 0.1)",
-        accentFreeBackground: "rgba(142, 255, 215, 0.05)",
-        accentBusyBackground: "rgba(255, 142, 142, 0.05)",
-        accentEarlyBackground: "rgba(72, 67, 20, 0.05)",
-        accentTodayBackground: "rgba(29, 20, 72, 0.25)"
+        background: "#0A0A0A",
+        surface: "#131313",
+        surfaceMuted: "#1c1b1b",
+        surfaceElevated: "#2a2a2a",
+        border: "#27272a",
+        textPrimary: "#e5e2e1",
+        textSecondary: "#a1a1aa",
+        textMuted: "#71717a",
+        accent: "#d2bbff",
+        accentMuted: "#411a83",
+        onAccent: "#3d147e",
+        tertiary: "#abd600",
+        onTertiary: "#283500",
+        error: "#ffb4ab",
+        onError: "#690005",
+        accentBackground: "rgba(210, 187, 255, 0.1)",
+        accentFreeBackground: "rgba(171, 214, 0, 0.1)",
+        accentBusyBackground: "rgba(255, 180, 171, 0.1)",
+        accentEarlyBackground: "rgba(171, 214, 0, 0.08)",
+        accentTodayBackground: "rgba(210, 187, 255, 0.2)"
     }
 };
 
@@ -205,8 +243,8 @@ function contrastRatio(firstHex: string, secondHex: string): number {
 }
 
 export function getAutoContrastTextColor(backgroundHex: string): string {
-    const lightText = "#F8FBFF";
-    const darkText = "#081127";
+    const lightText = "#e5e2e1";
+    const darkText = "#0A0A0A";
 
     return contrastRatio(backgroundHex, lightText) >= contrastRatio(backgroundHex, darkText)
         ? lightText

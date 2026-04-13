@@ -10,6 +10,17 @@
 ## Active Tasks
 
 ### Completed
+- Friends + Messages Screen Merge (2026-04-13):
+  - Combined FriendsScreen and MessagesScreen into a single tab.
+  - Friend list is the default view; tapping an accepted friend opens a chat sub-view.
+  - Removed MESSAGES tab from App.tsx (now 4 tabs: Rota, Friends, Free Time, Profile).
+  - MessagesScreen.tsx is now unused/orphaned.
+- Brutalist UI Redesign — Global Theme (2026-04-13):
+  - Rewrote `themes.ts` with Design.html color palette (`#0A0A0A` background, `#d2bbff` accent, `#abd600` tertiary), 0 radii, 4px borders, industrial shadow tokens.
+  - Updated all shared components (`ActionButton`, `FormField`, `StateNotice`, `ScreenIntroCard`) with brutalist styling.
+  - Redesigned App.tsx header (minimal, accent purple title) and bottom nav (tertiary green top-border indicator, no dividers).
+  - Removed local BRUTALIST overrides from RotaCalendarScreen — all screens now inherit style through the global theme.
+  - Forced dark-only mode in ThemeProvider.
 - Email verification overhaul (2026-04-12):
   - Verification uses 6-char alphanumeric code (no ambiguous chars: 0/O/I/1/L)
   - Token TTL extended to 7 days (was 24h)
