@@ -1,7 +1,8 @@
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import {
 	Alert,
 	Modal,
+	PanResponder,
 	Pressable,
 	ScrollView,
 	StyleSheet,
@@ -150,6 +151,9 @@ interface ImportDeviceCalendarMutation {
 
 type DayState = "FREE" | "BUSY" | "EARLY";
 type EntryModalMode = "PRESET" | "CUSTOM";
+
+const WEEK_SWIPE_ACTIVATION_PX = 16;
+const WEEK_SWIPE_TRIGGER_PX = 48;
 
 const MONTHS = [
 	"January",
@@ -325,7 +329,6 @@ function mapCalendarEventToImportInput(
 		recurrenceRule: serializeRecurrenceRule(event.recurrenceRule),
 	};
 }
-
 
 export function RotaScreen() {
 	const { theme } = useTheme();
@@ -541,7 +544,8 @@ export function RotaScreen() {
 					paddingBottom: theme.spacing.md,
 				},
 				card: {
-					backgroundColor: theme.colors.surfaceMuted,
+					backgroundColor:
+						theme.colors.surfaceMuted,
 					borderWidth: theme.borderWidth,
 					borderColor: theme.colors.border,
 					borderRadius: theme.radius.lg,
@@ -569,8 +573,9 @@ export function RotaScreen() {
 					...theme.shadowSm,
 				},
 				monthButtonCurrent: {
-					borderColor: theme.colors.tertiary,
-					backgroundColor: theme.colors.surfaceElevated,
+					borderColor: theme.colors.accent,
+					backgroundColor:
+						theme.colors.surfaceElevated,
 				},
 				monthButtonText: {
 					fontSize: theme.typography.body,
@@ -599,9 +604,7 @@ export function RotaScreen() {
 					color: theme.colors.textPrimary,
 				},
 				weekRow: {
-					flexDirection: "row",
-					alignItems: "center",
-					gap: theme.spacing.sm,
+					alignItems: "stretch",
 				},
 				arrowButton: {
 					width: 34,
@@ -616,18 +619,19 @@ export function RotaScreen() {
 					...theme.shadowSm,
 				},
 				daysRow: {
-					flex: 1,
+					width: "100%",
 					flexDirection: "row",
 					gap: theme.spacing.xs,
 				},
 				dayCell: {
 					flex: 1,
-					minHeight: 64,
+					minWidth: 0,
+					minHeight: 60,
 					borderRadius: theme.radius.md,
 					borderWidth: theme.borderWidth,
 					borderColor: theme.colors.border,
 					paddingVertical: theme.spacing.sm,
-					paddingHorizontal: 2,
+					paddingHorizontal: 1,
 					alignItems: "center",
 					justifyContent: "center",
 					gap: 2,
@@ -635,23 +639,43 @@ export function RotaScreen() {
 				},
 				dayCellToday: {
 					backgroundColor:
-						theme.colors.accentTodayBackground,
+						theme.colors
+							.accentTodayBackground,
 					borderColor: theme.colors.accent,
 				},
 				dayCellActive: {
-					backgroundColor: theme.colors.tertiary,
-					borderColor: theme.colors.tertiary,
+					borderColor: theme.colors.active,
 				},
 				dayLabel: {
 					fontSize: theme.typography.tiny,
 					fontWeight: "900",
 					textTransform: "uppercase",
-					color: theme.colors.textMuted,
+					letterSpacing: 0.4,
+					color: theme.colors.textSecondary,
+				},
+				dayLabelTinted: {
+					color: theme.colors.textPrimary,
+				},
+				dayLabelToday: {
+					color: theme.colors.onAccent,
 				},
 				dayDate: {
 					fontSize: theme.typography.caption,
 					fontWeight: "900",
 					color: theme.colors.textPrimary,
+				},
+				dayDateTinted: {
+					color: theme.colors.textPrimary,
+				},
+				dayDateToday: {
+					color: theme.colors.onAccent,
+				},
+				weekHint: {
+					marginTop: theme.spacing.xs,
+					fontSize: theme.typography.tiny,
+					fontWeight: "700",
+					textAlign: "center",
+					color: theme.colors.textMuted,
 				},
 				totalHoursRow: {
 					flexDirection: "row",
@@ -875,8 +899,9 @@ export function RotaScreen() {
 						theme.colors.surfaceElevated,
 				},
 				monthCellCurrent: {
-					borderColor: theme.colors.tertiary,
-					backgroundColor: theme.colors.surfaceElevated,
+					borderColor: theme.colors.accent,
+					backgroundColor:
+						theme.colors.surfaceElevated,
 				},
 				monthCellText: {
 					fontSize: theme.typography.caption,
@@ -887,17 +912,6 @@ export function RotaScreen() {
 			}),
 		[theme],
 	);
-
-	const dayStateColor = (state: DayState): string => {
-		switch (state) {
-			case "EARLY":
-				return "#FFD70033"; // Gold with transparency
-			case "BUSY":
-				return "#FF450033"; // OrangeRed with transparency
-			default:
-				return "transparent";
-		}
-	};
 
 	const resetEntryFormForDay = (dayKey: string): void => {
 		const targetDate = dayKeyToDate(dayKey);
@@ -1402,17 +1416,67 @@ export function RotaScreen() {
 		]);
 	};
 
-	const goToPreviousWeek = (): void => {
-		const nextWeekDate = addLocalDays(weekStartDate, -7);
-		setSelectedDate(nextWeekDate);
-		setActiveDayKey(getZonedDateKey(nextWeekDate, timezone));
-	};
+	const moveByWeeks = useCallback(
+		(deltaWeeks: number): void => {
+			const nextWeekDate = addLocalDays(
+				weekStartDate,
+				deltaWeeks * 7,
+			);
+			setSelectedDate(nextWeekDate);
+			setActiveDayKey(
+				getZonedDateKey(nextWeekDate, timezone),
+			);
+		},
+		[weekStartDate, timezone],
+	);
 
-	const goToNextWeek = (): void => {
-		const nextWeekDate = addLocalDays(weekStartDate, 7);
-		setSelectedDate(nextWeekDate);
-		setActiveDayKey(getZonedDateKey(nextWeekDate, timezone));
-	};
+	const goToPreviousWeek = useCallback((): void => {
+		moveByWeeks(-1);
+	}, [moveByWeeks]);
+
+	const goToNextWeek = useCallback((): void => {
+		moveByWeeks(1);
+	}, [moveByWeeks]);
+
+	const weekSwipeResponder = useMemo(
+		() =>
+			PanResponder.create({
+				onMoveShouldSetPanResponder: (
+					_,
+					gestureState,
+				) => {
+					const horizontalDistance = Math.abs(
+						gestureState.dx,
+					);
+					const verticalDistance = Math.abs(
+						gestureState.dy,
+					);
+					return (
+						horizontalDistance >
+							WEEK_SWIPE_ACTIVATION_PX &&
+						horizontalDistance >
+							verticalDistance
+					);
+				},
+				onPanResponderRelease: (_, gestureState) => {
+					if (
+						gestureState.dx >=
+						WEEK_SWIPE_TRIGGER_PX
+					) {
+						goToPreviousWeek();
+						return;
+					}
+
+					if (
+						gestureState.dx <=
+						-WEEK_SWIPE_TRIGGER_PX
+					) {
+						goToNextWeek();
+					}
+				},
+			}),
+		[goToNextWeek, goToPreviousWeek],
+	);
 
 	const openMonthPicker = (): void => {
 		setMonthPickerYear(selectedDate.getFullYear());
@@ -1512,26 +1576,10 @@ export function RotaScreen() {
 						</View>
 					</View>
 
-					<View style={styles.weekRow}>
-						<Pressable
-							style={
-								styles.arrowButton
-							}
-							onPress={
-								goToPreviousWeek
-							}
-						>
-							<Ionicons
-								name="chevron-back"
-								size={18}
-								color={
-									theme
-										.colors
-										.textPrimary
-								}
-							/>
-						</Pressable>
-
+					<View
+						style={styles.weekRow}
+						{...weekSwipeResponder.panHandlers}
+					>
 						<View style={styles.daysRow}>
 							{weekDates.map(
 								(day) => {
@@ -1551,6 +1599,9 @@ export function RotaScreen() {
 									const isToday =
 										dayKey ===
 										todayDayKey;
+									const hasTintedBackground =
+										dayState !==
+										"FREE";
 
 									return (
 										<Pressable
@@ -1561,16 +1612,25 @@ export function RotaScreen() {
 												styles.dayCell,
 												{
 													backgroundColor:
-														dayState === "EARLY"
-															? theme.colors.accentEarlyBackground
-															: dayState === "BUSY"
-																? theme.colors.accentBusyBackground
-																: theme.colors.surface,
+														dayState ===
+														"EARLY"
+															? theme
+																	.colors
+																	.accentEarlyBackground
+															: dayState ===
+																  "BUSY"
+																? theme
+																		.colors
+																		.accentBusyBackground
+																: theme
+																		.colors
+																		.surface,
 												},
 												isToday
 													? styles.dayCellToday
 													: undefined,
-												isActive
+												isActive &&
+												!isToday
 													? styles.dayCellActive
 													: undefined,
 											]}
@@ -1581,9 +1641,15 @@ export function RotaScreen() {
 											}
 										>
 											<Text
-												style={
-													styles.dayLabel
-												}
+												style={[
+													styles.dayLabel,
+													hasTintedBackground
+														? styles.dayLabelTinted
+														: undefined,
+													isToday
+														? styles.dayLabelToday
+														: undefined,
+												]}
 											>
 												{formatWeekdayShort(
 													day,
@@ -1591,9 +1657,15 @@ export function RotaScreen() {
 												)}
 											</Text>
 											<Text
-												style={
-													styles.dayDate
-												}
+												style={[
+													styles.dayDate,
+													hasTintedBackground
+														? styles.dayDateTinted
+														: undefined,
+													isToday
+														? styles.dayDateToday
+														: undefined,
+												]}
 											>
 												{formatDayNumber(
 													day,
@@ -1605,23 +1677,10 @@ export function RotaScreen() {
 								},
 							)}
 						</View>
-
-						<Pressable
-							style={
-								styles.arrowButton
-							}
-							onPress={goToNextWeek}
-						>
-							<Ionicons
-								name="chevron-forward"
-								size={18}
-								color={
-									theme
-										.colors
-										.textPrimary
-								}
-							/>
-						</Pressable>
+						<Text style={styles.weekHint}>
+							Swipe left or right to
+							change week
+						</Text>
 					</View>
 
 					<View style={styles.totalHoursRow}>

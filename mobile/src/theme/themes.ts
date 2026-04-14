@@ -20,17 +20,21 @@ export interface ThemeTokens {
     colors: {
         background: string;
         surface: string;
+        surfaceTab: string;
         surfaceMuted: string;
         surfaceElevated: string;
         border: string;
         textPrimary: string;
         textSecondary: string;
         textMuted: string;
+        textTab: string;
         accent: string;
         accentMuted: string;
         onAccent: string;
         tertiary: string;
         onTertiary: string;
+        active: string;
+        onActive: string;
         error: string;
         onError: string;
         accentBackground: string;
@@ -111,26 +115,30 @@ const baseTokens: Omit<ThemeTokens, "colors"> = {
 export const lightTheme: ThemeTokens = {
     ...baseTokens,
     colors: {
-        background: "#0A0A0A",
-        surface: "#131313",
-        surfaceMuted: "#1c1b1b",
-        surfaceElevated: "#2a2a2a",
-        border: "#27272a",
-        textPrimary: "#e5e2e1",
-        textSecondary: "#a1a1aa",
-        textMuted: "#71717a",
-        accent: "#d2bbff",
-        accentMuted: "#411a83",
-        onAccent: "#3d147e",
-        tertiary: "#abd600",
+        background: "#F3F3F3",
+        surface: "#D4D4D4",
+        surfaceTab: "#ACACAC",
+        surfaceMuted: "#CFCFCF",
+        surfaceElevated: "#CCCCCC",
+        border: "#0F0F0F",
+        textPrimary: "#0F0F0F",
+        textSecondary: "#222222",
+        textMuted: "#414146",
+        textTab: "#292929",
+        accent: "#d35422",
+        accentMuted: "#f0a890",
+        onAccent: "#0E0500",
+        tertiary: "#d35422",
         onTertiary: "#283500",
+        active: "#6890FF",
+        onActive: "#3d147e",
         error: "#ffb4ab",
         onError: "#690005",
-        accentBackground: "rgba(210, 187, 255, 0.1)",
-        accentFreeBackground: "rgba(171, 214, 0, 0.1)",
-        accentBusyBackground: "rgba(255, 180, 171, 0.1)",
-        accentEarlyBackground: "rgba(171, 214, 0, 0.08)",
-        accentTodayBackground: "rgba(210, 187, 255, 0.2)"
+        accentBackground: "rgba(211, 84, 34, 0.6)",
+        accentFreeBackground: "rgba(44, 158, 112, 0.6)",
+        accentBusyBackground: "rgba(219, 58, 58, 0.6)",
+        accentEarlyBackground: "rgba(201, 156, 42, 0.6)",
+        accentTodayBackground: "rgba(211, 84, 34, 0.6)"
     }
 };
 
@@ -139,24 +147,28 @@ export const darkTheme: ThemeTokens = {
     colors: {
         background: "#0A0A0A",
         surface: "#131313",
+        surfaceTab: "#0F0F0F",
         surfaceMuted: "#1c1b1b",
         surfaceElevated: "#2a2a2a",
-        border: "#27272a",
+        border: "#050505",
         textPrimary: "#e5e2e1",
         textSecondary: "#a1a1aa",
         textMuted: "#71717a",
-        accent: "#d2bbff",
-        accentMuted: "#411a83",
-        onAccent: "#3d147e",
+        textTab: "#919191",
+        accent: "#d35422",
+        accentMuted: "#f0a890",
+        onAccent: "#0E0500",
         tertiary: "#abd600",
         onTertiary: "#283500",
+        active: "#6890FF",
+        onActive: "#3d147e",
         error: "#ffb4ab",
         onError: "#690005",
-        accentBackground: "rgba(210, 187, 255, 0.1)",
-        accentFreeBackground: "rgba(171, 214, 0, 0.1)",
-        accentBusyBackground: "rgba(255, 180, 171, 0.1)",
-        accentEarlyBackground: "rgba(171, 214, 0, 0.08)",
-        accentTodayBackground: "rgba(210, 187, 255, 0.2)"
+        accentBackground: "rgba(211, 84, 34, 0.6)",
+        accentFreeBackground: "rgba(38, 145, 104, 0.6)",
+        accentBusyBackground: "rgba(227, 67, 67, 0.6)",
+        accentEarlyBackground: "rgba(196, 149, 36, 0.6)",
+        accentTodayBackground: "rgba(211, 84, 34, 0.6)"
     }
 };
 
@@ -264,11 +276,11 @@ function withAccentOverride(theme: ThemeTokens, accentColor?: string | null): Th
             accent: normalizedAccent,
             accentMuted: blendHexColors(theme.colors.surface, normalizedAccent, 0.2),
             onAccent: getAutoContrastTextColor(normalizedAccent),
-            accentBackground: toRgba(normalizedAccent, 0.14),
-            accentFreeBackground: toRgba(blendHexColors(normalizedAccent, "#1EC87D", 0.55), 0.16),
-            accentBusyBackground: toRgba(blendHexColors(normalizedAccent, "#FF7A7A", 0.45), 0.16),
-            accentEarlyBackground: toRgba(blendHexColors(normalizedAccent, "#CFAE39", 0.45), 0.16),
-            accentTodayBackground: toRgba(normalizedAccent, 0.28)
+            accentBackground: toRgba(normalizedAccent, 0.5),
+            accentFreeBackground: toRgba(blendHexColors(normalizedAccent, "#1EC87D", 0.95), 0.5),
+            accentBusyBackground: toRgba(blendHexColors(normalizedAccent, "#FF7A7A", 0.95), 0.5),
+            accentEarlyBackground: toRgba(blendHexColors(normalizedAccent, "#CFAE39", 0.95), 0.5),
+            accentTodayBackground: toRgba(normalizedAccent, 0.5)
         }
     };
 }

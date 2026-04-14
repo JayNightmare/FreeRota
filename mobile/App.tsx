@@ -25,6 +25,7 @@ import { SettingsScreen } from "./src/screens/SettingsScreen";
 import { AuthScreen } from "./src/screens/AuthScreen";
 import { ThemeProvider } from "./src/theme/ThemeProvider";
 import { useTheme } from "./src/theme/useTheme";
+import { TabIndicator } from "./src/components/TabIndicator";
 
 type TabKey = "ROTA" | "FRIENDS" | "FREE" | "PROFILE" | "SETTINGS";
 
@@ -54,39 +55,6 @@ function ActiveScreen({ tab }: { tab: TabKey }) {
 		default:
 			return <RotaScreen />;
 	}
-}
-
-function TabIndicator({ tab, activeTab, onSelect, theme, styles }: any) {
-	const active = tab.key === activeTab;
-	const iconColor = active ? theme.colors.tertiary : theme.colors.textMuted;
-	const scaleAnim = useRef(new Animated.Value(1)).current;
-
-	const handlePressIn = () => {
-		Animated.spring(scaleAnim, { toValue: 0.85, useNativeDriver: true }).start();
-	};
-
-	const handlePressOut = () => {
-		Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true }).start();
-	};
-
-	return (
-		<Pressable
-			onPress={() => {
-				Keyboard.dismiss();
-				onSelect(tab.key);
-			}}
-			onPressIn={handlePressIn}
-			onPressOut={handlePressOut}
-			style={[
-				styles.tabButton,
-				active ? styles.tabButtonActive : undefined,
-			]}
-		>
-			<Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-				<Ionicons name={tab.icon} size={22} color={iconColor} />
-			</Animated.View>
-		</Pressable>
-	);
 }
 
 function AppShell() {
@@ -120,7 +88,7 @@ function AppShell() {
 	const fadeAnim = useRef(new Animated.Value(1)).current;
 
 	useEffect(() => {
-		fadeAnim.setValue(0);
+		fadeAnim.setValue(0.75);
 		Animated.timing(fadeAnim, {
 			toValue: 1,
 			duration: 250,
@@ -197,6 +165,9 @@ function AppShell() {
 					borderWidth: theme.borderWidth,
 					borderColor: theme.colors.border,
 				},
+				themeIconButtonActive: {
+					borderColor: theme.colors.accent,
+				},
 				screenContainer: {
 					flex: 1,
 				},
@@ -243,7 +214,7 @@ function AppShell() {
 				tabBar: {
 					flexDirection: "row",
 					backgroundColor:
-						theme.colors.background,
+						theme.colors.surfaceTab,
 					borderTopWidth: 2,
 					borderTopColor: theme.colors.surface,
 					paddingBottom: 6,
@@ -259,17 +230,7 @@ function AppShell() {
 					borderTopColor: "transparent",
 				},
 				tabButtonActive: {
-					borderTopColor: theme.colors.tertiary,
-				},
-				tabLabel: {
-					fontSize: 10,
-					fontWeight: "700",
-					letterSpacing: 1.5,
-					textTransform: "uppercase",
-					color: theme.colors.textMuted,
-				},
-				tabLabelActive: {
-					color: theme.colors.tertiary,
+					borderTopColor: theme.colors.accent,
 				},
 			}),
 		[theme],
@@ -277,8 +238,8 @@ function AppShell() {
 
 	if (shouldBlockWebUsage) {
 		const blockedMessage = isDesktopViewport
-			? "FreeRota web access is limited to phone-sized portrait screens. Please open this on a mobile device."
-			: "FreeRota supports portrait mode only. Rotate your device to portrait to continue.";
+			? "FreeRota web access is limited to portrait screens. Please open this on a mobile device"
+			: "FreeRota supports portrait mode only. Rotate your device to portrait to continue";
 
 		return (
 			<SafeAreaView
@@ -349,7 +310,12 @@ function AppShell() {
 
 				<View style={styles.headerActions}>
 					<Pressable
-						style={styles.themeIconButton}
+						style={[
+							styles.themeIconButton,
+							activeTab === "SETTINGS"
+								? styles.themeIconButtonActive
+								: undefined,
+						]}
 						onPress={() =>
 							setActiveTab("SETTINGS")
 						}
@@ -379,7 +345,12 @@ function AppShell() {
 				</View>
 			</View>
 
-			<Animated.View style={[styles.screenContainer, { opacity: fadeAnim }]}>
+			<Animated.View
+				style={[
+					styles.screenContainer,
+					{ opacity: fadeAnim },
+				]}
+			>
 				<ActiveScreen tab={activeTab} />
 			</Animated.View>
 

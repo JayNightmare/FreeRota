@@ -1,5 +1,11 @@
 import { useRef } from "react";
-import { ActivityIndicator, Pressable, StyleSheet, Text, Animated } from "react-native";
+import {
+	ActivityIndicator,
+	Pressable,
+	StyleSheet,
+	Text,
+	Animated,
+} from "react-native";
 import { useTheme } from "../theme/useTheme";
 
 interface ActionButtonProps {
@@ -51,14 +57,10 @@ export function ActionButton({
 				: theme.colors.onAccent;
 
 	const borderColor =
-		variant === "muted"
-			? theme.colors.border
-			: "#000000";
+		variant === "muted" ? theme.colors.border : "#000000";
 
 	const styles = StyleSheet.create({
 		button: {
-			paddingHorizontal: theme.spacing.lg,
-			paddingVertical: theme.spacing.sm + 2,
 			height: 44,
 			borderRadius: theme.radius.md,
 			alignItems: "center",
@@ -77,31 +79,42 @@ export function ActionButton({
 			color: textColor,
 		},
 		pressable: {
-		    flex: 1,
-		    width: "100%",
-		    alignItems: "center",
-		    justifyContent: "center",
-		}
+			paddingHorizontal: theme.spacing.lg,
+			paddingVertical: theme.spacing.sm + 2,
+			flex: 1,
+			width: "100%",
+			alignItems: "center",
+			justifyContent: "center",
+		},
 	});
 
 	return (
-		<Animated.View style={[styles.button, { transform: [{ scale: scaleValue }] }]}>
-			<Pressable
-				style={styles.pressable}
-				onPress={onPress}
-				onPressIn={handlePressIn}
-				onPressOut={handlePressOut}
-				disabled={disabled || loading}
+		<>
+			<Animated.View
+				style={[
+					styles.button,
+					{ transform: [{ scale: scaleValue }] },
+				]}
 			>
-				{loading ? (
-					<ActivityIndicator
-						color={textColor}
-						size="small"
-					/>
-				) : (
-					<Text style={styles.label}>{label}</Text>
-				)}
-			</Pressable>
-		</Animated.View>
+				<Pressable
+					style={styles.pressable}
+					onPress={onPress}
+					onPressIn={handlePressIn}
+					onPressOut={handlePressOut}
+					disabled={disabled || loading}
+				>
+					{loading ? (
+						<ActivityIndicator
+							color={textColor}
+							size="small"
+						/>
+					) : (
+						<Text style={styles.label}>
+							{label}
+						</Text>
+					)}
+				</Pressable>
+			</Animated.View>
+		</>
 	);
 }

@@ -16,6 +16,7 @@ import { StateNotice } from "../components/StateNotice";
 import { CityTimezonePicker } from "../components/CityTimezonePicker";
 import {
 	CHANGE_EMAIL_MUTATION,
+	CHANGE_PASSWORD_MUTATION,
 	DELETE_ACCOUNT_MUTATION,
 	ME_QUERY,
 	REQUEST_EMAIL_VERIFICATION_MUTATION,
@@ -63,8 +64,12 @@ export function ProfileScreen() {
 	const [verifySuccess, setVerifySuccess] = useState<string | null>(null);
 
 	const [showChangeEmail, setShowChangeEmail] = useState(false);
+	const [showChangePassword, setShowChangePassword] = useState(false);
 	const [newEmail, setNewEmail] = useState("");
 	const [emailPassword, setEmailPassword] = useState("");
+	const [currentPassword, setCurrentPassword] = useState("");
+	const [newPassword, setNewPassword] = useState("");
+	const [confirmNewPassword, setConfirmNewPassword] = useState("");
 	const [emailReason, setEmailReason] =
 		useState<ChangeEmailReason | null>(null);
 	const [showReasonPicker, setShowReasonPicker] = useState(false);
@@ -72,6 +77,12 @@ export function ProfileScreen() {
 		null,
 	);
 	const [emailChangeSuccess, setEmailChangeSuccess] = useState<
+		string | null
+	>(null);
+	const [passwordChangeError, setPasswordChangeError] = useState<
+		string | null
+	>(null);
+	const [passwordChangeSuccess, setPasswordChangeSuccess] = useState<
 		string | null
 	>(null);
 
@@ -89,6 +100,9 @@ export function ProfileScreen() {
 		useMutation(REQUEST_EMAIL_VERIFICATION_MUTATION);
 	const [changeEmail, { loading: changingEmail }] = useMutation(
 		CHANGE_EMAIL_MUTATION,
+	);
+	const [changePassword, { loading: changingPassword }] = useMutation(
+		CHANGE_PASSWORD_MUTATION,
 	);
 
 	const isVerified = Boolean(data?.me?.emailVerifiedAt);
@@ -408,6 +422,86 @@ export function ProfileScreen() {
 		setEmailChangeSuccess(null);
 	};
 
+	const handleChangePassword = async (): Promise<void> => {
+		if (!isVerified) {
+			setPasswordChangeError(
+				"Verify first to change profile information.",
+			);
+			return;
+		}
+
+		if (!currentPassword.trim()) {
+			setPasswordChangeError("Current password is required.");
+			return;
+		}
+
+		if (!newPassword) {
+			setPasswordChangeError("New password is required.");
+			return;
+		}
+
+		if (newPassword.length < 8) {
+			setPasswordChangeError(
+				"New password must be at least 8 characters.",
+			);
+			return;
+		}
+
+		if (newPassword !== confirmNewPassword) {
+			setPasswordChangeError(
+				"New password and confirmation do not match.",
+			);
+			return;
+		}
+
+		setPasswordChangeError(null);
+		setPasswordChangeSuccess(null);
+
+		try {
+			const response = await changePassword({
+				variables: {
+					input: {
+						currentPassword,
+						newPassword,
+					},
+				},
+			});
+
+			if (response.data?.changePassword?.success) {
+				setPasswordChangeSuccess(
+					response.data.changePassword.message ||
+						"Password changed successfully.",
+				);
+				setCurrentPassword("");
+				setNewPassword("");
+				setConfirmNewPassword("");
+				setShowChangePassword(false);
+			} else {
+				setPasswordChangeError(
+					response.data?.changePassword
+						?.message ||
+						"Unable to change password.",
+				);
+			}
+		} catch (changeErr) {
+			setPasswordChangeError(
+				toUserErrorMessage(
+					changeErr,
+					"Password change failed.",
+				),
+			);
+		}
+	};
+
+	const resetChangePasswordForm = (): void => {
+		setShowChangePassword(false);
+		setCurrentPassword("");
+		setNewPassword("");
+		setConfirmNewPassword("");
+		setPasswordChangeError(null);
+		setPasswordChangeSuccess(null);
+	};
+
 	return (
 		<ScreenScaffold>
 			<ScrollView
@@ -623,6 +717,178 @@ export function ProfileScreen() {
 									emailChangeSuccess
 								}
 							/>
+						) : null}
+
+						{passwordChangeSuccess ? (
+							<StateNotice
+								mode="empty"
+								message={
+									passwordChangeSuccess
+								}
+							/>
+						) : null}
+
+						{data?.me ? (
+							<>
+								<View
+									style={
+										styles.row
+									}
+								>
+									<Text
+										style={
+											styles.meta
+										}
+									>
+										Password:
+										••••••••
+									</Text>
+									{isVerified ? (
+										<Pressable
+											onPress={() => {
+												resetChangePasswordForm();
+												setShowChangePassword(
+													!showChangePassword,
+												);
+											}}
+										>
+											<Text
+												style={{
+													fontSize: theme
+														.typography
+														.tiny,
+													fontWeight: "700",
+													color: theme
+														.colors
+														.accent,
+												}}
+											>
+												Change
+											</Text>
+										</Pressable>
+									) : null}
+								</View>
+
+								{!isVerified ? (
+									<Text
+										style={
+											styles.helpText
+										}
+									>
+										Verify
+										first
+										to
+										change
+										profile
+										information.
+									</Text>
+								) : null}
+							</>
+						) : null}
+
+						{showChangePassword &&
+						isVerified ? (
+							<View
+								style={
+									styles.card
+								}
+							>
+								<Text
+									style={
+										styles.sectionTitle
+									}
+								>
+									Change
+									Password
+								</Text>
+								<FormField
+									label="Current Password"
+									value={
+										currentPassword
+									}
+									onChangeText={(
+										text,
+									) => {
+										setPasswordChangeError(
+											null,
+										);
+										setCurrentPassword(
+											text,
+										);
+									}}
+									secureTextEntry
+									autoCapitalize="none"
+									placeholder="••••••••"
+								/>
+								<FormField
+									label="New Password"
+									value={
+										newPassword
+									}
+									onChangeText={(
+										text,
+									) => {
+										setPasswordChangeError(
+											null,
+										);
+										setNewPassword(
+											text,
+										);
+									}}
+									secureTextEntry
+									autoCapitalize="none"
+									placeholder="At least 8 characters"
+								/>
+								<FormField
+									label="Confirm New Password"
+									value={
+										confirmNewPassword
+									}
+									onChangeText={(
+										text,
+									) => {
+										setPasswordChangeError(
+											null,
+										);
+										setConfirmNewPassword(
+											text,
+										);
+									}}
+									secureTextEntry
+									autoCapitalize="none"
+									placeholder="Repeat your new password"
+								/>
+								{passwordChangeError ? (
+									<StateNotice
+										mode="error"
+										message={
+											passwordChangeError
+										}
+									/>
+								) : null}
+								<View
+									style={
+										styles.buttonRow
+									}
+								>
+									<ActionButton
+										label="Update Password"
+										onPress={() =>
+											void handleChangePassword()
+										}
+										loading={
+											changingPassword
+										}
+									/>
+									<ActionButton
+										label="Cancel"
+										onPress={
+											resetChangePasswordForm
+										}
+										variant="muted"
+									/>
+								</View>
+							</View>
 						) : null}
 
 						{showChangeEmail ? (

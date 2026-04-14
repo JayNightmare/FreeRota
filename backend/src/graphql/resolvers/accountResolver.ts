@@ -1,6 +1,6 @@
 import { authService } from '../../services/authService.js';
 import { userService } from '../../services/userService.js';
-import { requireAuth } from './helpers.js';
+import { requireAuth, requireVerifiedEmail } from './helpers.js';
 
 export const accountResolver = {
     Query: {
@@ -66,6 +66,19 @@ export const accountResolver = {
         ) => {
             const userId = requireAuth(context);
             return authService.changeEmail(userId, args.input);
+        },
+        changePassword: async (
+            _parent: unknown,
+            args: {
+                input: {
+                    currentPassword: string;
+                    newPassword: string;
+                };
+            },
+            context: Parameters<typeof requireAuth>[0]
+        ) => {
+            const userId = requireVerifiedEmail(context);
+            return authService.changePassword(userId, args.input);
         },
         deleteAccount: async (_parent: unknown, _args: unknown, context: Parameters<typeof requireAuth>[0]) => {
             const userId = requireAuth(context);

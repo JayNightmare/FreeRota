@@ -167,12 +167,52 @@ class AuthService {
 
         const passwordHash = await bcrypt.hash(newPassword, 12);
         await userRepository.updatePasswordById(String(user._id), passwordHash);
+        await emailService.sendPasswordChangedEmail(user.email, user.username);
 
         return {
             success: true,
             message: 'Password updated successfully. You can now sign in.'
         };
     }
+
+    async changePassword(userId: string, input: {
+        currentPassword: string;
+        newPassword: string;
+    }): Promise<ActionResult> {
+        const user = await userRepository.findById(userId);
+        if (!user || user.deletedAt) {
+            throw new AppError('User not found', 'NOT_FOUND', 404);
+        }
+
+        assertOrThrow(Boolean(user.emailVerifiedAt), 'Please verify your email before changing your password.', 'FORBIDDEN', 403);
+
+        const currentPassword = input.currentPassword.trim();
+        const newPassword = input.newPassword;
+
+        assertOrThrow(Boolean(currentPassword), 'Current password is required');
+        assertOrThrow(
+            newPassword.length >= MIN_PASSWORD_LENGTH,
+            `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`
+        );
+
+        const valid = await bcrypt.compare(currentPassword, user.passwordHash);
+        if (!valid) {
+            throw new AppError('Current password is incorrect.', 'UNAUTHORIZED', 401);
+        }
+
+        const sameAsCurrent = await bcrypt.compare(newPassword, user.passwordHash);
+        assertOrThrow(!sameAsCurrent, 'New password must be different from your current password.');
+
+        const passwordHash = await bcrypt.hash(newPassword, 12);
+        await userRepository.updatePasswordById(userId, passwordHash);
+        await emailService.sendPasswordChangedEmail(user.email, user.username);
+
+        return {
+            success: true,
+            message: 'Password changed successfully.'
+        };
+    }
+
     async changeEmail(userId: string, input: {
         newEmail: string;
         password: string;

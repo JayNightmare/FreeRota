@@ -84,7 +84,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 		void AsyncStorage.setItem(STORAGE_KEY, mode);
 	}, [isHydrated, mode]);
 
-	const resolvedMode: "light" | "dark" = "dark";
+	const resolvedMode = mode === "system" ? systemMode : mode;
 	const profileAccentColor = token
 		? (themePreferenceData?.me?.uiAccentColor ?? null)
 		: null;

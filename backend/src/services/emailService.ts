@@ -3,8 +3,10 @@ import { MailtrapClient, type Address } from 'mailtrap';
 import { env } from '../config/env.js';
 
 type AuthEmailFlow = 'verify-email' | 'reset-password';
-type AuthEmailCategory = 'auth.verify-email' | 'auth.reset-password';
+type AuthEmailCategory = 'auth.verify-email' | 'auth.reset-password' | 'auth.password-changed';
 type EmailDeliveryMode = 'mailtrap-api' | 'smtp';
+
+const PASSWORD_CHANGE_SUPPORT_LINK = 'https://discord.gg/placeholder';
 
 class EmailService {
     private readonly mailtrapToken = env.MAILTRAP_TOKEN?.trim();
@@ -101,6 +103,28 @@ class EmailService {
             this.buildHtml('Reset your password', links, username),
             'auth.reset-password'
         );
+    }
+
+    async sendPasswordChangedEmail(email: string, username: string): Promise<void> {
+        const subject = 'Your FreeRota password was changed';
+        const message = [
+            'Hi ' + username + ',',
+            '',
+            'This is a confirmation that your FreeRota password was changed.',
+            '',
+            'If this was not you, contact support immediately: ' + PASSWORD_CHANGE_SUPPORT_LINK
+        ].join('\n');
+
+        const html = [
+            '<div style="font-family: Arial, sans-serif; color: #1b1b1b; line-height: 1.5;">',
+            '    <h2>Password changed</h2>',
+            '    <p>Hi ' + username + ',</p>',
+            '    <p>This is a confirmation that your FreeRota password was changed.</p>',
+            '    <p>If this wasn\'t you, contact support immediately: <a href="' + PASSWORD_CHANGE_SUPPORT_LINK + '">' + PASSWORD_CHANGE_SUPPORT_LINK + '</a></p>',
+            '</div>'
+        ].join('\n');
+
+        await this.send(email, subject, message, html, 'auth.password-changed');
     }
 
     private parseFromAddress(value: string): Address {
