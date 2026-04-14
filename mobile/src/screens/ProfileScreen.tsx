@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
+	Alert,
 	Modal,
 	Pressable,
 	ScrollView,
@@ -283,6 +284,23 @@ export function ProfileScreen() {
 				),
 			);
 		}
+	};
+
+	const confirmRemoveAccount = (): void => {
+		Alert.alert(
+			"Delete Account",
+			"Are you sure you want to delete your account? This action cannot be undone.",
+			[
+				{ text: "Cancel", style: "cancel" },
+				{
+					text: "Delete",
+					style: "destructive",
+					onPress: () => {
+						void removeAccount();
+					},
+				},
+			],
+		);
 	};
 
 	const handleVerifyEmail = async (): Promise<void> => {
@@ -1055,8 +1073,8 @@ export function ProfileScreen() {
 							/>
 							<ActionButton
 								label="Delete Account"
-								onPress={() =>
-									void removeAccount()
+								onPress={
+									confirmRemoveAccount
 								}
 								loading={
 									deleting
