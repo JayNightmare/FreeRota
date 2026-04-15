@@ -140,6 +140,26 @@ const typeDefs = /* GraphQL */ `
     updatedAt: DateTime!
   }
 
+  enum NotificationCategory {
+    BUG_FIX
+    RELEASE
+    UPDATE
+    MAINTENANCE
+  }
+
+  type Notification {
+    id: ID!
+    title: String!
+    body: String!
+    category: NotificationCategory!
+    version: String
+    linkUrl: String
+    publishedAt: DateTime!
+    isRead: Boolean!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+  }
+
   type FreeWindow {
     startUtc: DateTime!
     endUtc: DateTime!
@@ -241,6 +261,8 @@ const typeDefs = /* GraphQL */ `
     incomingFriendRequests: [Friendship!]!
     conversations: [Conversation!]!
     messages(conversationId: ID!, limit: Int = 30, cursor: String): [Message!]!
+    notifications(limit: Int = 20, cursor: String): [Notification!]!
+    notificationUnreadCount: Int!
     findCommonFreeTime(
       userIds: [ID!]!
       rangeStartUtc: DateTime!
@@ -286,6 +308,8 @@ const typeDefs = /* GraphQL */ `
     createConversationWith(targetUserId: ID!): Conversation!
     sendMessage(recipientId: ID!, body: String!): Message!
     markMessageRead(messageId: ID!): Message!
+    markNotificationRead(notificationId: ID!): Notification!
+    markAllNotificationsRead: ActionResult!
     contactSupport(input: ContactSupportInput!): ContactSupportResult!
   }
 

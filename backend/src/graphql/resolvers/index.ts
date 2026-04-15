@@ -2,6 +2,7 @@ import { accountResolver } from './accountResolver.js';
 import { friendshipResolver } from './friendshipResolver.js';
 import { freeTimeResolver } from './freeTimeResolver.js';
 import { messageResolver } from './messageResolver.js';
+import { notificationResolver } from './notificationResolver.js';
 import { supportResolver } from './supportResolver.js';
 import { rotaResolver } from './rotaResolver.js';
 import { shiftTypeResolver } from './shiftTypeResolver.js';
@@ -60,6 +61,7 @@ export const resolvers = {
         ...rotaResolver.Query,
         ...friendshipResolver.Query,
         ...messageResolver.Query,
+        ...notificationResolver.Query,
         ...freeTimeResolver.Query
     },
     Mutation: {
@@ -68,6 +70,7 @@ export const resolvers = {
         ...rotaResolver.Mutation,
         ...friendshipResolver.Mutation,
         ...messageResolver.Mutation,
+        ...notificationResolver.Mutation,
         ...supportResolver.Mutation
     },
     Subscription: {

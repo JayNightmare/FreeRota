@@ -3,6 +3,8 @@ import {
 	Keyboard,
 	StatusBar,
 	Pressable,
+	Modal,
+	ScrollView,
 	StyleSheet,
 	Text,
 	View,
@@ -13,7 +15,7 @@ import {
 } from "react-native";
 import { useRef } from "react";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
-import { ApolloProvider } from "@apollo/client";
+import { ApolloProvider, useMutation, useQuery } from "@apollo/client";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { apolloClient } from "./src/graphql/client";
 import { AuthProvider, useAuth } from "./src/auth/AuthProvider";
@@ -26,6 +28,14 @@ import { AuthScreen, type AuthMode } from "./src/screens/AuthScreen";
 import { ThemeProvider } from "./src/theme/ThemeProvider";
 import { useTheme } from "./src/theme/useTheme";
 import { TabIndicator } from "./src/components/TabIndicator";
+import {
+	MARK_ALL_NOTIFICATIONS_READ_MUTATION,
+	MARK_NOTIFICATION_READ_MUTATION,
+	NOTIFICATIONS_QUERY,
+	NOTIFICATION_UNREAD_COUNT_QUERY,
+} from "./src/graphql/operations";
+import { toLocalDateTime } from "./src/utils/time";
+import { toUserErrorMessage } from "./src/utils/errors";
 
 function getStableWebPortrait(): boolean {
 	if (typeof window === "undefined") {
@@ -52,6 +62,39 @@ function getStableWebPortrait(): boolean {
 }
 
 type TabKey = "ROTA" | "FRIENDS" | "FREE" | "PROFILE" | "SETTINGS";
+
+type NotificationCategory = "BUG_FIX" | "RELEASE" | "UPDATE" | "MAINTENANCE";
+
+interface AppNotification {
+	id: string;
+	title: string;
+	body: string;
+	category: NotificationCategory;
+	version?: string | null;
+	publishedAt: string;
+	isRead: boolean;
+}
+
+interface NotificationsQueryData {
+	notifications: AppNotification[];
+}
+
+interface NotificationUnreadCountData {
+	notificationUnreadCount: number;
+}
+
+function formatNotificationCategory(category: NotificationCategory): string {
+	switch (category) {
+		case "BUG_FIX":
+			return "Bug Fix";
+		case "RELEASE":
+			return "Release";
+		case "MAINTENANCE":
+			return "Maintenance";
+		default:
+			return "Update";
+	}
+}
 
 const tabs: Array<{
 	key: TabKey;
@@ -87,6 +130,10 @@ function AppShell() {
 	const { width } = useWindowDimensions();
 	const [activeTab, setActiveTab] = useState<TabKey>("ROTA");
 	const [authMode, setAuthMode] = useState<AuthMode>("login");
+	const [isNotificationsOpen, setNotificationsOpen] = useState(false);
+	const [notificationActionError, setNotificationActionError] = useState<
+		string | null
+	>(null);
 	const isWeb = Platform.OS === "web";
 	const [webIsPortrait, setWebIsPortrait] = useState<boolean>(() =>
 		isWeb ? getStableWebPortrait() : true,
@@ -96,9 +143,122 @@ function AppShell() {
 		isWeb && (!webIsPortrait || isDesktopViewport);
 	const isAuthenticated = Boolean(token);
 
+	const {
+		data: notificationsData,
+		loading: loadingNotifications,
+		error: notificationsError,
+		refetch: refetchNotifications,
+	} = useQuery<NotificationsQueryData>(NOTIFICATIONS_QUERY, {
+		variables: {
+			limit: 20,
+			cursor: null,
+		},
+		skip: !isAuthenticated,
+		fetchPolicy: "cache-and-network",
+		pollInterval: isAuthenticated ? 20000 : 0,
+	});
+
+	const {
+		data: notificationUnreadData,
+		refetch: refetchNotificationUnreadCount,
+	} = useQuery<NotificationUnreadCountData>(
+		NOTIFICATION_UNREAD_COUNT_QUERY,
+		{
+			skip: !isAuthenticated,
+			fetchPolicy: "cache-and-network",
+			pollInterval: isAuthenticated ? 20000 : 0,
+		},
+	);
+
+	const [markNotificationRead, { loading: markingNotificationRead }] =
+		useMutation(MARK_NOTIFICATION_READ_MUTATION);
+	const [
+		markAllNotificationsRead,
+		{ loading: markingAllNotificationsRead },
+	] = useMutation(MARK_ALL_NOTIFICATIONS_READ_MUTATION);
+
+	const notifications = notificationsData?.notifications ?? [];
+	const unreadCount =
+		notificationUnreadData?.notificationUnreadCount ?? 0;
+	const unreadBadgeLabel = unreadCount > 99 ? "99+" : String(unreadCount);
+
 	const handleAuthModeChange = useCallback((nextMode: AuthMode) => {
 		setAuthMode(nextMode);
 	}, []);
+
+	const closeNotificationsPanel = useCallback(() => {
+		setNotificationsOpen(false);
+		setNotificationActionError(null);
+	}, []);
+
+	const toggleNotificationsPanel = useCallback(() => {
+		setNotificationsOpen((current) => !current);
+		setNotificationActionError(null);
+	}, []);
+
+	const handleMarkNotificationRead = useCallback(
+		async (notification: AppNotification) => {
+			if (notification.isRead || markingNotificationRead) {
+				return;
+			}
+
+			setNotificationActionError(null);
+
+			try {
+				await markNotificationRead({
+					variables: {
+						notificationId: notification.id,
+					},
+				});
+				await Promise.all([
+					refetchNotifications(),
+					refetchNotificationUnreadCount(),
+				]);
+			} catch (error) {
+				setNotificationActionError(
+					toUserErrorMessage(
+						error,
+						"Failed to mark notification as read.",
+					),
+				);
+			}
+		},
+		[
+			markNotificationRead,
+			markingNotificationRead,
+			refetchNotificationUnreadCount,
+			refetchNotifications,
+		],
+	);
+
+	const handleMarkAllNotificationsRead = useCallback(async () => {
+		if (markingAllNotificationsRead || unreadCount === 0) {
+			return;
+		}
+
+		setNotificationActionError(null);
+
+		try {
+			await markAllNotificationsRead();
+			await Promise.all([
+				refetchNotifications(),
+				refetchNotificationUnreadCount(),
+			]);
+		} catch (error) {
+			setNotificationActionError(
+				toUserErrorMessage(
+					error,
+					"Failed to mark all notifications as read.",
+				),
+			);
+		}
+	}, [
+		markAllNotificationsRead,
+		markingAllNotificationsRead,
+		refetchNotificationUnreadCount,
+		refetchNotifications,
+		unreadCount,
+	]);
 
 	useEffect(() => {
 		if (isWeb && typeof document !== "undefined") {
@@ -139,12 +299,16 @@ function AppShell() {
 		};
 	}, [isWeb]);
 
-	const activeLabel = useMemo(
-		() =>
+	const activeLabel = useMemo(() => {
+		if (activeTab === "SETTINGS") {
+			return "Settings";
+		}
+
+		return (
 			tabs.find((item) => item.key === activeTab)?.label ??
-			"Rota",
-		[activeTab],
-	);
+			"Rota"
+		);
+	}, [activeTab]);
 
 	const fadeAnim = useRef(new Animated.Value(1)).current;
 
@@ -164,8 +328,17 @@ function AppShell() {
 	useEffect(() => {
 		if (isAuthenticated) {
 			setAuthMode("login");
+			return;
 		}
+
+		setNotificationsOpen(false);
+		setNotificationActionError(null);
 	}, [isAuthenticated]);
+
+	useEffect(() => {
+		setNotificationsOpen(false);
+		setNotificationActionError(null);
+	}, [activeTab]);
 
 	const styles = useMemo(
 		() =>
@@ -220,6 +393,28 @@ function AppShell() {
 					alignItems: "center",
 					gap: theme.spacing.sm,
 				},
+				notificationIconWrap: {
+					position: "relative",
+				},
+				notificationBadge: {
+					position: "absolute",
+					top: -7,
+					right: -10,
+					minWidth: 19,
+					height: 19,
+					borderRadius: 10,
+					paddingHorizontal: 4,
+					alignItems: "center",
+					justifyContent: "center",
+					backgroundColor: theme.colors.accent,
+					borderWidth: 1,
+					borderColor: theme.colors.border,
+				},
+				notificationBadgeText: {
+					fontSize: theme.typography.tiny,
+					fontWeight: "900",
+					color: theme.colors.onAccent,
+				},
 				themeIconButton: {
 					width: 40,
 					height: 40,
@@ -233,6 +428,128 @@ function AppShell() {
 				},
 				themeIconButtonActive: {
 					borderColor: theme.colors.accent,
+				},
+				notificationModalOverlay: {
+					flex: 1,
+					backgroundColor: "rgba(0, 0, 0, 0.25)",
+					paddingTop: theme.spacing.lg,
+					paddingHorizontal: theme.spacing.md,
+				},
+				notificationPanel: {
+					alignSelf: "flex-end",
+					width: "100%",
+					maxWidth: 420,
+					maxHeight: "78%",
+					backgroundColor: theme.colors.surface,
+					borderWidth: theme.borderWidth,
+					borderColor: theme.colors.border,
+					borderRadius: theme.radius.lg,
+					padding: theme.spacing.md,
+					gap: theme.spacing.sm,
+					...theme.shadowSm,
+				},
+				notificationPanelHeader: {
+					flexDirection: "row",
+					alignItems: "center",
+					justifyContent: "space-between",
+					gap: theme.spacing.sm,
+				},
+				notificationPanelTitle: {
+					fontSize: theme.typography.body,
+					fontWeight: "900",
+					textTransform: "uppercase",
+					color: theme.colors.textPrimary,
+					letterSpacing: 0.7,
+				},
+				notificationMarkAllButton: {
+					paddingHorizontal: theme.spacing.sm,
+					paddingVertical: theme.spacing.xs,
+					borderWidth: 1,
+					borderColor: theme.colors.border,
+					backgroundColor:
+						theme.colors.surfaceMuted,
+					borderRadius: theme.radius.md,
+				},
+				notificationMarkAllText: {
+					fontSize: theme.typography.caption,
+					fontWeight: "800",
+					textTransform: "uppercase",
+					color: theme.colors.textPrimary,
+				},
+				notificationMarkAllTextMuted: {
+					color: theme.colors.textMuted,
+				},
+				notificationMessage: {
+					fontSize: theme.typography.caption,
+					fontWeight: "700",
+					color: theme.colors.textMuted,
+				},
+				notificationErrorMessage: {
+					fontSize: theme.typography.caption,
+					fontWeight: "700",
+					color: theme.colors.error,
+				},
+				notificationLoadingContainer: {
+					flexDirection: "row",
+					alignItems: "center",
+					gap: theme.spacing.sm,
+				},
+				notificationList: {
+					maxHeight: 360,
+				},
+				notificationListContent: {
+					gap: theme.spacing.sm,
+					paddingBottom: theme.spacing.xs,
+				},
+				notificationCard: {
+					borderWidth: 1,
+					borderColor: theme.colors.border,
+					backgroundColor:
+						theme.colors.surfaceElevated,
+					borderRadius: theme.radius.md,
+					padding: theme.spacing.sm,
+					gap: theme.spacing.xs,
+				},
+				notificationCardUnread: {
+					borderColor: theme.colors.accent,
+					backgroundColor:
+						theme.colors.surfaceMuted,
+				},
+				notificationCategoryRow: {
+					flexDirection: "row",
+					alignItems: "center",
+					justifyContent: "space-between",
+				},
+				notificationCategory: {
+					fontSize: theme.typography.tiny,
+					fontWeight: "800",
+					textTransform: "uppercase",
+					color: theme.colors.textSecondary,
+					letterSpacing: 0.5,
+				},
+				notificationUnreadDot: {
+					width: 10,
+					height: 10,
+					borderRadius: 5,
+					backgroundColor: theme.colors.accent,
+					borderWidth: 1,
+					borderColor: theme.colors.border,
+				},
+				notificationTitle: {
+					fontSize: theme.typography.body,
+					fontWeight: "800",
+					color: theme.colors.textPrimary,
+				},
+				notificationBody: {
+					fontSize: theme.typography.caption,
+					fontWeight: "700",
+					color: theme.colors.textSecondary,
+					lineHeight: 20,
+				},
+				notificationMeta: {
+					fontSize: theme.typography.tiny,
+					fontWeight: "700",
+					color: theme.colors.textMuted,
 				},
 				screenContainer: {
 					flex: 1,
@@ -401,6 +718,54 @@ function AppShell() {
 						/>
 					</Pressable>
 					<Pressable
+						style={[
+							styles.themeIconButton,
+							isNotificationsOpen
+								? styles.themeIconButtonActive
+								: undefined,
+						]}
+						onPress={
+							toggleNotificationsPanel
+						}
+					>
+						<View
+							style={
+								styles.notificationIconWrap
+							}
+						>
+							<Ionicons
+								name={
+									isNotificationsOpen
+										? "notifications"
+										: "notifications-outline"
+								}
+								size={20}
+								color={
+									theme
+										.colors
+										.textPrimary
+								}
+							/>
+							{unreadCount > 0 ? (
+								<View
+									style={
+										styles.notificationBadge
+									}
+								>
+									<Text
+										style={
+											styles.notificationBadgeText
+										}
+									>
+										{
+											unreadBadgeLabel
+										}
+									</Text>
+								</View>
+							) : null}
+						</View>
+					</Pressable>
+					<Pressable
 						style={styles.themeIconButton}
 						onPress={toggleColorMode}
 					>
@@ -415,6 +780,220 @@ function AppShell() {
 					</Pressable>
 				</View>
 			</View>
+
+			<Modal
+				visible={isNotificationsOpen}
+				transparent
+				animationType="fade"
+				onRequestClose={closeNotificationsPanel}
+			>
+				<Pressable
+					style={styles.notificationModalOverlay}
+					onPress={closeNotificationsPanel}
+				>
+					<Pressable
+						style={styles.notificationPanel}
+						onPress={() => {}}
+					>
+						<View
+							style={
+								styles.notificationPanelHeader
+							}
+						>
+							<Text
+								style={
+									styles.notificationPanelTitle
+								}
+							>
+								Notifications
+							</Text>
+							<Pressable
+								style={
+									styles.notificationMarkAllButton
+								}
+								onPress={() =>
+									void handleMarkAllNotificationsRead()
+								}
+								disabled={
+									markingAllNotificationsRead ||
+									unreadCount ===
+										0
+								}
+							>
+								<Text
+									style={[
+										styles.notificationMarkAllText,
+										markingAllNotificationsRead ||
+										unreadCount ===
+											0
+											? styles.notificationMarkAllTextMuted
+											: undefined,
+									]}
+								>
+									Mark All
+									Read
+								</Text>
+							</Pressable>
+						</View>
+
+						{notificationActionError ? (
+							<Text
+								style={
+									styles.notificationErrorMessage
+								}
+							>
+								{
+									notificationActionError
+								}
+							</Text>
+						) : null}
+
+						{loadingNotifications ? (
+							<View
+								style={
+									styles.notificationLoadingContainer
+								}
+							>
+								<ActivityIndicator
+									size="small"
+									color={
+										theme
+											.colors
+											.accent
+									}
+								/>
+								<Text
+									style={
+										styles.notificationMessage
+									}
+								>
+									Loading
+									notifications...
+								</Text>
+							</View>
+						) : null}
+
+						{!loadingNotifications &&
+						notificationsError ? (
+							<Text
+								style={
+									styles.notificationErrorMessage
+								}
+							>
+								{toUserErrorMessage(
+									notificationsError,
+									"Unable to load notifications.",
+								)}
+							</Text>
+						) : null}
+
+						{!loadingNotifications &&
+						!notificationsError &&
+						notifications.length === 0 ? (
+							<Text
+								style={
+									styles.notificationMessage
+								}
+							>
+								No updates yet.
+							</Text>
+						) : null}
+
+						{!loadingNotifications &&
+						!notificationsError &&
+						notifications.length > 0 ? (
+							<ScrollView
+								style={
+									styles.notificationList
+								}
+								contentContainerStyle={
+									styles.notificationListContent
+								}
+							>
+								{notifications.map(
+									(
+										notification,
+									) => (
+										<Pressable
+											key={
+												notification.id
+											}
+											style={[
+												styles.notificationCard,
+												!notification.isRead
+													? styles.notificationCardUnread
+													: undefined,
+											]}
+											onPress={() =>
+												void handleMarkNotificationRead(
+													notification,
+												)
+											}
+											disabled={
+												notification.isRead ||
+												markingNotificationRead
+											}
+										>
+											<View
+												style={
+													styles.notificationCategoryRow
+												}
+											>
+												<Text
+													style={
+														styles.notificationCategory
+													}
+												>
+													{formatNotificationCategory(
+														notification.category,
+													)}
+												</Text>
+												{!notification.isRead ? (
+													<View
+														style={
+															styles.notificationUnreadDot
+														}
+													/>
+												) : null}
+											</View>
+											<Text
+												style={
+													styles.notificationTitle
+												}
+											>
+												{
+													notification.title
+												}
+											</Text>
+											<Text
+												style={
+													styles.notificationBody
+												}
+											>
+												{
+													notification.body
+												}
+											</Text>
+											<Text
+												style={
+													styles.notificationMeta
+												}
+											>
+												{toLocalDateTime(
+													notification.publishedAt,
+												)}
+												{notification.version
+													? ` | v${notification.version}`
+													: ""}
+											</Text>
+										</Pressable>
+									),
+								)}
+							</ScrollView>
+						) : null}
+					</Pressable>
+				</Pressable>
+			</Modal>
 
 			<Animated.View
 				style={[

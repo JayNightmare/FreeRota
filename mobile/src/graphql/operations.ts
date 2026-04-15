@@ -461,3 +461,45 @@ export const MARK_MESSAGE_READ_MUTATION = gql`
 		}
 	}
 `;
+
+export const NOTIFICATIONS_QUERY = gql`
+	query Notifications($limit: Int, $cursor: String) {
+		notifications(limit: $limit, cursor: $cursor) {
+			id
+			title
+			body
+			category
+			version
+			linkUrl
+			publishedAt
+			isRead
+			createdAt
+			updatedAt
+		}
+	}
+`;
+
+export const NOTIFICATION_UNREAD_COUNT_QUERY = gql`
+	query NotificationUnreadCount {
+		notificationUnreadCount
+	}
+`;
+
+export const MARK_NOTIFICATION_READ_MUTATION = gql`
+	mutation MarkNotificationRead($notificationId: ID!) {
+		markNotificationRead(notificationId: $notificationId) {
+			id
+			isRead
+			updatedAt
+		}
+	}
+`;
+
+export const MARK_ALL_NOTIFICATIONS_READ_MUTATION = gql`
+	mutation MarkAllNotificationsRead {
+		markAllNotificationsRead {
+			success
+			message
+		}
+	}
+`;

@@ -4,9 +4,11 @@ import { connectDatabase, disconnectDatabase } from './config/db.js';
 import { env } from './config/env.js';
 import { schema } from './graphql/schema.js';
 import { buildContext } from './graphql/context.js';
+import { notificationService } from './services/notificationService.js';
 
 async function bootstrap(): Promise<void> {
     await connectDatabase(env.MONGODB_URI);
+    await notificationService.ensureSeedData();
 
     const yoga = createYoga({
         schema,
