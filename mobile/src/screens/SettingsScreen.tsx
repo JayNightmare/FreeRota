@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import {
+	Pressable,
+	ScrollView,
+	StyleSheet,
+	Text,
+	TextInput,
+	View,
+} from "react-native";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { useMutation, useQuery } from "@apollo/client";
 import { ScreenScaffold } from "../components/ScreenScaffold";
@@ -8,6 +15,7 @@ import { ActionButton } from "../components/ActionButton";
 import { StateNotice } from "../components/StateNotice";
 import {
 	CREATE_SHIFT_TYPE_MUTATION,
+	CONTACT_SUPPORT_MUTATION,
 	DELETE_SHIFT_TYPE_MUTATION,
 	ME_QUERY,
 	MY_SHIFT_TYPES_QUERY,
@@ -32,6 +40,23 @@ interface MeQuery {
 	me: {
 		id: string;
 		uiAccentColor: string | null;
+	};
+}
+
+type ContactReason =
+	| "BUG_REPORT"
+	| "FEATURE_REQUEST"
+	| "ACCOUNT_LOGIN_PROBLEM"
+	| "OTHER";
+type ContactUrgency = "LOW" | "MEDIUM" | "HIGH" | "CRITICAL";
+
+interface ContactSupportMutation {
+	contactSupport: {
+		success: boolean;
+		message: string;
+		issueCreated: boolean;
+		issueNumber: number | null;
+		issueUrl: string | null;
 	};
 }
 
@@ -67,7 +92,30 @@ const APPARENCE_COLOR_PRESETS = [
 
 const HEX_COLOR_REGEX = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
 
-type SettingsCategoryKey = "APPARENCE" | "SHIFT_TYPES";
+type SettingsCategoryKey = "APPARENCE" | "SHIFT_TYPES" | "CONTACT_SUPPORT";
+
+const CONTACT_REASON_OPTIONS: Array<{
+	value: ContactReason;
+	label: string;
+}> = [
+	{ value: "BUG_REPORT", label: "Bug Report" },
+	{ value: "FEATURE_REQUEST", label: "Feature Request" },
+	{
+		value: "ACCOUNT_LOGIN_PROBLEM",
+		label: "Account/Login Problem",
+	},
+	{ value: "OTHER", label: "Other" },
+];
+
+const CONTACT_URGENCY_OPTIONS: Array<{
+	value: ContactUrgency;
+	label: string;
+}> = [
+	{ value: "LOW", label: "Low" },
+	{ value: "MEDIUM", label: "Medium" },
+	{ value: "HIGH", label: "High" },
+	{ value: "CRITICAL", label: "Critical" },
+];
 
 const SETTINGS_CATEGORIES: Array<{
 	key: SettingsCategoryKey;
@@ -83,6 +131,11 @@ const SETTINGS_CATEGORIES: Array<{
 		key: "SHIFT_TYPES",
 		label: "Shift Types",
 		description: "Tag names and chip colors",
+	},
+	{
+		key: "CONTACT_SUPPORT",
+		label: "Contact Support",
+		description: "Send tester feedback and issues",
 	},
 ];
 
@@ -184,6 +237,22 @@ export function SettingsScreen() {
 		null,
 	);
 
+	const [contactTitle, setContactTitle] = useState("");
+	const [contactReason, setContactReason] =
+		useState<ContactReason>("BUG_REPORT");
+	const [contactUrgency, setContactUrgency] =
+		useState<ContactUrgency>("MEDIUM");
+	const [contactMessage, setContactMessage] = useState("");
+	const [contactError, setContactError] = useState<string | null>(null);
+	const [contactSuccess, setContactSuccess] = useState<string | null>(
+		null,
+	);
+	const [contactIssueUrl, setContactIssueUrl] = useState<string | null>(
+		null,
+	);
+	const [reasonPickerOpen, setReasonPickerOpen] = useState(false);
+	const [urgencyPickerOpen, setUrgencyPickerOpen] = useState(false);
+
 	const {
 		data: shiftTypeData,
 		loading: shiftTypeLoading,
@@ -207,6 +276,8 @@ export function SettingsScreen() {
 	const [updateAccount, { loading: updatingApparence }] = useMutation(
 		UPDATE_ACCOUNT_MUTATION,
 	);
+	const [contactSupport, { loading: submittingContact }] =
+		useMutation<ContactSupportMutation>(CONTACT_SUPPORT_MUTATION);
 
 	const shiftTypeMutationLoading = creating || updating;
 
@@ -363,6 +434,60 @@ export function SettingsScreen() {
 					fontSize: theme.typography.caption,
 					fontWeight: "700",
 					color: theme.colors.textSecondary,
+				},
+				pickerTrigger: {
+					borderWidth: theme.borderWidth,
+					borderRadius: theme.radius.md,
+					borderColor: theme.colors.border,
+					backgroundColor:
+						theme.colors.surfaceElevated,
+					paddingHorizontal: theme.spacing.md,
+					paddingVertical: theme.spacing.sm,
+					flexDirection: "row",
+					alignItems: "center",
+					justifyContent: "space-between",
+					gap: theme.spacing.sm,
+				},
+				pickerTriggerValue: {
+					fontSize: theme.typography.body,
+					fontWeight: "600",
+					color: theme.colors.textPrimary,
+					flex: 1,
+				},
+				dropdownContainer: {
+					marginTop: theme.spacing.xs,
+					borderWidth: theme.borderWidth,
+					borderRadius: theme.radius.md,
+					borderColor: theme.colors.border,
+					backgroundColor:
+						theme.colors.surfaceElevated,
+					overflow: "hidden",
+				},
+				dropdownOption: {
+					paddingHorizontal: theme.spacing.md,
+					paddingVertical: theme.spacing.sm,
+				},
+				dropdownOptionActive: {
+					backgroundColor:
+						theme.colors.accentBackground,
+				},
+				dropdownOptionText: {
+					fontSize: theme.typography.body,
+					fontWeight: "600",
+					color: theme.colors.textPrimary,
+				},
+				messageInput: {
+					borderWidth: theme.borderWidth,
+					borderRadius: theme.radius.md,
+					borderColor: theme.colors.border,
+					backgroundColor:
+						theme.colors.surfaceElevated,
+					paddingHorizontal: theme.spacing.md,
+					paddingVertical: theme.spacing.sm,
+					fontSize: theme.typography.body,
+					color: theme.colors.textPrimary,
+					minHeight: 120,
+					textAlignVertical: "top",
 				},
 				helpText: {
 					fontSize: theme.typography.tiny,
@@ -539,6 +664,74 @@ export function SettingsScreen() {
 				toUserErrorMessage(
 					mutationError,
 					"Unable to save apparence settings.",
+				),
+			);
+		}
+	};
+
+	const selectedReasonLabel =
+		CONTACT_REASON_OPTIONS.find(
+			(option) => option.value === contactReason,
+		)?.label ?? "Bug Report";
+	const selectedUrgencyLabel =
+		CONTACT_URGENCY_OPTIONS.find(
+			(option) => option.value === contactUrgency,
+		)?.label ?? "Medium";
+
+	const submitContactSupport = async () => {
+		setContactError(null);
+		setContactSuccess(null);
+		setContactIssueUrl(null);
+
+		const trimmedTitle = contactTitle.trim();
+		const trimmedMessage = contactMessage.trim();
+
+		if (trimmedTitle.length < 3) {
+			setContactError("Title must be at least 3 characters.");
+			return;
+		}
+
+		if (trimmedMessage.length < 10) {
+			setContactError(
+				"Message must be at least 10 characters.",
+			);
+			return;
+		}
+
+		try {
+			const result = await contactSupport({
+				variables: {
+					input: {
+						title: trimmedTitle,
+						reason: contactReason,
+						urgency: contactUrgency,
+						message: trimmedMessage,
+					},
+				},
+			});
+
+			const response = result.data?.contactSupport;
+			if (!response?.success) {
+				setContactError(
+					response?.message ??
+						"Unable to send message. Please try again.",
+				);
+				return;
+			}
+
+			setContactSuccess(response.message);
+			setContactIssueUrl(response.issueUrl ?? null);
+			setContactTitle("");
+			setContactMessage("");
+			setContactReason("BUG_REPORT");
+			setContactUrgency("MEDIUM");
+			setReasonPickerOpen(false);
+			setUrgencyPickerOpen(false);
+		} catch (mutationError) {
+			setContactError(
+				toUserErrorMessage(
+					mutationError,
+					"Unable to send message. Please try again.",
 				),
 			);
 		}
@@ -896,6 +1089,191 @@ export function SettingsScreen() {
 		</View>
 	);
 
+	const renderContactSupportCategory = () => (
+		<View style={styles.section}>
+			<Text style={styles.sectionKicker}>Tester Support</Text>
+			<Text style={styles.sectionTitle}>Contact Team</Text>
+			<Text style={styles.subtitle}>
+				Send tester feedback to the team. Critical
+				urgency also attempts an automatic GitHub issue.
+			</Text>
+
+			<FormField
+				label="Title"
+				value={contactTitle}
+				onChangeText={setContactTitle}
+				placeholder="Short summary of your feedback"
+				autoCapitalize="sentences"
+			/>
+
+			<Text style={styles.label}>Reason</Text>
+			<Pressable
+				style={styles.pickerTrigger}
+				onPress={() => {
+					setReasonPickerOpen((value) => !value);
+					setUrgencyPickerOpen(false);
+				}}
+			>
+				<Text style={styles.pickerTriggerValue}>
+					{selectedReasonLabel}
+				</Text>
+				<Ionicons
+					name={
+						reasonPickerOpen
+							? "chevron-up"
+							: "chevron-down"
+					}
+					size={18}
+					color={theme.colors.textMuted}
+				/>
+			</Pressable>
+			{reasonPickerOpen ? (
+				<View style={styles.dropdownContainer}>
+					{CONTACT_REASON_OPTIONS.map(
+						(option) => {
+							const isActive =
+								option.value ===
+								contactReason;
+							return (
+								<Pressable
+									key={
+										option.value
+									}
+									onPress={() => {
+										setContactReason(
+											option.value,
+										);
+										setReasonPickerOpen(
+											false,
+										);
+									}}
+									style={[
+										styles.dropdownOption,
+										isActive
+											? styles.dropdownOptionActive
+											: undefined,
+									]}
+								>
+									<Text
+										style={
+											styles.dropdownOptionText
+										}
+									>
+										{
+											option.label
+										}
+									</Text>
+								</Pressable>
+							);
+						},
+					)}
+				</View>
+			) : null}
+
+			<Text style={styles.label}>Urgency</Text>
+			<Pressable
+				style={styles.pickerTrigger}
+				onPress={() => {
+					setUrgencyPickerOpen((value) => !value);
+					setReasonPickerOpen(false);
+				}}
+			>
+				<Text style={styles.pickerTriggerValue}>
+					{selectedUrgencyLabel}
+				</Text>
+				<Ionicons
+					name={
+						urgencyPickerOpen
+							? "chevron-up"
+							: "chevron-down"
+					}
+					size={18}
+					color={theme.colors.textMuted}
+				/>
+			</Pressable>
+			{urgencyPickerOpen ? (
+				<View style={styles.dropdownContainer}>
+					{CONTACT_URGENCY_OPTIONS.map(
+						(option) => {
+							const isActive =
+								option.value ===
+								contactUrgency;
+							return (
+								<Pressable
+									key={
+										option.value
+									}
+									onPress={() => {
+										setContactUrgency(
+											option.value,
+										);
+										setUrgencyPickerOpen(
+											false,
+										);
+									}}
+									style={[
+										styles.dropdownOption,
+										isActive
+											? styles.dropdownOptionActive
+											: undefined,
+									]}
+								>
+									<Text
+										style={
+											styles.dropdownOptionText
+										}
+									>
+										{
+											option.label
+										}
+									</Text>
+								</Pressable>
+							);
+						},
+					)}
+				</View>
+			) : null}
+
+			<Text style={styles.label}>Message</Text>
+			<TextInput
+				style={styles.messageInput}
+				value={contactMessage}
+				onChangeText={setContactMessage}
+				multiline
+				numberOfLines={6}
+				placeholder="Share details, expected behaviour, and what happened."
+				placeholderTextColor={theme.colors.textMuted}
+			/>
+
+			<Text style={styles.helpText}>
+				Every message goes to Discord. Critical urgency
+				also triggers GitHub issue escalation.
+			</Text>
+			{contactError ? (
+				<StateNotice
+					mode="error"
+					message={contactError}
+				/>
+			) : null}
+			{contactSuccess ? (
+				<StateNotice
+					mode="empty"
+					message={contactSuccess}
+				/>
+			) : null}
+			{contactIssueUrl ? (
+				<Text style={styles.helpText}>
+					Escalation issue: {contactIssueUrl}
+				</Text>
+			) : null}
+			<ActionButton
+				label="Send Message"
+				onPress={() => void submitContactSupport()}
+				loading={submittingContact}
+			/>
+		</View>
+	);
+
 	return (
 		<ScreenScaffold>
 			{renderSidebar()}
@@ -947,6 +1325,9 @@ export function SettingsScreen() {
 						: null}
 					{activeCategory === "SHIFT_TYPES"
 						? renderShiftTypeCategory()
+						: null}
+					{activeCategory === "CONTACT_SUPPORT"
+						? renderContactSupportCategory()
 						: null}
 				</ScrollView>
 			</View>

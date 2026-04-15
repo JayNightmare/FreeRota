@@ -30,12 +30,20 @@ MONGODB_URI=<your-mongodb-uri>
 JWT_SECRET=<your-secret>
 JWT_EXPIRES_IN=7d
 FRONTEND_ORIGIN=https://freerota-testers.your-domain.com
+DISCORD_SUPPORT_WEBHOOK_URL=<discord-webhook-url>
+GITHUB_ISSUE_TOKEN=<github-token-with-issues-write>
+GITHUB_ISSUE_OWNER=JayNightmare
+GITHUB_ISSUE_REPO=FreeRota
+GITHUB_ISSUE_LABELS=tester-feedback,triage
+GITHUB_ISSUE_ESCALATION_LEVEL=CRITICAL
 ```
 
 Notes:
 
 - Use `*` only for temporary testing.
 - Prefer exact origin in non-dev environments.
+- Every contact submission posts a Discord embed to `DISCORD_SUPPORT_WEBHOOK_URL`.
+- `GITHUB_ISSUE_ESCALATION_LEVEL=CRITICAL` keeps issue creation limited to Critical urgency submissions.
 
 ## 2) Configure Mobile Web Build Environment
 

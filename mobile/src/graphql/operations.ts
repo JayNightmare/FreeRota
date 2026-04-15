@@ -98,6 +98,18 @@ export const CHANGE_PASSWORD_MUTATION = gql`
 	}
 `;
 
+export const CONTACT_SUPPORT_MUTATION = gql`
+	mutation ContactSupport($input: ContactSupportInput!) {
+		contactSupport(input: $input) {
+			success
+			message
+			issueCreated
+			issueNumber
+			issueUrl
+		}
+	}
+`;
+
 export const MY_SHIFT_TYPES_QUERY = gql`
 	query MyShiftTypes {
 		myShiftTypes {

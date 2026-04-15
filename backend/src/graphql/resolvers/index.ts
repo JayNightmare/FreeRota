@@ -2,6 +2,7 @@ import { accountResolver } from './accountResolver.js';
 import { friendshipResolver } from './friendshipResolver.js';
 import { freeTimeResolver } from './freeTimeResolver.js';
 import { messageResolver } from './messageResolver.js';
+import { supportResolver } from './supportResolver.js';
 import { rotaResolver } from './rotaResolver.js';
 import { shiftTypeResolver } from './shiftTypeResolver.js';
 import { GraphQLError, GraphQLScalarType, Kind } from 'graphql';
@@ -66,7 +67,8 @@ export const resolvers = {
         ...shiftTypeResolver.Mutation,
         ...rotaResolver.Mutation,
         ...friendshipResolver.Mutation,
-        ...messageResolver.Mutation
+        ...messageResolver.Mutation,
+        ...supportResolver.Mutation
     },
     Subscription: {
         ...messageResolver.Subscription

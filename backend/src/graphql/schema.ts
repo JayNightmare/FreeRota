@@ -146,6 +146,28 @@ const typeDefs = /* GraphQL */ `
     durationMinutes: Int!
   }
 
+  enum ContactReason {
+    BUG_REPORT
+    FEATURE_REQUEST
+    ACCOUNT_LOGIN_PROBLEM
+    OTHER
+  }
+
+  enum ContactUrgency {
+    LOW
+    MEDIUM
+    HIGH
+    CRITICAL
+  }
+
+  type ContactSupportResult {
+    success: Boolean!
+    message: String!
+    issueCreated: Boolean!
+    issueNumber: Int
+    issueUrl: String
+  }
+
   input RegisterInput {
     email: String!
     username: String!
@@ -200,6 +222,13 @@ const typeDefs = /* GraphQL */ `
   input ChangePasswordInput {
     currentPassword: String!
     newPassword: String!
+  }
+
+  input ContactSupportInput {
+    title: String!
+    reason: ContactReason!
+    urgency: ContactUrgency!
+    message: String!
   }
 
   type Query {
@@ -257,6 +286,7 @@ const typeDefs = /* GraphQL */ `
     createConversationWith(targetUserId: ID!): Conversation!
     sendMessage(recipientId: ID!, body: String!): Message!
     markMessageRead(messageId: ID!): Message!
+    contactSupport(input: ContactSupportInput!): ContactSupportResult!
   }
 
   type Subscription {

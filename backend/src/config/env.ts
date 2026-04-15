@@ -29,6 +29,26 @@ function normalizeOptionalUrl(value?: string): string | undefined {
     return trimTrailingSlash(trimmed);
 }
 
+function normalizeOptionalValue(value?: string): string | undefined {
+    if (!value) {
+        return undefined;
+    }
+
+    const trimmed = value.trim();
+    return trimmed ? trimmed : undefined;
+}
+
+function normalizeOptionalCsv(value?: string): string[] {
+    if (!value) {
+        return [];
+    }
+
+    return value
+        .split(',')
+        .map((item) => item.trim())
+        .filter(Boolean);
+}
+
 const envSchema = z.object({
     PORT: z.coerce.number().default(4000),
     MONGODB_URI: z.string().min(1),
@@ -42,7 +62,16 @@ const envSchema = z.object({
     SMTP_FROM: z.string().default('FreeRota <no-reply@freerota.local>'),
     MAILTRAP_TOKEN: z.string().optional(),
     APP_DEEP_LINK_BASE: z.string().default('freerota://auth').transform(trimTrailingSlash),
-    APP_WEB_BASE_URL: z.string().optional().transform(normalizeOptionalUrl)
+    APP_WEB_BASE_URL: z.string().optional().transform(normalizeOptionalUrl),
+    DISCORD_SUPPORT_WEBHOOK_URL: z.string().optional().transform(normalizeOptionalValue),
+    GITHUB_ISSUE_TOKEN: z.string().optional().transform(normalizeOptionalValue),
+    GITHUB_ISSUE_OWNER: z.string().optional().transform(normalizeOptionalValue),
+    GITHUB_ISSUE_REPO: z.string().optional().transform(normalizeOptionalValue),
+    GITHUB_ISSUE_LABELS: z.string().default('tester-feedback,triage').transform(normalizeOptionalCsv),
+    GITHUB_ISSUE_ESCALATION_LEVEL: z
+        .enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'])
+        .default('CRITICAL')
+        .transform((value) => value.toUpperCase() as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL')
 });
 
 const parsed = envSchema.safeParse(process.env);
