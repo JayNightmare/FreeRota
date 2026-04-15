@@ -728,6 +728,24 @@ export function SettingsScreen() {
 			setReasonPickerOpen(false);
 			setUrgencyPickerOpen(false);
 		} catch (mutationError) {
+			const rawMessage =
+				mutationError instanceof Error
+					? mutationError.message
+					: String(mutationError);
+			if (
+				rawMessage.includes(
+					'Unknown type "ContactSupportInput"',
+				) ||
+				rawMessage.includes(
+					'Cannot query field "contactSupport"',
+				)
+			) {
+				setContactError(
+					"The support endpoint has not been deployed yet. Please try again after the backend update is live.",
+				);
+				return;
+			}
+
 			setContactError(
 				toUserErrorMessage(
 					mutationError,
