@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
 	Keyboard,
 	StatusBar,
@@ -22,10 +22,34 @@ import { FriendsScreen } from "./src/screens/FriendsScreen";
 import { FreeTimeScreen } from "./src/screens/FreeTimeScreen";
 import { ProfileScreen } from "./src/screens/ProfileScreen";
 import { SettingsScreen } from "./src/screens/SettingsScreen";
-import { AuthScreen } from "./src/screens/AuthScreen";
+import { AuthScreen, type AuthMode } from "./src/screens/AuthScreen";
 import { ThemeProvider } from "./src/theme/ThemeProvider";
 import { useTheme } from "./src/theme/useTheme";
 import { TabIndicator } from "./src/components/TabIndicator";
+
+function getStableWebPortrait(): boolean {
+	if (typeof window === "undefined") {
+		return true;
+	}
+
+	const orientationType = window.screen?.orientation?.type;
+	if (orientationType) {
+		return orientationType.startsWith("portrait");
+	}
+
+	const screenHeight = window.screen?.height;
+	const screenWidth = window.screen?.width;
+	if (
+		typeof screenHeight === "number" &&
+		typeof screenWidth === "number" &&
+		screenHeight > 0 &&
+		screenWidth > 0
+	) {
+		return screenHeight >= screenWidth;
+	}
+
+	return window.innerHeight >= window.innerWidth;
+}
 
 type TabKey = "ROTA" | "FRIENDS" | "FREE" | "PROFILE" | "SETTINGS";
 
@@ -60,12 +84,21 @@ function ActiveScreen({ tab }: { tab: TabKey }) {
 function AppShell() {
 	const { theme, resolvedMode, toggleColorMode } = useTheme();
 	const { token, isBootstrapping } = useAuth();
-	const { width, height } = useWindowDimensions();
+	const { width } = useWindowDimensions();
 	const [activeTab, setActiveTab] = useState<TabKey>("ROTA");
+	const [authMode, setAuthMode] = useState<AuthMode>("login");
 	const isWeb = Platform.OS === "web";
-	const isPortrait = height >= width;
+	const [webIsPortrait, setWebIsPortrait] = useState<boolean>(() =>
+		isWeb ? getStableWebPortrait() : true,
+	);
 	const isDesktopViewport = width >= 900;
-	const shouldBlockWebUsage = isWeb && (!isPortrait || isDesktopViewport);
+	const shouldBlockWebUsage =
+		isWeb && (!webIsPortrait || isDesktopViewport);
+	const isAuthenticated = Boolean(token);
+
+	const handleAuthModeChange = useCallback((nextMode: AuthMode) => {
+		setAuthMode(nextMode);
+	}, []);
 
 	useEffect(() => {
 		if (isWeb && typeof document !== "undefined") {
@@ -77,6 +110,34 @@ function AppShell() {
 			document.documentElement.style.height = "100%";
 		}
 	}, [isWeb, theme.colors.background]);
+
+	useEffect(() => {
+		if (!isWeb || typeof window === "undefined") {
+			return;
+		}
+
+		const syncWebOrientation = () => {
+			setWebIsPortrait(getStableWebPortrait());
+		};
+
+		syncWebOrientation();
+		window.addEventListener(
+			"orientationchange",
+			syncWebOrientation,
+		);
+		window.addEventListener("resize", syncWebOrientation);
+
+		return () => {
+			window.removeEventListener(
+				"orientationchange",
+				syncWebOrientation,
+			);
+			window.removeEventListener(
+				"resize",
+				syncWebOrientation,
+			);
+		};
+	}, [isWeb]);
 
 	const activeLabel = useMemo(
 		() =>
@@ -99,7 +160,12 @@ function AppShell() {
 	const statusBarStyle =
 		resolvedMode === "dark" ? "light-content" : "dark-content";
 	const themeIconName = resolvedMode === "dark" ? "moon" : "sunny";
-	const isAuthenticated = Boolean(token);
+
+	useEffect(() => {
+		if (isAuthenticated) {
+			setAuthMode("login");
+		}
+	}, [isAuthenticated]);
 
 	const styles = useMemo(
 		() =>
@@ -279,7 +345,12 @@ function AppShell() {
 	}
 
 	if (!isAuthenticated) {
-		return <AuthScreen />;
+		return (
+			<AuthScreen
+				mode={authMode}
+				onModeChange={handleAuthModeChange}
+			/>
+		);
 	}
 
 	return (

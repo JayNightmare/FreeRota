@@ -26,7 +26,16 @@ import { CityTimezonePicker } from "../components/CityTimezonePicker";
 import { getDeviceTimezone } from "../utils/time";
 import { parseAuthLink } from "../utils/authLinks";
 
-type AuthMode = "login" | "register" | "forgot-password" | "reset-password";
+export type AuthMode =
+	| "login"
+	| "register"
+	| "forgot-password"
+	| "reset-password";
+
+interface AuthScreenProps {
+	mode: AuthMode;
+	onModeChange: (nextMode: AuthMode) => void;
+}
 
 function getTitle(mode: AuthMode): string {
 	switch (mode) {
@@ -67,10 +76,9 @@ function getSubmitLabel(mode: AuthMode): string {
 	}
 }
 
-export function AuthScreen() {
+export function AuthScreen({ mode, onModeChange }: AuthScreenProps) {
 	const { theme } = useTheme();
 	const { signIn } = useAuth();
-	const [mode, setMode] = useState<AuthMode>("login");
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [username, setUsername] = useState("");
@@ -174,7 +182,7 @@ export function AuthScreen() {
 
 			setFormError(null);
 			if (parsed.flow === "reset-password") {
-				setMode("reset-password");
+				onModeChange("reset-password");
 				setResetToken(parsed.token);
 				setInfoMessage(
 					"Reset link detected. Choose a new password.",
@@ -198,7 +206,7 @@ export function AuthScreen() {
 		return () => {
 			subscription.remove();
 		};
-	}, []);
+	}, [onModeChange]);
 
 	const handleSubmit = async (): Promise<void> => {
 		setFormError(null);
@@ -306,7 +314,7 @@ export function AuthScreen() {
 							},
 						});
 
-					setMode("login");
+					onModeChange("login");
 					setInfoMessage(
 						response.data
 							?.requestPasswordReset
@@ -358,7 +366,7 @@ export function AuthScreen() {
 						return;
 					}
 
-					setMode("login");
+					onModeChange("login");
 					setNewPassword("");
 					setConfirmPassword("");
 					setResetToken("");
@@ -382,7 +390,7 @@ export function AuthScreen() {
 	};
 
 	const handleModeSwitch = (nextMode: AuthMode): void => {
-		setMode(nextMode);
+		onModeChange(nextMode);
 		setFormError(null);
 		setInfoMessage(null);
 	};
