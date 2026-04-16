@@ -1,38 +1,93 @@
 # FreeRota
 
-> [!NOTE]
-> This is an early implementation slice focused on core data flows and architecture. The code is not production-ready and may contain rough edges, hardcoded values, and incomplete features. The goal is to establish a working baseline for the main app flows and system structure, which can be iteratively improved and hardened in future development cycles.
+<p align="center">
+     <img src="mobile/images/FreeRota.png" alt="FreeRota logo" width="144" />
+</p>
 
-FreeRota is a work rota and schedule coordination app with:
+FreeRota is a rota and schedule coordination platform with a React Native (Expo) client, a GraphQL API, and MongoDB persistence.
 
-- React Native mobile client (`mobile`)
-- Node.js + GraphQL backend (`backend`)
-- MongoDB persistence
-- Shared contracts package (`shared`)
+## Current Stack
 
-## Quick Start
+- Mobile/Web client: Expo + React Native + Apollo Client
+- Backend API: Node.js + GraphQL Yoga + TypeScript
+- Database: MongoDB + Mongoose
+- Monorepo workspaces: `mobile`, `backend`, `shared`
 
-### 1. Start MongoDB
+## Current Product Scope
+
+- Auth and account lifecycle:
+     - Register/login
+     - Email verification using 6-character code
+     - Password reset
+     - Change email (with reason and password confirmation)
+     - Change password and soft-delete account
+- Rota and shifts:
+     - Shift type management
+     - Rota CRUD
+     - Rota screenshot OCR preview/import
+     - Device calendar preview/import with duplicate/conflict handling
+- Social and messaging:
+     - Friend request flow (send/accept/reject/remove)
+     - Block/unblock users
+     - Conversations and direct messaging
+     - Friends + Chat merged into one tab experience
+- Coordination tools:
+     - Shared free-time overlap finder
+     - Privacy policy enforcement on rota visibility
+- In-app operations:
+     - Notifications and unread tracking
+     - Admin application flow
+     - Support contact flow with escalation hooks
+
+## Repository Structure
+
+- `backend`: GraphQL API, services, repositories, models
+- `mobile`: Expo app (native + web)
+- `shared`: shared package for cross-workspace contracts
+- `docs`: deployment and design guidance
+
+## Local Development
+
+### Prerequisites
+
+- Node.js 20+
+- npm 10+
+- Docker (for local MongoDB via compose)
+
+### 1) Start MongoDB
 
 ```bash
 docker compose up -d
 ```
 
-### 2. Install dependencies
+### 2) Install dependencies
 
 ```bash
 npm install
 ```
 
-### 3. Configure backend environment
+### 3) Configure backend environment
 
 ```bash
-cp .env.example backend/.env
+cp backend/.env.example backend/.env
 ```
 
-Update values in `backend/.env` as needed.
+Set required values in `backend/.env` for your environment.
 
-### 4. Run backend
+### 4) Configure mobile environment
+
+```bash
+cp mobile/.env.example mobile/.env
+```
+
+Set `EXPO_PUBLIC_GRAPHQL_URL` in `mobile/.env` to a URL reachable by your simulator/device.
+
+Example local URL:
+
+- `http://localhost:4000/graphql` (web/local emulator)
+- `http://<your-lan-ip>:4000/graphql` (physical device)
+
+### 5) Run backend
 
 ```bash
 npm run dev:backend
@@ -42,64 +97,38 @@ GraphQL endpoint:
 
 - `http://localhost:4000/graphql`
 
-### 5. Run mobile app
-
-```bash
-cp mobile/.env.example mobile/.env
-```
-
-Set `EXPO_PUBLIC_GRAPHQL_URL` in `mobile/.env` to a backend URL reachable by your simulator or physical device.
+### 6) Run Expo app (native)
 
 ```bash
 npm run dev:mobile
 ```
 
-### 6. Run web app locally (tester preview)
-
-Use this when you want to validate the same app flow in a browser before app store distribution.
+### 7) Run Expo app (web)
 
 ```bash
 npm run dev:web
 ```
 
-### 7. Build web app for testers
+## Build Commands
 
-Set `EXPO_PUBLIC_GRAPHQL_URL` in `mobile/.env` to your deployed backend GraphQL endpoint, then build:
+- Build backend: `npm run build:backend`
+- Start built backend: `npm run start:backend`
+- Build web bundle: `npm run build:web` (output in `mobile/dist`)
 
-```bash
-npm run build:web
-```
+## Deployment Guides
 
-Static files are generated in `mobile/dist`.
-
-For production-like tester rollout details (CORS, environment strategy, and hosting options), see `docs/web-tester-deployment.md`.
-
-For a full setup walkthrough targeting Render backend + GitHub Pages frontend (including Actions workflow), see `docs/render-github-pages-setup.md`.
-
-## Implemented in this initial slice
-
-- Account registration, login, profile update, account soft-delete
-- Rota CRUD (create, read, update, delete)
-- Friendship flow (request, accept/reject, remove, block/unblock)
-- Privacy policy enforcement for schedule visibility
-- Free-time overlap query over 30-minute slots
-- Direct messaging service + GraphQL subscription channel scaffold
-- Feature-first React Native screen shell
+- Web tester rollout guide: `docs/web-tester-deployment.md`
+- Render + GitHub Pages setup: `docs/render-github-pages-setup.md`
 
 ## Architecture Notes
 
-- Backend follows layered separation:
+- Backend layering:
      - GraphQL resolvers (transport)
      - Services (business rules)
-     - Repositories (persistence)
-     - Models (MongoDB schema)
-- Privacy rules live in a dedicated policy service.
-- Free-time computation uses UTC normalized intervals.
-
-## Next Implementation Steps
-
-1. Add robust input validation with schema-level constraints.
-2. Add auth refresh strategy and token revocation.
-3. Complete real-time subscription payload and client websocket link.
-4. Add automated tests for policy and free-time edge cases.
-5. Add mobile data hooks and mutation workflows.
+     - Repositories (data access)
+     - Models (MongoDB schemas)
+- UTC-normalized date handling for rota/free-time calculations
+- Runtime mobile API resolution supports:
+     - `EXPO_PUBLIC_GRAPHQL_URL`
+     - Expo `extra` values
+     - Expo host-derived fallback
