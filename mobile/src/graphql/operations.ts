@@ -111,6 +111,16 @@ export const CONTACT_SUPPORT_MUTATION = gql`
 	}
 `;
 
+export const SUBMIT_ENTERPRISE_INQUIRY_MUTATION = gql`
+	mutation SubmitEnterpriseInquiry($input: EnterpriseInquiryInput!) {
+		submitEnterpriseInquiry(input: $input) {
+			success
+			message
+			ticketId
+		}
+	}
+`;
+
 export const MY_SHIFT_TYPES_QUERY = gql`
 	query MyShiftTypes {
 		myShiftTypes {

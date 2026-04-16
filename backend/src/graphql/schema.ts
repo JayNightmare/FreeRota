@@ -211,12 +211,26 @@ const typeDefs = /* GraphQL */ `
     CRITICAL
   }
 
+  enum EnterpriseInquiryType {
+    PRICING
+    PARTNERSHIP
+    BULK_LICENSING
+    SUPPORT
+    OTHER
+  }
+
   type ContactSupportResult {
     success: Boolean!
     message: String!
     issueCreated: Boolean!
     issueNumber: Int
     issueUrl: String
+  }
+
+  type EnterpriseInquiryResult {
+    success: Boolean!
+    message: String!
+    ticketId: String
   }
 
   input RegisterInput {
@@ -279,6 +293,15 @@ const typeDefs = /* GraphQL */ `
     title: String!
     reason: ContactReason!
     urgency: ContactUrgency!
+    message: String!
+  }
+
+  input EnterpriseInquiryInput {
+    companyName: String!
+    contactName: String!
+    email: String!
+    phone: String
+    inquiryType: EnterpriseInquiryType!
     message: String!
   }
 
@@ -363,6 +386,7 @@ const typeDefs = /* GraphQL */ `
     markAllNotificationsRead: ActionResult!
     publishNotification(input: PublishNotificationInput!): Notification!
     contactSupport(input: ContactSupportInput!): ContactSupportResult!
+    submitEnterpriseInquiry(input: EnterpriseInquiryInput!): EnterpriseInquiryResult!
   }
 
   type Subscription {

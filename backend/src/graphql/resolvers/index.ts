@@ -4,6 +4,7 @@ import { friendshipResolver } from './friendshipResolver.js';
 import { freeTimeResolver } from './freeTimeResolver.js';
 import { messageResolver } from './messageResolver.js';
 import { notificationResolver } from './notificationResolver.js';
+import { enterpriseResolver } from './enterpriseResolver.js';
 import { supportResolver } from './supportResolver.js';
 import { rotaResolver } from './rotaResolver.js';
 import { shiftTypeResolver } from './shiftTypeResolver.js';
@@ -75,6 +76,7 @@ export const resolvers = {
         ...friendshipResolver.Mutation,
         ...messageResolver.Mutation,
         ...notificationResolver.Mutation,
+        ...enterpriseResolver.Mutation,
         ...supportResolver.Mutation
     },
     Subscription: {

@@ -65,6 +65,7 @@ const envSchema = z.object({
     APP_WEB_BASE_URL: z.string().optional().transform(normalizeOptionalUrl),
     DISCORD_SUPPORT_WEBHOOK_URL: z.string().optional().transform(normalizeOptionalValue),
     DISCORD_ADMIN_APPROVAL_WEBHOOK_URL: z.string().optional().transform(normalizeOptionalValue),
+    DISCORD_ENTERPRISE_WEBHOOK_URL: z.string().optional().transform(normalizeOptionalValue),
     DISCORD_SUPPORT_SERVER: z.string().optional().transform(normalizeOptionalUrl),
     GITHUB_ISSUE_TOKEN: z.string().optional().transform(normalizeOptionalValue),
     GITHUB_ISSUE_OWNER: z.string().optional().transform(normalizeOptionalValue),
