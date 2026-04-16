@@ -83,6 +83,9 @@ If your host supports redirects, route all paths to `index.html` for SPA navigat
 Before sharing the URL, validate:
 
 - App loads from hosted URL over HTTPS.
+- Desktop `/` redirects to `/desktop/re/landing`.
+- Desktop routes render correctly on desktop and mobile browsers: `/desktop/re/landing`, `/desktop/re/platform`, `/desktop/re/solutions`, `/desktop/re/enterprise`, `/desktop/re/pricing`, `/desktop/re/log-in`, `/desktop/re/get-started`, `/desktop/re/enterprise-inquiry`.
+- Unknown desktop route slugs under `/desktop/re/*` fallback to `/desktop/re/landing`.
 - Login and registration work.
 - GraphQL calls reach the deployed API.
 - Browser origin is allowed by backend CORS.

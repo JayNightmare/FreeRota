@@ -115,6 +115,14 @@ npm run dev:web
 - Start built backend: `npm run start:backend`
 - Build web bundle: `npm run build:web` (output in `mobile/dist`)
 
+## Desktop Web Entry Route
+
+- Desktop users opening `/` are redirected to `/desktop/re/landing`.
+- Desktop marketing routes follow `/desktop/re/[screen]`.
+- Supported desktop screens: `landing`, `platform`, `solutions`, `enterprise`, `pricing`, `log-in`, `get-started`, `enterprise-inquiry`.
+- Unknown desktop slugs (for example `/desktop/re/abc`) fall back to `/desktop/re/landing`.
+- Mobile users can still open desktop routes directly.
+
 ## Deployment Guides
 
 - Web tester rollout guide: `docs/web-tester-deployment.md`

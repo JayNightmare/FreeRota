@@ -24,10 +24,26 @@ import { FriendsScreen } from "./src/screens/FriendsScreen";
 import { FreeTimeScreen } from "./src/screens/FreeTimeScreen";
 import { ProfileScreen } from "./src/screens/ProfileScreen";
 import { SettingsScreen } from "./src/screens/SettingsScreen";
-import { AuthScreen, type AuthMode } from "./src/screens/AuthScreen";
+import { DesktopLandingScreen } from "./src/screens/DesktopLandingScreen";
+import {
+	DesktopEnterpriseInquiryScreen,
+	DesktopEnterpriseScreen,
+	DesktopGetStartedScreen,
+	DesktopLoginScreen,
+	DesktopPlatformScreen,
+	DesktopPricingScreen,
+	DesktopSolutionsScreen,
+} from "./src/screens/DesktopRouteScreens";
+import { AuthScreen } from "./src/screens/AuthScreen";
 import { ThemeProvider } from "./src/theme/ThemeProvider";
 import { useTheme } from "./src/theme/useTheme";
 import { TabIndicator } from "./src/components/TabIndicator";
+import {
+	DESKTOP_DEFAULT_SCREEN,
+	DESKTOP_ROUTE_PREFIX,
+	isSupportedDesktopScreenSlug,
+	resolveDesktopScreenSlug,
+} from "./src/screens/desktopRoutes";
 import {
 	MARK_ALL_NOTIFICATIONS_READ_MUTATION,
 	MARK_NOTIFICATION_READ_MUTATION,
@@ -40,6 +56,10 @@ import { toUserErrorMessage } from "./src/utils/errors";
 function getStableWebPortrait(): boolean {
 	if (typeof window === "undefined") {
 		return true;
+	}
+
+	if (window.innerHeight > 0 && window.innerWidth > 0) {
+		return window.innerHeight >= window.innerWidth;
 	}
 
 	const orientationType = window.screen?.orientation?.type;
@@ -59,6 +79,49 @@ function getStableWebPortrait(): boolean {
 	}
 
 	return window.innerHeight >= window.innerWidth;
+}
+
+const DESKTOP_DEFAULT_PATH = `${DESKTOP_ROUTE_PREFIX}/${DESKTOP_DEFAULT_SCREEN}`;
+
+interface DesktopRouteMatch {
+	screenSlug: string | null;
+}
+
+function normalizeWebPathname(pathname: string): string {
+	const trimmed = pathname.trim();
+	if (!trimmed) {
+		return "/";
+	}
+
+	const withLeadingSlash = trimmed.startsWith("/")
+		? trimmed
+		: `/${trimmed}`;
+	const withoutTrailingSlash = withLeadingSlash.replace(/\/+$/, "");
+
+	return withoutTrailingSlash || "/";
+}
+
+function getCurrentWebPathname(): string {
+	if (typeof window === "undefined") {
+		return "/";
+	}
+
+	return normalizeWebPathname(window.location.pathname);
+}
+
+function parseDesktopRoute(pathname: string): DesktopRouteMatch | null {
+	const normalizedPathname = normalizeWebPathname(pathname);
+	const routeMatch = /^\/desktop\/re(?:\/([a-z0-9-]+))?$/i.exec(
+		normalizedPathname,
+	);
+
+	if (!routeMatch) {
+		return null;
+	}
+
+	return {
+		screenSlug: routeMatch[1] ? routeMatch[1].toLowerCase() : null,
+	};
 }
 
 type TabKey = "ROTA" | "FRIENDS" | "FREE" | "PROFILE" | "SETTINGS";
@@ -96,6 +159,61 @@ function formatNotificationCategory(category: NotificationCategory): string {
 	}
 }
 
+function isAuthenticationRequiredError(error: unknown): boolean {
+	if (!error || typeof error !== "object") {
+		return false;
+	}
+
+	const apolloError = error as {
+		message?: unknown;
+		graphQLErrors?: Array<{
+			message?: unknown;
+			extensions?: { code?: unknown };
+		}>;
+		networkError?: { message?: unknown };
+	};
+
+	const topLevelMessage =
+		typeof apolloError.message === "string"
+			? apolloError.message
+			: "";
+
+	const graphQLMessages = Array.isArray(apolloError.graphQLErrors)
+		? apolloError.graphQLErrors
+				.map((graphQLError) =>
+					typeof graphQLError.message === "string"
+						? graphQLError.message
+						: "",
+				)
+				.join(" ")
+		: "";
+
+	const graphQLCodes = Array.isArray(apolloError.graphQLErrors)
+		? apolloError.graphQLErrors
+				.map((graphQLError) =>
+					typeof graphQLError.extensions?.code ===
+					"string"
+						? graphQLError.extensions.code
+						: "",
+				)
+				.join(" ")
+		: "";
+
+	const networkMessage =
+		typeof apolloError.networkError?.message === "string"
+			? apolloError.networkError.message
+			: "";
+
+	const combined =
+		`${topLevelMessage} ${graphQLMessages} ${graphQLCodes} ${networkMessage}`.toLowerCase();
+
+	return (
+		combined.includes("authentication required") ||
+		combined.includes("unauthenticated") ||
+		combined.includes("invalid token")
+	);
+}
+
 const tabs: Array<{
 	key: TabKey;
 	label: string;
@@ -126,21 +244,22 @@ function ActiveScreen({ tab }: { tab: TabKey }) {
 
 function AppShell() {
 	const { theme, resolvedMode, toggleColorMode } = useTheme();
-	const { token, isBootstrapping } = useAuth();
+	const { token, isBootstrapping, signOut } = useAuth();
 	const { width } = useWindowDimensions();
 	const [activeTab, setActiveTab] = useState<TabKey>("ROTA");
-	const [authMode, setAuthMode] = useState<AuthMode>("login");
 	const [isNotificationsOpen, setNotificationsOpen] = useState(false);
 	const [notificationActionError, setNotificationActionError] = useState<
 		string | null
 	>(null);
 	const isWeb = Platform.OS === "web";
+	const [webPathname, setWebPathname] = useState<string>(() =>
+		getCurrentWebPathname(),
+	);
 	const [webIsPortrait, setWebIsPortrait] = useState<boolean>(() =>
 		isWeb ? getStableWebPortrait() : true,
 	);
 	const isDesktopViewport = width >= 900;
-	const shouldBlockWebUsage =
-		isWeb && (!webIsPortrait || isDesktopViewport);
+	const shouldBlockWebUsage = isWeb && !webIsPortrait;
 	const isAuthenticated = Boolean(token);
 
 	const {
@@ -160,6 +279,7 @@ function AppShell() {
 
 	const {
 		data: notificationUnreadData,
+		error: notificationUnreadError,
 		refetch: refetchNotificationUnreadCount,
 	} = useQuery<NotificationUnreadCountData>(
 		NOTIFICATION_UNREAD_COUNT_QUERY,
@@ -181,10 +301,6 @@ function AppShell() {
 	const unreadCount =
 		notificationUnreadData?.notificationUnreadCount ?? 0;
 	const unreadBadgeLabel = unreadCount > 99 ? "99+" : String(unreadCount);
-
-	const handleAuthModeChange = useCallback((nextMode: AuthMode) => {
-		setAuthMode(nextMode);
-	}, []);
 
 	const closeNotificationsPanel = useCallback(() => {
 		setNotificationsOpen(false);
@@ -276,11 +392,19 @@ function AppShell() {
 			return;
 		}
 
+		const syncWebPathname = () => {
+			setWebPathname(
+				normalizeWebPathname(window.location.pathname),
+			);
+		};
+
 		const syncWebOrientation = () => {
 			setWebIsPortrait(getStableWebPortrait());
 		};
 
+		syncWebPathname();
 		syncWebOrientation();
+		window.addEventListener("popstate", syncWebPathname);
 		window.addEventListener(
 			"orientationchange",
 			syncWebOrientation,
@@ -288,6 +412,7 @@ function AppShell() {
 		window.addEventListener("resize", syncWebOrientation);
 
 		return () => {
+			window.removeEventListener("popstate", syncWebPathname);
 			window.removeEventListener(
 				"orientationchange",
 				syncWebOrientation,
@@ -298,6 +423,50 @@ function AppShell() {
 			);
 		};
 	}, [isWeb]);
+
+	const desktopRouteMatch = useMemo(
+		() => (isWeb ? parseDesktopRoute(webPathname) : null),
+		[isWeb, webPathname],
+	);
+
+	const shouldRedirectDesktopRoot =
+		isWeb && isDesktopViewport && webPathname === "/";
+	const shouldRedirectUnsupportedDesktopRoute =
+		isWeb &&
+		desktopRouteMatch !== null &&
+		!isSupportedDesktopScreenSlug(desktopRouteMatch.screenSlug) &&
+		webPathname !== DESKTOP_DEFAULT_PATH;
+
+	const pendingWebRedirectTarget =
+		shouldRedirectDesktopRoot ||
+		shouldRedirectUnsupportedDesktopRoute
+			? DESKTOP_DEFAULT_PATH
+			: null;
+
+	const shouldRenderDesktopScreen =
+		isWeb &&
+		desktopRouteMatch !== null &&
+		isSupportedDesktopScreenSlug(desktopRouteMatch.screenSlug);
+
+	useEffect(() => {
+		if (
+			!isWeb ||
+			typeof window === "undefined" ||
+			!pendingWebRedirectTarget
+		) {
+			return;
+		}
+
+		const currentPath = normalizeWebPathname(
+			window.location.pathname,
+		);
+		if (currentPath === pendingWebRedirectTarget) {
+			return;
+		}
+
+		setWebPathname(pendingWebRedirectTarget);
+		window.location.replace(pendingWebRedirectTarget);
+	}, [isWeb, pendingWebRedirectTarget]);
 
 	const activeLabel = useMemo(() => {
 		if (activeTab === "SETTINGS") {
@@ -326,14 +495,32 @@ function AppShell() {
 	const themeIconName = resolvedMode === "dark" ? "moon" : "sunny";
 
 	useEffect(() => {
-		if (isAuthenticated) {
-			setAuthMode("login");
+		if (!isAuthenticated) {
+			setNotificationsOpen(false);
+			setNotificationActionError(null);
+		}
+	}, [isAuthenticated]);
+
+	useEffect(() => {
+		if (!isAuthenticated) {
 			return;
 		}
 
+		const authError = notificationsError ?? notificationUnreadError;
+		if (!authError || !isAuthenticationRequiredError(authError)) {
+			return;
+		}
+
+		void signOut();
+		setActiveTab("ROTA");
 		setNotificationsOpen(false);
 		setNotificationActionError(null);
-	}, [isAuthenticated]);
+	}, [
+		isAuthenticated,
+		notificationUnreadError,
+		notificationsError,
+		signOut,
+	]);
 
 	useEffect(() => {
 		setNotificationsOpen(false);
@@ -619,10 +806,49 @@ function AppShell() {
 		[theme],
 	);
 
+	if (pendingWebRedirectTarget) {
+		return (
+			<SafeAreaView
+				style={styles.bootContainer}
+				edges={["top", "left", "right", "bottom"]}
+			>
+				<ActivityIndicator
+					color={theme.colors.accent}
+					size="large"
+				/>
+			</SafeAreaView>
+		);
+	}
+
+	if (shouldRenderDesktopScreen) {
+		const desktopScreenSlug = resolveDesktopScreenSlug(
+			desktopRouteMatch?.screenSlug ?? null,
+		);
+
+		switch (desktopScreenSlug) {
+			case "platform":
+				return <DesktopPlatformScreen />;
+			case "solutions":
+				return <DesktopSolutionsScreen />;
+			case "enterprise":
+				return <DesktopEnterpriseScreen />;
+			case "pricing":
+				return <DesktopPricingScreen />;
+			case "log-in":
+				return <DesktopLoginScreen />;
+			case "get-started":
+				return <DesktopGetStartedScreen />;
+			case "enterprise-inquiry":
+				return <DesktopEnterpriseInquiryScreen />;
+			case "landing":
+			default:
+				return <DesktopLandingScreen />;
+		}
+	}
+
 	if (shouldBlockWebUsage) {
-		const blockedMessage = isDesktopViewport
-			? "FreeRota web access is limited to portrait screens. Please open this on a mobile device"
-			: "FreeRota supports portrait mode only. Rotate your device to portrait to continue";
+		const blockedMessage =
+			"FreeRota supports portrait mode only. Rotate your device to portrait to continue";
 
 		return (
 			<SafeAreaView
@@ -662,12 +888,7 @@ function AppShell() {
 	}
 
 	if (!isAuthenticated) {
-		return (
-			<AuthScreen
-				mode={authMode}
-				onModeChange={handleAuthModeChange}
-			/>
-		);
+		return <AuthScreen mode="register" onModeChange={() => {}} />;
 	}
 
 	return (

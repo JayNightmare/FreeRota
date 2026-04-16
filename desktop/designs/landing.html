@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>FreeRota | Precision Social Coordination</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;300;400;500;700;800;900&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-secondary": "#3e006a",
+                        "primary-fixed": "#b28bff",
+                        "surface-dim": "#0e0e0e",
+                        "surface-container-highest": "#262626",
+                        "background": "#0e0e0e",
+                        "error": "#ff6e84",
+                        "primary-container": "#b28bff",
+                        "on-tertiary": "#6a0a30",
+                        "tertiary-container": "#fe81a3",
+                        "surface-bright": "#2c2c2c",
+                        "on-primary": "#3d0088",
+                        "tertiary": "#ff97b1",
+                        "on-error-container": "#ffb2b9",
+                        "tertiary-fixed": "#ff8eab",
+                        "inverse-surface": "#fcf9f8",
+                        "on-primary-fixed-variant": "#3a0082",
+                        "outline-variant": "#484847",
+                        "on-secondary-fixed-variant": "#6c369a",
+                        "on-secondary-container": "#e6c3ff",
+                        "inverse-primary": "#7433df",
+                        "surface-container": "#1a1919",
+                        "on-error": "#490013",
+                        "surface-variant": "#262626",
+                        "surface": "#0e0e0e",
+                        "on-primary-container": "#2e006b",
+                        "secondary": "#c78df7",
+                        "error-dim": "#d73357",
+                        "error-container": "#a70138",
+                        "secondary-fixed": "#e7c5ff",
+                        "primary-dim": "#8b4ef6",
+                        "surface-tint": "#be9dff",
+                        "secondary-container": "#612b8f",
+                        "on-tertiary-fixed-variant": "#711035",
+                        "on-surface-variant": "#adaaaa",
+                        "on-tertiary-container": "#5a0026",
+                        "primary": "#be9dff",
+                        "inverse-on-surface": "#565555",
+                        "on-tertiary-fixed": "#380015",
+                        "on-background": "#ffffff",
+                        "primary-fixed-dim": "#a77aff",
+                        "secondary-fixed-dim": "#ddb3ff",
+                        "tertiary-fixed-dim": "#f77c9d",
+                        "surface-container-high": "#201f1f",
+                        "surface-container-low": "#131313",
+                        "on-surface": "#ffffff",
+                        "on-primary-fixed": "#000000",
+                        "secondary-dim": "#be85ee",
+                        "surface-container-lowest": "#000000",
+                        "tertiary-dim": "#f17798",
+                        "on-secondary-fixed": "#4d127b",
+                        "outline": "#767575"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0px",
+                        "lg": "0px",
+                        "xl": "0px",
+                        "full": "0px"
+                    },
+                    "fontFamily": {
+                        "headline": ["Inter"],
+                        "body": ["Inter"],
+                        "label": ["Inter"]
+                    }
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0e0e0e;
+            color: #ffffff;
+        }
+
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 300, 'GRAD' 0, 'opsz' 24;
+        }
+
+        .glass-nav {
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        input:focus {
+            border-bottom: 2px solid #be9dff !important;
+            outline: none;
+        }
+    </style>
+</head>
+
+<body class="bg-surface selection:bg-primary/30">
+    <!-- TopNavBar -->
+    <nav
+        class="fixed top-0 left-0 w-full z-50 flex justify-between items-center px-8 h-20 bg-[#0e0e0e]/80 backdrop-blur-xl font-['Inter'] tracking-tight font-medium">
+        <div class="text-2xl font-bold tracking-tighter text-[#be9dff]">FreeRota</div>
+        <div class="hidden md:flex gap-10">
+            <a class="text-[#be9dff] border-b-2 border-[#be9dff] pb-1 transition-colors duration-300" href="#">Social
+                Syncing</a>
+            <a class="text-white/70 hover:text-white transition-colors duration-300" href="#">Enterprise</a>
+            <a class="text-white/70 hover:text-white transition-colors duration-300" href="#">Developers</a>
+            <a class="text-white/70 hover:text-white transition-colors duration-300" href="#">Pricing</a>
+        </div>
+        <div class="flex items-center gap-6">
+            <button class="text-white/70 hover:text-white transition-all scale-95 active:duration-100 font-medium">Log
+                In</button>
+            <button
+                class="bg-[#be9dff] text-[#3d0088] px-6 py-2 font-bold hover:brightness-110 active:scale-95 transition-all">Get
+                Started</button>
+        </div>
+    </nav>
+    <main class="pt-20">
+        <!-- Hero Section -->
+        <section class="relative min-h-[921px] flex items-center px-8 md:px-16 overflow-hidden">
+            <div class="grid md:grid-cols-2 gap-12 w-full max-w-7xl mx-auto">
+                <div class="flex flex-col justify-center z-10">
+                    <h1 class="text-6xl md:text-8xl font-black tracking-tighter leading-[0.9] mb-8 text-on-surface">
+                        Coordination,<br />clarified.
+                    </h1>
+                    <p class="text-xl md:text-2xl text-on-surface-variant max-w-xl mb-12 font-light leading-relaxed">
+                        Share your rota, sync with friends, and find the perfect time to connect. Built for people,
+                        adopted by enterprises.
+                    </p>
+                    <div class="flex flex-wrap gap-4">
+                        <button
+                            class="bg-primary text-on-primary px-8 py-4 font-bold text-lg hover:ring-2 hover:ring-primary/50 transition-all active:scale-95">Get
+                            the App</button>
+                        <button
+                            class="bg-surface-container-highest text-on-surface px-8 py-4 font-bold text-lg hover:bg-surface-container transition-all active:scale-95">Enterprise
+                            Inquiry</button>
+                    </div>
+                </div>
+                <div class="relative flex items-center justify-center min-h-[400px]">
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div
+                            class="w-full h-full opacity-40 blur-3xl bg-gradient-to-tr from-primary via-secondary to-tertiary animate-pulse rounded-full">
+                        </div>
+                        <svg class="w-full h-full relative" preserveaspectratio="none" viewbox="0 0 100 100">
+                            <path class="opacity-30" d="M0,50 Q25,30 50,50 T100,50" fill="none" stroke="#be9dff"
+                                stroke-width="0.1"></path>
+                            <path class="opacity-20" d="M0,60 Q25,40 50,60 T100,60" fill="none" stroke="#c78df7"
+                                stroke-width="0.1"></path>
+                            <path class="opacity-10" d="M0,40 Q25,20 50,40 T100,40" fill="none" stroke="#ff97b1"
+                                stroke-width="0.1"></path>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Trusted By Section -->
+        <section class="py-12 border-y border-white/5 bg-surface-container-lowest">
+            <div class="max-w-7xl mx-auto px-8">
+                <p class="text-center text-xs font-bold uppercase tracking-[0.3em] text-white/30 mb-10">Trusted by
+                    modern organizations</p>
+                <div
+                    class="flex flex-wrap justify-center items-center gap-12 md:gap-24 opacity-40 grayscale contrast-125">
+                    <div class="text-2xl font-black tracking-tighter">AETHER_TX</div>
+                    <div class="text-2xl font-black tracking-tighter">NOVUS.GRID</div>
+                    <div class="text-2xl font-black tracking-tighter">PHASE_RETAIL</div>
+                    <div class="text-2xl font-black tracking-tighter">CORE.SYSTEMS</div>
+                    <div class="text-2xl font-black tracking-tighter">VANTAGE</div>
+                </div>
+            </div>
+        </section>
+        <!-- Social Features (Bento Grid) -->
+        <section class="py-32 px-8 max-w-7xl mx-auto">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <!-- Card 1 -->
+                <div
+                    class="bg-surface-container-low p-10 border-l-4 border-primary group hover:bg-surface-container transition-all duration-500">
+                    <div class="mb-8">
+                        <span class="material-symbols-outlined text-4xl text-primary" data-icon="sync">sync</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4 tracking-tight">Sync</h3>
+                    <p class="text-on-surface-variant font-light leading-relaxed">
+                        Effortlessly import schedules from any major HR platform. One-way or two-way, your time is
+                        always current.
+                    </p>
+                </div>
+                <!-- Card 2 -->
+                <div
+                    class="bg-surface-container-low p-10 border-l-4 border-tertiary group hover:bg-surface-container transition-all duration-500">
+                    <div class="mb-8">
+                        <span class="material-symbols-outlined text-4xl text-tertiary"
+                            data-icon="privacy_tip">privacy_tip</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4 tracking-tight">Privacy</h3>
+                    <p class="text-on-surface-variant font-light leading-relaxed">
+                        Granular controls allow you to share only when you're busy or specific shift details. You own
+                        your time data.
+                    </p>
+                </div>
+                <!-- Card 3 -->
+                <div
+                    class="bg-surface-container-low p-10 border-l-4 border-secondary group hover:bg-surface-container transition-all duration-500">
+                    <div class="mb-8">
+                        <span class="material-symbols-outlined text-4xl text-secondary" data-icon="bolt">bolt</span>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4 tracking-tight">Real-time</h3>
+                    <p class="text-on-surface-variant font-light leading-relaxed">
+                        Push notifications for shift swaps, friend requests, and availability matches as they happen.
+                    </p>
+                </div>
+            </div>
+        </section>
+        <!-- Testimonials Section -->
+        <section class="py-32 px-8 bg-[#0a0a0a]">
+            <div class="max-w-7xl mx-auto">
+                <h2 class="text-4xl md:text-5xl font-black tracking-tighter mb-20 text-center">What people are saying.
+                </h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    <!-- Testimonial 1 -->
+                    <div class="bg-surface-container p-8 flex flex-col justify-between border-t border-white/5">
+                        <p class="text-lg font-light leading-relaxed mb-8 text-on-surface-variant italic">"FreeRota
+                            completely changed how my friend group plans weekends. No more 'when do you finish?'
+                            texts—we just look at the shared grid and go."</p>
+                        <div>
+                            <div class="font-bold text-primary">Alex Chen</div>
+                            <div class="text-xs uppercase tracking-widest text-white/40">Hospitality Worker</div>
+                        </div>
+                    </div>
+                    <!-- Testimonial 2 -->
+                    <div
+                        class="bg-surface-container p-8 flex flex-col justify-between border-t border-white/5 lg:mt-12">
+                        <p class="text-lg font-light leading-relaxed mb-8 text-on-surface-variant italic">"The API
+                            integration was seamless. We managed to sync 500+ employees' rotas into our internal
+                            dashboard in a single afternoon. Pure efficiency."</p>
+                        <div>
+                            <div class="font-bold text-secondary">Sarah Miller</div>
+                            <div class="text-xs uppercase tracking-widest text-white/40">HR Manager, Novus Grid</div>
+                        </div>
+                    </div>
+                    <!-- Testimonial 3 -->
+                    <div class="bg-surface-container p-8 flex flex-col justify-between border-t border-white/5">
+                        <p class="text-lg font-light leading-relaxed mb-8 text-on-surface-variant italic">"Privacy was
+                            my main concern, but FreeRota's granular controls are the best I've seen. I share my
+                            availability with family but keep shift details private."</p>
+                        <div>
+                            <div class="font-bold text-tertiary">Marcus Thorne</div>
+                            <div class="text-xs uppercase tracking-widest text-white/40">Freelance Consultant</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        <!-- Enterprise Section -->
+        <section class="bg-surface-bright py-40 px-8">
+            <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center gap-20">
+                <div class="flex-1">
+                    <h2 class="text-5xl md:text-7xl font-black tracking-tighter mb-8 leading-tight">Scale
+                        your<br />schedule.</h2>
+                    <p class="text-xl text-on-surface-variant font-light leading-relaxed mb-10">
+                        Enterprise-grade coordination for distributed teams. Integrate FreeRota directly into your
+                        existing workforce management software via our robust REST API.
+                    </p>
+                    <ul class="space-y-4 mb-12">
+                        <li class="flex items-center gap-4 text-on-surface">
+                            <span class="material-symbols-outlined text-primary"
+                                data-icon="check_circle">check_circle</span>
+                            <span>SSO &amp; SAML Integration</span>
+                        </li>
+                        <li class="flex items-center gap-4 text-on-surface">
+                            <span class="material-symbols-outlined text-primary"
+                                data-icon="check_circle">check_circle</span>
+                            <span>Custom API Endpoints</span>
+                        </li>
+                        <li class="flex items-center gap-4 text-on-surface">
+                            <span class="material-symbols-outlined text-primary"
+                                data-icon="check_circle">check_circle</span>
+                            <span>Data Residency Compliance</span>
+                        </li>
+                    </ul>
+                    <button
+                        class="border-2 border-primary text-primary px-10 py-4 font-bold hover:bg-primary hover:text-on-primary transition-all">API
+                        Documentation</button>
+                </div>
+                <div class="flex-1 bg-surface p-8 shadow-2xl relative">
+                    <div class="absolute top-0 left-0 w-1 h-full bg-primary"></div>
+                    <pre class="text-sm font-mono text-primary-fixed overflow-x-auto"><code>{
+  "rota": "enterprise_v1",
+  "endpoint": "/api/sync",
+  "method": "POST",
+  "payload": {
+    "staff_id": "FR_9921",
+    "timezone": "UTC",
+    "availability": [
+      {"start": "09:00", "end": "17:00"},
+      {"start": "21:00", "end": "03:00"}
+    ]
+  }
+}</code></pre>
+                </div>
+            </div>
+        </section>
+        <!-- Contact Form -->
+        <section class="py-32 px-8 max-w-4xl mx-auto">
+            <div class="text-center mb-20">
+                <h2 class="text-4xl font-bold tracking-tight mb-4">Partner with FreeRota</h2>
+                <p class="text-on-surface-variant font-light">Tell us about your organization's coordination needs.</p>
+            </div>
+            <form action="#" class="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-16">
+                <div class="relative">
+                    <input
+                        class="w-full bg-transparent border-0 border-b border-outline-variant py-4 px-0 text-on-surface placeholder:text-outline focus:ring-0 focus:border-primary transition-all"
+                        id="name" placeholder="Full Name" type="text" />
+                </div>
+                <div class="relative">
+                    <input
+                        class="w-full bg-transparent border-0 border-b border-outline-variant py-4 px-0 text-on-surface placeholder:text-outline focus:ring-0 focus:border-primary transition-all"
+                        id="email" placeholder="Work Email" type="email" />
+                </div>
+                <div class="relative md:col-span-2">
+                    <input
+                        class="w-full bg-transparent border-0 border-b border-outline-variant py-4 px-0 text-on-surface placeholder:text-outline focus:ring-0 focus:border-primary transition-all"
+                        id="company" placeholder="Organization" type="text" />
+                </div>
+                <div class="relative md:col-span-2">
+                    <textarea
+                        class="w-full bg-transparent border-0 border-b border-outline-variant py-4 px-0 text-on-surface placeholder:text-outline focus:ring-0 focus:border-primary transition-all resize-none"
+                        id="message" placeholder="How can we help?" rows="4"></textarea>
+                </div>
+                <div class="md:col-span-2 flex justify-end">
+                    <button
+                        class="bg-primary text-on-primary px-12 py-5 font-black uppercase tracking-widest hover:brightness-110 active:scale-95 transition-all"
+                        type="submit">
+                        Send Inquiry
+                    </button>
+                </div>
+            </form>
+        </section>
+    </main>
+    <!-- Footer -->
+    <footer
+        class="w-full py-20 px-8 border-t border-white/5 max-w-7xl mx-auto flex flex-col md:flex-row justify-between bg-[#0e0e0e]">
+        <div class="flex flex-col gap-6 mb-12 md:mb-0">
+            <div class="text-lg font-black text-[#be9dff]">FreeRota</div>
+            <p class="font-['Inter'] text-sm uppercase tracking-widest text-white/40">© 2024 FreeRota. Precision Social
+                Coordination.</p>
+        </div>
+        <div class="flex flex-wrap gap-12">
+            <div class="flex flex-col gap-4">
+                <span class="font-bold text-xs uppercase tracking-[0.2em] text-white/20 mb-2">Network</span>
+                <a class="font-['Inter'] text-sm uppercase tracking-widest text-white/40 hover:text-[#be9dff] transition-all"
+                    href="#">Product</a>
+                <a class="font-['Inter'] text-sm uppercase tracking-widest text-white/40 hover:text-[#be9dff] transition-all"
+                    href="#">Safety</a>
+            </div>
+            <div class="flex flex-col gap-4">
+                <span class="font-bold text-xs uppercase tracking-[0.2em] text-white/20 mb-2">Legal</span>
+                <a class="font-['Inter'] text-sm uppercase tracking-widest text-white/40 hover:text-[#be9dff] transition-all"
+                    href="#">Privacy</a>
+                <a class="font-['Inter'] text-sm uppercase tracking-widest text-white/40 hover:text-[#be9dff] transition-all"
+                    href="#">Status</a>
+            </div>
+            <div class="flex flex-col gap-4">
+                <span class="font-bold text-xs uppercase tracking-[0.2em] text-white/20 mb-2">Connect</span>
+                <a class="font-['Inter'] text-sm uppercase tracking-widest text-white/40 hover:text-[#be9dff] transition-all"
+                    href="#">Twitter</a>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>

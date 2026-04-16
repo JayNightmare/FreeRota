@@ -33,6 +33,16 @@ interface DiscordAdminApplicationDecisionPayload {
     reviewNote: string | null;
 }
 
+interface DiscordEnterpriseInquiryPayload {
+    companyName: string;
+    contactName: string;
+    email: string;
+    phone: string | null;
+    inquiryType: 'PRICING' | 'PARTNERSHIP' | 'BULK_LICENSING' | 'SUPPORT' | 'OTHER';
+    message: string;
+    submittedAt: Date;
+}
+
 function truncate(value: string, maxLength: number): string {
     if (value.length <= maxLength) {
         return value;
@@ -62,6 +72,10 @@ class DiscordWebhookService {
 
     isAdminApprovalConfigured(): boolean {
         return Boolean(env.DISCORD_ADMIN_APPROVAL_WEBHOOK_URL);
+    }
+
+    isEnterpriseConfigured(): boolean {
+        return Boolean(env.DISCORD_ENTERPRISE_WEBHOOK_URL);
     }
 
     private async postWebhook(url: string, body: Record<string, unknown>): Promise<void> {
@@ -224,6 +238,51 @@ class DiscordWebhookService {
                         }
                     ],
                     timestamp: new Date().toISOString()
+                }
+            ]
+        });
+    }
+
+    async sendEnterpriseInquiryPayload(payload: DiscordEnterpriseInquiryPayload): Promise<void> {
+        if (!env.DISCORD_ENTERPRISE_WEBHOOK_URL) {
+            throw new Error('Discord enterprise webhook is not configured.');
+        }
+
+        await this.postWebhook(env.DISCORD_ENTERPRISE_WEBHOOK_URL, {
+            username: 'FreeRota Enterprise',
+            embeds: [
+                {
+                    title: truncate(`Enterprise Inquiry: ${payload.companyName}`, 256),
+                    color: 0x3B82F6,
+                    description: truncate(payload.message, 3900),
+                    fields: [
+                        {
+                            name: 'Inquiry Type',
+                            value: truncate(payload.inquiryType, 1024),
+                            inline: true
+                        },
+                        {
+                            name: 'Company',
+                            value: truncate(payload.companyName, 1024),
+                            inline: true
+                        },
+                        {
+                            name: 'Contact Name',
+                            value: truncate(payload.contactName, 1024),
+                            inline: false
+                        },
+                        {
+                            name: 'Email',
+                            value: truncate(payload.email, 1024),
+                            inline: true
+                        },
+                        {
+                            name: 'Phone',
+                            value: truncate(payload.phone ?? 'Not provided', 1024),
+                            inline: true
+                        }
+                    ],
+                    timestamp: payload.submittedAt.toISOString()
                 }
             ]
         });
