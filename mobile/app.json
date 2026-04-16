@@ -6,6 +6,7 @@
 		"version": "0.1.0",
 		"orientation": "portrait",
 		"userInterfaceStyle": "automatic",
+		"icon": "./images/FreeRota.png",
 		"splash": {
 			"resizeMode": "contain",
 			"backgroundColor": "#FFFFFF"
@@ -19,6 +20,7 @@
 		},
 		"android": {
 			"adaptiveIcon": {
+				"foregroundImage": "./images/FreeRota.png",
 				"backgroundColor": "#FFFFFF"
 			}
 		},
