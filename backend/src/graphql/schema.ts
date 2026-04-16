@@ -20,6 +20,7 @@ const typeDefs = /* GraphQL */ `
     displayName: String!
     timezone: String!
     isPublic: Boolean!
+    isAdmin: Boolean!
     uiAccentColor: String
     emailVerifiedAt: DateTime
     createdAt: DateTime!

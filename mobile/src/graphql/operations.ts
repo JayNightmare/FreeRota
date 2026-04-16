@@ -61,6 +61,7 @@ export const ME_QUERY = gql`
 			displayName
 			timezone
 			isPublic
+			isAdmin
 			uiAccentColor
 			emailVerifiedAt
 		}

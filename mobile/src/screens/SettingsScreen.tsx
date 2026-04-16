@@ -39,6 +39,7 @@ interface MyShiftTypesQuery {
 interface MeQuery {
 	me: {
 		id: string;
+		isAdmin: boolean;
 		uiAccentColor: string | null;
 	};
 }
@@ -92,7 +93,11 @@ const APPARENCE_COLOR_PRESETS = [
 
 const HEX_COLOR_REGEX = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
 
-type SettingsCategoryKey = "APPARENCE" | "SHIFT_TYPES" | "CONTACT_SUPPORT";
+type SettingsCategoryKey =
+	| "APPARENCE"
+	| "SHIFT_TYPES"
+	| "CONTACT_SUPPORT"
+	| "ADMIN_LOGIN";
 
 const CONTACT_REASON_OPTIONS: Array<{
 	value: ContactReason;
@@ -121,6 +126,7 @@ const SETTINGS_CATEGORIES: Array<{
 	key: SettingsCategoryKey;
 	label: string;
 	description: string;
+	admin?: boolean | false;
 }> = [
 	{
 		key: "APPARENCE",
@@ -136,6 +142,12 @@ const SETTINGS_CATEGORIES: Array<{
 		key: "CONTACT_SUPPORT",
 		label: "Contact Support",
 		description: "Send tester feedback and issues",
+	},
+	{
+		key: "ADMIN_LOGIN",
+		label: "Admin Login",
+		description: "Access admin features",
+		admin: true,
 	},
 ];
 
@@ -310,6 +322,16 @@ export function SettingsScreen() {
 	const activeCategoryMeta = SETTINGS_CATEGORIES.find(
 		(item) => item.key === activeCategory,
 	);
+	const isAdminAccount = meData?.me?.isAdmin === true;
+	const visibleSettingsCategories = SETTINGS_CATEGORIES.filter(
+		(category) => !category.admin || isAdminAccount,
+	);
+
+	useEffect(() => {
+		if (!isAdminAccount && activeCategory === "ADMIN_LOGIN") {
+			setActiveCategory("APPARENCE");
+		}
+	}, [activeCategory, isAdminAccount]);
 
 	const styles = useMemo(
 		() =>
@@ -774,51 +796,53 @@ export function SettingsScreen() {
 					<Text style={styles.sidebarHeading}>
 						Settings Categories
 					</Text>
-					{SETTINGS_CATEGORIES.map((category) => {
-						const isActive =
-							category.key ===
-							activeCategory;
-						return (
-							<Pressable
-								key={
-									category.key
-								}
-								onPress={() => {
-									setActiveCategory(
-										category.key,
-									);
-									setSidebarOpen(
-										false,
-									);
-								}}
-								style={[
-									styles.sidebarItem,
-									isActive
-										? styles.sidebarItemActive
-										: undefined,
-								]}
-							>
-								<Text
-									style={
-										styles.sidebarItemLabel
+					{visibleSettingsCategories.map(
+						(category) => {
+							const isActive =
+								category.key ===
+								activeCategory;
+							return (
+								<Pressable
+									key={
+										category.key
 									}
+									onPress={() => {
+										setActiveCategory(
+											category.key,
+										);
+										setSidebarOpen(
+											false,
+										);
+									}}
+									style={[
+										styles.sidebarItem,
+										isActive
+											? styles.sidebarItemActive
+											: undefined,
+									]}
 								>
-									{
-										category.label
-									}
-								</Text>
-								<Text
-									style={
-										styles.sidebarItemMeta
-									}
-								>
-									{
-										category.description
-									}
-								</Text>
-							</Pressable>
-						);
-					})}
+									<Text
+										style={
+											styles.sidebarItemLabel
+										}
+									>
+										{
+											category.label
+										}
+									</Text>
+									<Text
+										style={
+											styles.sidebarItemMeta
+										}
+									>
+										{
+											category.description
+										}
+									</Text>
+								</Pressable>
+							);
+						},
+					)}
 				</Pressable>
 			</Pressable>
 		);

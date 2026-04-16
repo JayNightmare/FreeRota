@@ -8,6 +8,7 @@ import { supportResolver } from './supportResolver.js';
 import { rotaResolver } from './rotaResolver.js';
 import { shiftTypeResolver } from './shiftTypeResolver.js';
 import { GraphQLError, GraphQLScalarType, Kind } from 'graphql';
+import { adminRepository } from '../../repositories/adminRepository.js';
 import { userRepository } from '../../repositories/userRepository.js';
 import { shiftTypeRepository } from '../../repositories/shiftTypeRepository.js';
 
@@ -81,6 +82,7 @@ export const resolvers = {
     },
     User: {
         id: (parent: { _id: string }) => String(parent._id),
+        isAdmin: async (parent: { _id: string }) => adminRepository.isUserAdmin(String(parent._id)),
         username: (parent: { username?: string; displayName?: string; email?: string }) => {
             if (parent.username?.trim()) {
                 return parent.username;
