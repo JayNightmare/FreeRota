@@ -140,8 +140,9 @@ class UserRepository {
         ).exec();
     }
 
-    async softDeleteById(id: string): Promise<void> {
-        await UserModel.findByIdAndUpdate(id, { deletedAt: new Date() }).exec();
+    async deleteById(id: string): Promise<boolean> {
+        const deleted = await UserModel.findByIdAndDelete(id).exec();
+        return Boolean(deleted);
     }
 }
 

@@ -1,5 +1,7 @@
 import bcrypt from 'bcryptjs';
+import { deletedUserRepository } from '../repositories/deletedUserRepository.js';
 import { userRepository } from '../repositories/userRepository.js';
+import { buildDeletedAccountSupportMessage, buildDeletedUsernameConflictMessage } from '../utils/deletedAccount.js';
 import { AppError, assertOrThrow } from '../utils/errors.js';
 import { signAuthToken } from '../utils/jwt.js';
 import { validateUsername } from '../utils/username.js';
@@ -40,6 +42,9 @@ class AuthService {
         const existingUsername = await userRepository.findByUsername(username);
         assertOrThrow(!existingUsername, 'Username is already in use', 'CONFLICT', 409);
 
+        const deletedUsername = await deletedUserRepository.findByUsername(username);
+        assertOrThrow(!deletedUsername, buildDeletedUsernameConflictMessage(), 'CONFLICT', 409);
+
         assertOrThrow(
             input.password.length >= MIN_PASSWORD_LENGTH,
             `Password must be at least ${MIN_PASSWORD_LENGTH} characters long`
@@ -70,8 +75,19 @@ class AuthService {
     }
 
     async login(username: string, password: string): Promise<{ token: string }> {
-        const user = await userRepository.findByUsername(username);
-        if (!user || user.deletedAt) {
+        const normalizedUsername = username.toLowerCase().trim();
+        const user = await userRepository.findByUsername(normalizedUsername);
+
+        if (user?.deletedAt) {
+            throw new AppError(buildDeletedAccountSupportMessage(), 'FORBIDDEN', 403);
+        }
+
+        if (!user) {
+            const deletedUser = await deletedUserRepository.findByUsername(normalizedUsername);
+            if (deletedUser) {
+                throw new AppError(buildDeletedAccountSupportMessage(), 'FORBIDDEN', 403);
+            }
+
             throw new AppError('Invalid credentials', 'UNAUTHORIZED', 401);
         }
 

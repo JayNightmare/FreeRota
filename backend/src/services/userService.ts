@@ -1,5 +1,7 @@
+import { deletedUserRepository } from '../repositories/deletedUserRepository.js';
 import { userRepository } from '../repositories/userRepository.js';
 import { AppError, assertOrThrow } from '../utils/errors.js';
+import { buildDeletedUsernameConflictMessage } from '../utils/deletedAccount.js';
 import { validateUsername } from '../utils/username.js';
 
 const HEX_COLOR_REGEX = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
@@ -64,6 +66,11 @@ class UserService {
                 throw new AppError('Username is already in use', 'CONFLICT', 409);
             }
 
+            const deletedUser = await deletedUserRepository.findByUsername(nextUsername);
+            if (deletedUser) {
+                throw new AppError(buildDeletedUsernameConflictMessage(), 'CONFLICT', 409);
+            }
+
             sanitizedUpdates.username = nextUsername;
         }
 
@@ -80,7 +87,18 @@ class UserService {
     }
 
     async deleteAccount(userId: string): Promise<boolean> {
-        await userRepository.softDeleteById(userId);
+        const user = await userRepository.findById(userId);
+        if (!user || user.deletedAt) {
+            throw new AppError('User not found', 'NOT_FOUND', 404);
+        }
+
+        await deletedUserRepository.archiveFromUser(user);
+
+        const deleted = await userRepository.deleteById(userId);
+        if (!deleted) {
+            throw new AppError('Unable to delete account', 'INTERNAL', 500);
+        }
+
         return true;
     }
 }
