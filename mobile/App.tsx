@@ -700,26 +700,6 @@ function AppShell() {
 					<Pressable
 						style={[
 							styles.themeIconButton,
-							activeTab === "SETTINGS"
-								? styles.themeIconButtonActive
-								: undefined,
-						]}
-						onPress={() =>
-							setActiveTab("SETTINGS")
-						}
-					>
-						<Ionicons
-							name="settings-outline"
-							size={20}
-							color={
-								theme.colors
-									.textPrimary
-							}
-						/>
-					</Pressable>
-					<Pressable
-						style={[
-							styles.themeIconButton,
 							isNotificationsOpen
 								? styles.themeIconButtonActive
 								: undefined,
@@ -764,6 +744,26 @@ function AppShell() {
 								</View>
 							) : null}
 						</View>
+					</Pressable>
+					<Pressable
+						style={[
+							styles.themeIconButton,
+							activeTab === "SETTINGS"
+								? styles.themeIconButtonActive
+								: undefined,
+						]}
+						onPress={() =>
+							setActiveTab("SETTINGS")
+						}
+					>
+						<Ionicons
+							name="settings-outline"
+							size={20}
+							color={
+								theme.colors
+									.textPrimary
+							}
+						/>
 					</Pressable>
 					<Pressable
 						style={styles.themeIconButton}

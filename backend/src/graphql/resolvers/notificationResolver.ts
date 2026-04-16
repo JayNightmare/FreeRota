@@ -1,5 +1,6 @@
 import { requireAuth } from './helpers.js';
 import { notificationService } from '../../services/notificationService.js';
+import { adminService } from '../../services/adminService.js';
 
 export const notificationResolver = {
     Query: {
@@ -32,6 +33,24 @@ export const notificationResolver = {
         ) => {
             const userId = requireAuth(context);
             return notificationService.markAllRead(userId);
+        },
+        publishNotification: async (
+            _parent: unknown,
+            args: {
+                input: {
+                    title: string;
+                    body: string;
+                    category?: 'BUG_FIX' | 'RELEASE' | 'UPDATE' | 'MAINTENANCE';
+                    version?: string | null;
+                    linkUrl?: string | null;
+                    publishedAt?: string | null;
+                };
+            },
+            context: Parameters<typeof requireAuth>[0]
+        ) => {
+            const userId = requireAuth(context);
+            await adminService.assertAdmin(userId);
+            return notificationService.publish(args.input);
         }
     }
 };

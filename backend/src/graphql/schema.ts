@@ -147,6 +147,12 @@ const typeDefs = /* GraphQL */ `
     MAINTENANCE
   }
 
+  enum AdminApplicationStatus {
+    PENDING
+    APPROVED
+    REJECTED
+  }
+
   type Notification {
     id: ID!
     title: String!
@@ -158,6 +164,30 @@ const typeDefs = /* GraphQL */ `
     isRead: Boolean!
     createdAt: DateTime!
     updatedAt: DateTime!
+  }
+
+  type AdminApplication {
+    id: ID!
+    userId: ID!
+    applicantUsername: String!
+    applicantDisplayName: String!
+    applicantEmail: String!
+    motivation: String!
+    discordHandle: String
+    status: AdminApplicationStatus!
+    submittedAt: DateTime!
+    reviewedAt: DateTime
+    reviewedByUserId: ID
+    reviewNote: String
+    createdAt: DateTime!
+    updatedAt: DateTime!
+  }
+
+  type AdminApplicationSubmissionResult {
+    success: Boolean!
+    message: String!
+    application: AdminApplication!
+    discordDelivered: Boolean!
   }
 
   type FreeWindow {
@@ -251,8 +281,24 @@ const typeDefs = /* GraphQL */ `
     message: String!
   }
 
+  input ApplyForAdminInput {
+    motivation: String!
+    discordHandle: String
+  }
+
+  input PublishNotificationInput {
+    title: String!
+    body: String!
+    category: NotificationCategory = UPDATE
+    version: String
+    linkUrl: String
+    publishedAt: DateTime
+  }
+
   type Query {
     me: User!
+    myAdminApplication: AdminApplication
+    pendingAdminApplications(limit: Int = 25): [AdminApplication!]!
     myShiftTypes: [ShiftType!]!
     userProfile(userId: ID!): User!
     myRota(rangeStartUtc: DateTime!, rangeEndUtc: DateTime!): [RotaEntry!]!
@@ -272,6 +318,10 @@ const typeDefs = /* GraphQL */ `
   }
 
   type Mutation {
+    applyForAdmin(input: ApplyForAdminInput!): AdminApplicationSubmissionResult!
+    approveAdminApplication(applicationId: ID!, reviewNote: String): AdminApplication!
+    rejectAdminApplication(applicationId: ID!, reviewNote: String!): AdminApplication!
+
     register(input: RegisterInput!): AuthPayload!
     login(username: String!, password: String!): AuthPayload!
     requestEmailVerification(email: String!): ActionResult!
@@ -310,6 +360,7 @@ const typeDefs = /* GraphQL */ `
     markMessageRead(messageId: ID!): Message!
     markNotificationRead(notificationId: ID!): Notification!
     markAllNotificationsRead: ActionResult!
+    publishNotification(input: PublishNotificationInput!): Notification!
     contactSupport(input: ContactSupportInput!): ContactSupportResult!
   }
 

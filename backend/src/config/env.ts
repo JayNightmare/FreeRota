@@ -64,6 +64,7 @@ const envSchema = z.object({
     APP_DEEP_LINK_BASE: z.string().default('freerota://auth').transform(trimTrailingSlash),
     APP_WEB_BASE_URL: z.string().optional().transform(normalizeOptionalUrl),
     DISCORD_SUPPORT_WEBHOOK_URL: z.string().optional().transform(normalizeOptionalValue),
+    DISCORD_ADMIN_APPROVAL_WEBHOOK_URL: z.string().optional().transform(normalizeOptionalValue),
     GITHUB_ISSUE_TOKEN: z.string().optional().transform(normalizeOptionalValue),
     GITHUB_ISSUE_OWNER: z.string().optional().transform(normalizeOptionalValue),
     GITHUB_ISSUE_REPO: z.string().optional().transform(normalizeOptionalValue),
@@ -71,7 +72,8 @@ const envSchema = z.object({
     GITHUB_ISSUE_ESCALATION_LEVEL: z
         .enum(['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'])
         .default('CRITICAL')
-        .transform((value) => value.toUpperCase() as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL')
+        .transform((value) => value.toUpperCase() as 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL'),
+    ADMIN_BOOTSTRAP_USERNAMES: z.string().default('').transform(normalizeOptionalCsv)
 });
 
 const parsed = envSchema.safeParse(process.env);

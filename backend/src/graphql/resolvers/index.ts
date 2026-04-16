@@ -1,4 +1,5 @@
 import { accountResolver } from './accountResolver.js';
+import { adminResolver } from './adminResolver.js';
 import { friendshipResolver } from './friendshipResolver.js';
 import { freeTimeResolver } from './freeTimeResolver.js';
 import { messageResolver } from './messageResolver.js';
@@ -56,6 +57,7 @@ const dateTimeScalar = new GraphQLScalarType({
 export const resolvers = {
     DateTime: dateTimeScalar,
     Query: {
+        ...adminResolver.Query,
         ...accountResolver.Query,
         ...shiftTypeResolver.Query,
         ...rotaResolver.Query,
@@ -65,6 +67,7 @@ export const resolvers = {
         ...freeTimeResolver.Query
     },
     Mutation: {
+        ...adminResolver.Mutation,
         ...accountResolver.Mutation,
         ...shiftTypeResolver.Mutation,
         ...rotaResolver.Mutation,

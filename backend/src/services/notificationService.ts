@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { type NotificationCategory, type NotificationDocument } from '../models/Notification.js';
 import { notificationRepository, type SystemNotificationSeed } from '../repositories/notificationRepository.js';
 import { AppError } from '../utils/errors.js';
@@ -15,6 +16,15 @@ interface NotificationView {
     isRead: boolean;
 }
 
+interface PublishNotificationInput {
+    title: string;
+    body: string;
+    category?: NotificationCategory;
+    version?: string | null;
+    linkUrl?: string | null;
+    publishedAt?: string | Date | null;
+}
+
 const SYSTEM_NOTIFICATION_SEEDS: SystemNotificationSeed[] = [
     {
         slug: '2026-04-web-testing-rollout',
@@ -23,22 +33,6 @@ const SYSTEM_NOTIFICATION_SEEDS: SystemNotificationSeed[] = [
         category: 'UPDATE',
         version: '0.1.0',
         publishedAt: new Date('2026-04-16T09:00:00.000Z')
-    },
-    {
-        slug: '2026-04-calendar-import-bugfix',
-        title: 'Calendar import parsing fix',
-        body: 'Import now handles edge-case event formats more reliably and reports skipped items clearly.',
-        category: 'BUG_FIX',
-        version: '0.1.0',
-        publishedAt: new Date('2026-04-15T12:30:00.000Z')
-    },
-    {
-        slug: '2026-04-message-delivery-updates',
-        title: 'Message reliability update',
-        body: 'Conversation delivery and read-state consistency were improved for active chats.',
-        category: 'RELEASE',
-        version: '0.1.0',
-        publishedAt: new Date('2026-04-14T08:00:00.000Z')
     }
 ];
 
@@ -57,6 +51,48 @@ function toNotificationView(notification: NotificationDocument, isRead: boolean)
     };
 }
 
+function normalizeOptionalText(value?: string | null): string | null {
+    if (!value) {
+        return null;
+    }
+
+    const normalized = value.trim();
+    return normalized ? normalized : null;
+}
+
+function slugify(value: string): string {
+    const normalized = value
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+
+    return normalized || 'notification';
+}
+
+function buildRuntimeSlug(title: string, publishedAt: Date): string {
+    const datePrefix = publishedAt.toISOString().slice(0, 10);
+    const suffix = randomUUID().slice(0, 8);
+    const maxSlugLength = 120;
+    const maxBaseLength = maxSlugLength - datePrefix.length - suffix.length - 2;
+    const base = slugify(title).slice(0, Math.max(1, maxBaseLength));
+
+    return `${datePrefix}-${base}-${suffix}`;
+}
+
+function parsePublishedAt(value?: string | Date | null): Date {
+    if (!value) {
+        return new Date();
+    }
+
+    const parsed = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+        throw new AppError('Invalid publishedAt value', 'BAD_USER_INPUT', 400);
+    }
+
+    return parsed;
+}
+
 class NotificationService {
     async ensureSeedData(): Promise<void> {
         await notificationRepository.upsertSystemNotifications(SYSTEM_NOTIFICATION_SEEDS);
@@ -71,6 +107,32 @@ class NotificationService {
         return notifications.map((notification) =>
             toNotificationView(notification, readIds.has(String(notification._id)))
         );
+    }
+
+    async publish(input: PublishNotificationInput): Promise<NotificationView> {
+        const title = input.title.trim();
+        const body = input.body.trim();
+
+        if (!title) {
+            throw new AppError('Notification title is required', 'BAD_USER_INPUT', 400);
+        }
+
+        if (!body) {
+            throw new AppError('Notification body is required', 'BAD_USER_INPUT', 400);
+        }
+
+        const publishedAt = parsePublishedAt(input.publishedAt);
+        const notification = await notificationRepository.createSystemNotification({
+            slug: buildRuntimeSlug(title, publishedAt),
+            title,
+            body,
+            category: input.category ?? 'UPDATE',
+            version: normalizeOptionalText(input.version),
+            linkUrl: normalizeOptionalText(input.linkUrl),
+            publishedAt
+        });
+
+        return toNotificationView(notification, false);
     }
 
     async unreadCountForUser(userId: string): Promise<number> {
@@ -115,3 +177,4 @@ class NotificationService {
 }
 
 export const notificationService = new NotificationService();
+export type { PublishNotificationInput };

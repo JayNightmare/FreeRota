@@ -49,6 +49,13 @@ class NotificationRepository {
         );
     }
 
+    async createSystemNotification(seed: SystemNotificationSeed): Promise<NotificationDocument> {
+        return NotificationModel.create({
+            ...seed,
+            isActive: true
+        });
+    }
+
     async listRecent(limit: number, cursor?: string | null): Promise<NotificationDocument[]> {
         const filter: Record<string, unknown> = { isActive: true };
 
