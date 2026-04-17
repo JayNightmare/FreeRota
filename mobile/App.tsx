@@ -34,7 +34,7 @@ import {
 	DesktopPricingScreen,
 	DesktopSolutionsScreen,
 } from "./src/screens/DesktopRouteScreens";
-import { AuthScreen } from "./src/screens/AuthScreen";
+import { AuthScreen, type AuthMode } from "./src/screens/AuthScreen";
 import { ThemeProvider } from "./src/theme/ThemeProvider";
 import { useTheme } from "./src/theme/useTheme";
 import { TabIndicator } from "./src/components/TabIndicator";
@@ -247,6 +247,7 @@ function AppShell() {
 	const { token, isBootstrapping, signOut } = useAuth();
 	const { width } = useWindowDimensions();
 	const [activeTab, setActiveTab] = useState<TabKey>("ROTA");
+	const [authMode, setAuthMode] = useState<AuthMode>("register");
 	const [isNotificationsOpen, setNotificationsOpen] = useState(false);
 	const [notificationActionError, setNotificationActionError] = useState<
 		string | null
@@ -498,6 +499,7 @@ function AppShell() {
 		if (!isAuthenticated) {
 			setNotificationsOpen(false);
 			setNotificationActionError(null);
+			setAuthMode("register");
 		}
 	}, [isAuthenticated]);
 
@@ -513,6 +515,7 @@ function AppShell() {
 
 		void signOut();
 		setActiveTab("ROTA");
+		setAuthMode("register");
 		setNotificationsOpen(false);
 		setNotificationActionError(null);
 	}, [
@@ -888,7 +891,12 @@ function AppShell() {
 	}
 
 	if (!isAuthenticated) {
-		return <AuthScreen mode="register" onModeChange={() => {}} />;
+		return (
+			<AuthScreen
+				mode={authMode}
+				onModeChange={setAuthMode}
+			/>
+		);
 	}
 
 	return (
