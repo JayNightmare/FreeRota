@@ -11,7 +11,7 @@ import {
 	View,
 	useWindowDimensions,
 } from "react-native";
-import { HeaderNavBar } from "../components/desktop/HeaderNavBar";
+import { HeaderNavBar } from "../../components/desktop/HeaderNavBar";
 import * as THREE from "three";
 import { navigateToDesktopScreen, navigateWebPath } from "./desktopRoutes";
 

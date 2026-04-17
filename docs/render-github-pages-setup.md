@@ -75,10 +75,9 @@ What the workflow does:
 
 1. Installs dependencies with npm ci.
 2. Builds static Expo web output (mobile/dist).
-3. Rewrites /\_expo asset path references to ./\_expo for GitHub Pages project-path compatibility.
-4. Writes `CNAME` with `rota.nexusgit.info` for custom domain mapping.
-5. Copies index.html to 404.html to support SPA fallback routing.
-6. Publishes mobile/dist to GitHub Pages.
+3. Writes `CNAME` with `rota.nexusgit.info` for custom domain mapping.
+4. Copies index.html to 404.html to support SPA fallback routing.
+5. Publishes mobile/dist to GitHub Pages.
 
 ### 4) Find Your GitHub Pages URL
 

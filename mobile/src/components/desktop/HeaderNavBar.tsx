@@ -9,7 +9,7 @@ import {
 import {
 	type DesktopScreenSlug,
 	navigateToDesktopScreen,
-} from "../../screens/desktopRoutes";
+} from "../../screens/desktop/desktopRoutes";
 
 type HeaderNavBarVariant = "landing" | "route";
 
@@ -48,13 +48,7 @@ export const HeaderNavBar = ({
 		() =>
 			StyleSheet.create({
 				nav: {
-					paddingHorizontal: isDesktop
-						? isLanding
-							? 48
-							: 42
-						: isLanding
-							? 20
-							: 18,
+					paddingHorizontal: 48,
 					paddingTop: 18,
 					paddingBottom: 18,
 					flexDirection: "row",
@@ -75,7 +69,7 @@ export const HeaderNavBar = ({
 				navLinks: {
 					flexDirection: "row",
 					alignItems: "center",
-					gap: isLanding ? 24 : 20,
+					gap: 24,
 				},
 				navLink: {
 					fontSize: 12,
@@ -111,9 +105,9 @@ export const HeaderNavBar = ({
 				},
 				ctaButton: {
 					backgroundColor: TOKENS.brand,
-					paddingHorizontal: isLanding ? 18 : 16,
+					paddingHorizontal: 18,
 					paddingVertical: 10,
-					borderWidth: isLanding ? 2 : 1,
+					borderWidth: 2,
 					borderColor: "rgba(178, 139, 255, 0.8)",
 				},
 				ctaButtonText: {

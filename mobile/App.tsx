@@ -24,7 +24,7 @@ import { FriendsScreen } from "./src/screens/FriendsScreen";
 import { FreeTimeScreen } from "./src/screens/FreeTimeScreen";
 import { ProfileScreen } from "./src/screens/ProfileScreen";
 import { SettingsScreen } from "./src/screens/SettingsScreen";
-import { DesktopLandingScreen } from "./src/screens/DesktopLandingScreen";
+import { DesktopLandingScreen } from "./src/screens/desktop/DesktopLandingScreen";
 import {
 	DesktopEnterpriseInquiryScreen,
 	DesktopEnterpriseScreen,
@@ -33,7 +33,7 @@ import {
 	DesktopPlatformScreen,
 	DesktopPricingScreen,
 	DesktopSolutionsScreen,
-} from "./src/screens/DesktopRouteScreens";
+} from "./src/screens/desktop/DesktopRouteScreens";
 import { AuthScreen, type AuthMode } from "./src/screens/AuthScreen";
 import { ThemeProvider } from "./src/theme/ThemeProvider";
 import { useTheme } from "./src/theme/useTheme";
@@ -43,7 +43,7 @@ import {
 	DESKTOP_ROUTE_PREFIX,
 	isSupportedDesktopScreenSlug,
 	resolveDesktopScreenSlug,
-} from "./src/screens/desktopRoutes";
+} from "./src/screens/desktop/desktopRoutes";
 import {
 	MARK_ALL_NOTIFICATIONS_READ_MUTATION,
 	MARK_NOTIFICATION_READ_MUTATION,

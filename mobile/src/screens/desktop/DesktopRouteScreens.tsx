@@ -10,8 +10,8 @@ import {
 	View,
 	useWindowDimensions,
 } from "react-native";
-import { HeaderNavBar } from "../components/desktop/HeaderNavBar";
-import { SUBMIT_ENTERPRISE_INQUIRY_MUTATION } from "../graphql/operations";
+import { HeaderNavBar } from "../../components/desktop/HeaderNavBar";
+import { SUBMIT_ENTERPRISE_INQUIRY_MUTATION } from "../../graphql/operations";
 import {
 	type DesktopScreenSlug,
 	navigateWebPath,
