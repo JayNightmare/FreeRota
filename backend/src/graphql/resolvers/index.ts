@@ -8,6 +8,7 @@ import { enterpriseResolver } from './enterpriseResolver.js';
 import { supportResolver } from './supportResolver.js';
 import { rotaResolver } from './rotaResolver.js';
 import { shiftTypeResolver } from './shiftTypeResolver.js';
+import { tenantResolver } from './tenantResolver.js';
 import { GraphQLError, GraphQLScalarType, Kind } from 'graphql';
 import { adminRepository } from '../../repositories/adminRepository.js';
 import { userRepository } from '../../repositories/userRepository.js';
@@ -66,7 +67,8 @@ export const resolvers = {
         ...friendshipResolver.Query,
         ...messageResolver.Query,
         ...notificationResolver.Query,
-        ...freeTimeResolver.Query
+        ...freeTimeResolver.Query,
+        ...tenantResolver.Query
     },
     Mutation: {
         ...adminResolver.Mutation,
@@ -77,11 +79,18 @@ export const resolvers = {
         ...messageResolver.Mutation,
         ...notificationResolver.Mutation,
         ...enterpriseResolver.Mutation,
-        ...supportResolver.Mutation
+        ...supportResolver.Mutation,
+        ...tenantResolver.Mutation
     },
     Subscription: {
         ...messageResolver.Subscription
     },
+    Organization: tenantResolver.Organization,
+    Site: tenantResolver.Site,
+    Team: tenantResolver.Team,
+    Role: tenantResolver.Role,
+    OrganizationMembership: tenantResolver.OrganizationMembership,
+    Schedule: tenantResolver.Schedule,
     User: {
         id: (parent: { _id: string }) => String(parent._id),
         isAdmin: async (parent: { _id: string }) => adminRepository.isUserAdmin(String(parent._id)),

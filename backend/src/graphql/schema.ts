@@ -27,6 +27,112 @@ const typeDefs = /* GraphQL */ `
     updatedAt: DateTime!
   }
 
+  type TestSsoResult {
+    success: Boolean!
+    message: String!
+    claims: String
+  }
+
+  type GroupRoleMapping {
+    idpGroup: String!
+    roleId: ID!
+    scopes: [String!]!
+  }
+
+  type OrganizationSsoConfig {
+    ssoEnabled: Boolean!
+    ssoProvider: String
+    ssoEnforce: Boolean!
+    ssoMetadataString: String
+    groupRoleMappings: [GroupRoleMapping!]!
+  }
+
+  type EnterpriseApplicationResult {
+    success: Boolean!
+    message: String!
+  }
+
+  type Organization {
+    id: ID!
+    name: String!
+    type: String!
+    billingTier: String!
+    isActive: Boolean!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+    ssoEnabled: Boolean!
+    ssoEnforce: Boolean!
+  }
+
+  type Site {
+    id: ID!
+    organizationId: ID!
+    name: String!
+    regionCode: String
+    timezone: String!
+    createdAt: DateTime!
+  }
+
+  type Team {
+    id: ID!
+    organizationId: ID!
+    siteId: ID
+    name: String!
+    departmentName: String
+    createdAt: DateTime!
+  }
+
+  type Role {
+    id: ID!
+    organizationId: ID!
+    name: String!
+    permissions: [String!]!
+    isSystem: Boolean!
+    createdAt: DateTime!
+  }
+
+  type OrganizationMembership {
+    id: ID!
+    userId: ID!
+    organizationId: ID!
+    roles: [Role!]!
+    scopes: MembershipScopes
+    createdAt: DateTime!
+  }
+
+  type MembershipScopes {
+    siteIds: [ID!]
+    teamIds: [ID!]
+  }
+
+  type AuditEvent {
+    id: ID!
+    organizationId: ID!
+    actorId: ID!
+    actorUsername: String
+    action: String!
+    resource: String!
+    resourceId: ID!
+    metadataString: String
+    createdAt: DateTime!
+  }
+
+  type Schedule {
+    id: ID!
+    organizationId: ID!
+    teamId: ID
+    periodStart: DateTime!
+    periodEnd: DateTime!
+    status: String!
+    version: Int!
+    createdBy: ID!
+    approvedBy: ID
+    approvedAt: DateTime
+    entries: [RotaEntry!]!
+    createdAt: DateTime!
+    updatedAt: DateTime!
+  }
+
   type ShiftType {
     id: ID!
     userId: ID!
@@ -39,6 +145,8 @@ const typeDefs = /* GraphQL */ `
   type RotaEntry {
     id: ID!
     userId: ID!
+    organizationId: ID!
+    scheduleId: ID
     type: String!
     startUtc: DateTime!
     endUtc: DateTime!
@@ -251,6 +359,8 @@ const typeDefs = /* GraphQL */ `
   }
 
   input CreateRotaEntryInput {
+    organizationId: ID!
+    scheduleId: ID
     type: String!
     startUtc: DateTime!
     endUtc: DateTime!
@@ -319,10 +429,52 @@ const typeDefs = /* GraphQL */ `
     publishedAt: DateTime
   }
 
+  input CreateSiteInput {
+    organizationId: ID!
+    name: String!
+    regionCode: String
+    timezone: String!
+  }
+
+  input CreateTeamInput {
+    organizationId: ID!
+    siteId: ID
+    name: String!
+    departmentName: String
+  }
+
+  input CreateScheduleInput {
+    organizationId: ID!
+    teamId: ID
+    periodStart: DateTime!
+    periodEnd: DateTime!
+  }
+
+  input GroupRoleMappingInput {
+    idpGroup: String!
+    roleId: ID!
+    scopes: [String!]
+  }
+
+  input UpdateSsoConfigInput {
+    orgId: ID!
+    ssoEnabled: Boolean
+    ssoProvider: String
+    ssoEnforce: Boolean
+    ssoMetadataString: String
+    groupRoleMappings: [GroupRoleMappingInput!]
+  }
+
   type Query {
     me: User!
     myAdminApplication: AdminApplication
     pendingAdminApplications(limit: Int = 25): [AdminApplication!]!
+    myOrganizations: [OrganizationMembership!]!
+    organization(orgId: ID!): Organization!
+    organizationSites(orgId: ID!): [Site!]!
+    organizationTeams(orgId: ID!, siteId: ID): [Team!]!
+    organizationSchedules(orgId: ID!, teamId: ID!): [Schedule!]!
+    organizationAuditLogs(orgId: ID!, limit: Int = 50, cursor: String): [AuditEvent!]!
     myShiftTypes: [ShiftType!]!
     userProfile(userId: ID!): User!
     myRota(rangeStartUtc: DateTime!, rangeEndUtc: DateTime!): [RotaEntry!]!
@@ -331,6 +483,7 @@ const typeDefs = /* GraphQL */ `
     incomingFriendRequests: [Friendship!]!
     conversations: [Conversation!]!
     messages(conversationId: ID!, limit: Int = 30, cursor: String): [Message!]!
+    organizationSsoConfig(orgId: ID!): OrganizationSsoConfig!
     notifications(limit: Int = 20, cursor: String): [Notification!]!
     notificationUnreadCount: Int!
     findCommonFreeTime(
@@ -341,10 +494,29 @@ const typeDefs = /* GraphQL */ `
     ): [FreeWindow!]!
   }
 
+  input ApplyForEnterpriseInput {
+    companyName: String!
+    contactName: String!
+    email: String!
+    teamSize: String
+    message: String!
+  }
+
   type Mutation {
+    applyForEnterprise(input: ApplyForEnterpriseInput!): EnterpriseApplicationResult!
+    approveEnterpriseApplication(organizationId: ID!): Organization!
+
+    updateOrganizationSsoConfig(input: UpdateSsoConfigInput!): OrganizationSsoConfig!
+    testSsoConnection(orgId: ID!, mockPayload: String!): TestSsoResult!
+
     applyForAdmin(input: ApplyForAdminInput!): AdminApplicationSubmissionResult!
     approveAdminApplication(applicationId: ID!, reviewNote: String): AdminApplication!
     rejectAdminApplication(applicationId: ID!, reviewNote: String!): AdminApplication!
+
+    createSite(input: CreateSiteInput!): Site!
+    createTeam(input: CreateTeamInput!): Team!
+    createSchedule(input: CreateScheduleInput!): Schedule!
+    updateScheduleStatus(scheduleId: ID!, status: String!): Schedule!
 
     register(input: RegisterInput!): AuthPayload!
     login(username: String!, password: String!): AuthPayload!

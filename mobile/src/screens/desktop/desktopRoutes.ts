@@ -12,6 +12,7 @@ export const DESKTOP_SCREEN_SLUGS = [
 	"log-in",
 	"get-started",
 	"enterprise-inquiry",
+	"dashboard",
 ] as const;
 
 export type DesktopScreenSlug = (typeof DESKTOP_SCREEN_SLUGS)[number];

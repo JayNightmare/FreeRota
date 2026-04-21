@@ -24,6 +24,7 @@ import { FriendsScreen } from "./src/screens/FriendsScreen";
 import { FreeTimeScreen } from "./src/screens/FreeTimeScreen";
 import { ProfileScreen } from "./src/screens/ProfileScreen";
 import { SettingsScreen } from "./src/screens/SettingsScreen";
+import { EnterpriseAdminScreen } from "./src/screens/EnterpriseAdminScreen";
 import { DesktopLandingScreen } from "./src/screens/desktop/DesktopLandingScreen";
 import {
 	DesktopEnterpriseInquiryScreen,
@@ -34,6 +35,7 @@ import {
 	DesktopPricingScreen,
 	DesktopSolutionsScreen,
 } from "./src/screens/desktop/DesktopRouteScreens";
+import { DesktopDashboardScreen } from "./src/screens/desktop/DesktopDashboardScreen";
 import { AuthScreen, type AuthMode } from "./src/screens/AuthScreen";
 import { ThemeProvider } from "./src/theme/ThemeProvider";
 import { useTheme } from "./src/theme/useTheme";
@@ -124,7 +126,13 @@ function parseDesktopRoute(pathname: string): DesktopRouteMatch | null {
 	};
 }
 
-type TabKey = "ROTA" | "FRIENDS" | "FREE" | "PROFILE" | "SETTINGS";
+type TabKey =
+	| "ROTA"
+	| "FRIENDS"
+	| "FREE"
+	| "PROFILE"
+	| "SETTINGS"
+	| "ENTERPRISE";
 
 type NotificationCategory = "BUG_FIX" | "RELEASE" | "UPDATE" | "MAINTENANCE";
 
@@ -223,6 +231,7 @@ const tabs: Array<{
 	{ key: "FRIENDS", label: "Friends", icon: "people-outline" },
 	{ key: "FREE", label: "Free Time", icon: "time-outline" },
 	{ key: "PROFILE", label: "Profile", icon: "person-outline" },
+	{ key: "ENTERPRISE", label: "Enterprise", icon: "business-outline" },
 ];
 
 function ActiveScreen({ tab }: { tab: TabKey }) {
@@ -237,6 +246,8 @@ function ActiveScreen({ tab }: { tab: TabKey }) {
 			return <ProfileScreen />;
 		case "SETTINGS":
 			return <SettingsScreen />;
+		case "ENTERPRISE":
+			return <EnterpriseAdminScreen />;
 		default:
 			return <RotaScreen />;
 	}
@@ -260,7 +271,6 @@ function AppShell() {
 		isWeb ? getStableWebPortrait() : true,
 	);
 	const isDesktopViewport = width >= 900;
-	const shouldBlockWebUsage = isWeb && !webIsPortrait;
 	const isAuthenticated = Boolean(token);
 
 	const {
@@ -430,6 +440,9 @@ function AppShell() {
 		[isWeb, webPathname],
 	);
 
+	const shouldBlockWebUsage =
+		isWeb && !webIsPortrait && !desktopRouteMatch;
+
 	const shouldRedirectDesktopRoot =
 		isWeb && isDesktopViewport && webPathname === "/";
 	const shouldRedirectUnsupportedDesktopRoute =
@@ -438,11 +451,20 @@ function AppShell() {
 		!isSupportedDesktopScreenSlug(desktopRouteMatch.screenSlug) &&
 		webPathname !== DESKTOP_DEFAULT_PATH;
 
+	const shouldRedirectAuthenticatedLogin =
+		isWeb &&
+		isAuthenticated &&
+		desktopRouteMatch?.screenSlug === "log-in";
+
+	const DESKTOP_DASHBOARD_PATH = `${DESKTOP_ROUTE_PREFIX}/dashboard`;
+
 	const pendingWebRedirectTarget =
 		shouldRedirectDesktopRoot ||
 		shouldRedirectUnsupportedDesktopRoute
 			? DESKTOP_DEFAULT_PATH
-			: null;
+			: shouldRedirectAuthenticatedLogin
+				? DESKTOP_DASHBOARD_PATH
+				: null;
 
 	const shouldRenderDesktopScreen =
 		isWeb &&
@@ -838,11 +860,28 @@ function AppShell() {
 			case "pricing":
 				return <DesktopPricingScreen />;
 			case "log-in":
-				return <DesktopLoginScreen />;
+				return (
+					<AuthScreen
+						mode={authMode}
+						onModeChange={setAuthMode}
+					/>
+				);
 			case "get-started":
 				return <DesktopGetStartedScreen />;
 			case "enterprise-inquiry":
 				return <DesktopEnterpriseInquiryScreen />;
+			case "dashboard":
+				if (!isAuthenticated) {
+					return (
+						<AuthScreen
+							mode={authMode}
+							onModeChange={
+								setAuthMode
+							}
+						/>
+					);
+				}
+				return <DesktopDashboardScreen />;
 			case "landing":
 			default:
 				return <DesktopLandingScreen />;
@@ -850,9 +889,6 @@ function AppShell() {
 	}
 
 	if (shouldBlockWebUsage) {
-		const blockedMessage =
-			"FreeRota supports portrait mode only. Rotate your device to portrait to continue";
-
 		return (
 			<SafeAreaView
 				style={styles.blockedContainer}
@@ -869,7 +905,9 @@ function AppShell() {
 						Mobile Portrait Only
 					</Text>
 					<Text style={styles.blockedSubtitle}>
-						{blockedMessage}
+						FreeRota supports portrait mode
+						only. Rotate your device to
+						portrait to continue.
 					</Text>
 				</View>
 			</SafeAreaView>

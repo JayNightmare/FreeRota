@@ -5,6 +5,8 @@ export const rotaTypes = ['WORK', 'FREE'] as const;
 const rotaEntrySchema = new Schema(
     {
         userId: { type: Schema.Types.ObjectId, ref: 'User', required: true, index: true },
+        organizationId: { type: Schema.Types.ObjectId, ref: 'Organization', required: true, index: true },
+        scheduleId: { type: Schema.Types.ObjectId, ref: 'Schedule', default: null, index: true },
         type: { type: String, enum: rotaTypes, required: true, default: 'WORK' },
         startUtc: { type: Date, required: true },
         endUtc: { type: Date, required: true },
@@ -26,9 +28,10 @@ const rotaEntrySchema = new Schema(
 );
 
 rotaEntrySchema.index({ userId: 1, startUtc: 1, endUtc: 1 });
+rotaEntrySchema.index({ organizationId: 1, scheduleId: 1 });
 rotaEntrySchema.index({ userId: 1, importFingerprint: 1 }, { sparse: true });
 
-export type RotaEntry = InferSchemaType<typeof rotaEntrySchema> & { userId: Types.ObjectId };
+export type RotaEntry = InferSchemaType<typeof rotaEntrySchema> & { userId: Types.ObjectId, organizationId: Types.ObjectId, scheduleId?: Types.ObjectId | null };
 export type RotaEntryDocument = HydratedDocument<RotaEntry>;
 
 export const RotaEntryModel = model<RotaEntry>('RotaEntry', rotaEntrySchema);

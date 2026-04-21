@@ -514,3 +514,128 @@ export const MARK_ALL_NOTIFICATIONS_READ_MUTATION = gql`
 		}
 	}
 `;
+
+export const MY_ORGANIZATIONS_QUERY = gql`
+	query MyOrganizations {
+		myOrganizations {
+			id
+			organizationId
+			roles {
+				id
+				name
+				permissions
+			}
+		}
+	}
+`;
+
+export const ORGANIZATION_DETAILS_QUERY = gql`
+	query Organization($orgId: ID!) {
+		organization(orgId: $orgId) {
+			id
+			name
+			type
+			billingTier
+			isActive
+		}
+		organizationSites(orgId: $orgId) {
+			id
+			name
+			regionCode
+			timezone
+		}
+		organizationTeams(orgId: $orgId) {
+			id
+			siteId
+			name
+			departmentName
+		}
+	}
+`;
+
+export const ORGANIZATION_AUDIT_LOGS_QUERY = gql`
+	query OrganizationAuditLogs($orgId: ID!, $limit: Int) {
+		organizationAuditLogs(orgId: $orgId, limit: $limit) {
+			id
+			actorId
+			action
+			resource
+			resourceId
+			metadataString
+			createdAt
+		}
+	}
+`;
+
+export const CREATE_SITE_MUTATION = gql`
+	mutation CreateSite($input: CreateSiteInput!) {
+		createSite(input: $input) {
+			id
+			name
+			regionCode
+			timezone
+		}
+	}
+`;
+
+export const CREATE_TEAM_MUTATION = gql`
+	mutation CreateTeam($input: CreateTeamInput!) {
+		createTeam(input: $input) {
+			id
+			name
+			departmentName
+			siteId
+		}
+	}
+`;
+
+export const ORGANIZATION_SSO_CONFIG_QUERY = gql`
+	query OrganizationSsoConfig($orgId: ID!) {
+		organizationSsoConfig(orgId: $orgId) {
+			ssoEnabled
+			ssoProvider
+			ssoEnforce
+			ssoMetadataString
+			groupRoleMappings {
+				idpGroup
+				roleId
+				scopes
+			}
+		}
+	}
+`;
+
+export const UPDATE_ORGANIZATION_SSO_CONFIG_MUTATION = gql`
+	mutation UpdateOrganizationSsoConfig($input: UpdateSsoConfigInput!) {
+		updateOrganizationSsoConfig(input: $input) {
+			ssoEnabled
+			ssoProvider
+			ssoEnforce
+			ssoMetadataString
+			groupRoleMappings {
+				idpGroup
+				roleId
+				scopes
+			}
+		}
+	}
+`;
+
+export const TEST_SSO_CONNECTION_MUTATION = gql`
+	mutation TestSsoConnection($orgId: ID!, $mockPayload: String!) {
+		testSsoConnection(orgId: $orgId, mockPayload: $mockPayload) {
+			success
+			message
+			claims
+		}
+	}
+`;
+
+export const APPLY_FOR_ENTERPRISE_MUTATION = gql`
+	mutation ApplyForEnterprise($input: ApplyForEnterpriseInput!) {
+		applyForEnterprise(input: $input) {
+			success
+			message
+		}
+	}
+`;

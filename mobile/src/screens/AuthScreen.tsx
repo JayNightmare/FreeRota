@@ -121,6 +121,9 @@ export function AuthScreen({ mode, onModeChange }: AuthScreenProps) {
 					borderRadius: theme.radius.lg,
 					padding: theme.spacing.xl,
 					gap: theme.spacing.md,
+					width: "100%",
+					maxWidth: 420,
+					alignSelf: "center",
 				},
 				title: {
 					fontSize: theme.typography.heading,

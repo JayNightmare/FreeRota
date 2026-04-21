@@ -5,6 +5,7 @@ import { env } from './config/env.js';
 import { schema } from './graphql/schema.js';
 import { buildContext } from './graphql/context.js';
 import { notificationService } from './services/notificationService.js';
+import { ssoService } from './services/ssoService.js';
 
 async function bootstrap(): Promise<void> {
     await connectDatabase(env.MONGODB_URI);
@@ -23,7 +24,32 @@ async function bootstrap(): Promise<void> {
                 }
     });
 
-    const server = createServer(yoga);
+    const server = createServer(async (req, res) => {
+        // Native REST Intercept for pure SAML/OIDC POST Callbacks
+        if (req.url === '/api/sso/callback' && req.method === 'POST') {
+            let body = '';
+            req.on('data', chunk => {
+                body += chunk.toString();
+            });
+            req.on('end', async () => {
+                try {
+                    const parsed = JSON.parse(body);
+                    const { payload, orgId } = parsed;
+                    const token = await ssoService.processAssertion(payload, orgId);
+                    
+                    res.writeHead(200, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ success: true, token }));
+                } catch (err: any) {
+                    res.writeHead(400, { 'Content-Type': 'application/json' });
+                    res.end(JSON.stringify({ success: false, error: err.message }));
+                }
+            });
+            return;
+        }
+
+        // Standard GraphQL routing
+        yoga(req, res);
+    });
     server.listen(env.PORT, () => {
         console.log(`FreeRota API listening on http://localhost:${env.PORT}/graphql`);
     });
