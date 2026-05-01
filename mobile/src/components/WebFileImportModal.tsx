@@ -92,6 +92,8 @@ interface WebFileImportModalProps {
 
 type ModalStep = "select" | "preview" | "importing";
 
+const MAX_PREVIEW_ENTRIES = 50;
+
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function WebFileImportModal({
@@ -401,12 +403,12 @@ export function WebFileImportModal({
 			animationType="fade"
 			onRequestClose={handleClose}
 		>
-			{/* Hidden HTML file input – only rendered on web */}
-			{/* @ts-ignore – input is a valid DOM element in react-native-web */}
+			{/* Hidden HTML file input – react-native-web renders this as a native DOM input element */}
 			<input
 				ref={fileInputRef}
 				type="file"
 				accept={getAcceptAttribute()}
+				aria-label="Select schedule file to import"
 				style={{ display: "none" }}
 				onChange={handleFileChange}
 			/>
@@ -548,7 +550,7 @@ export function WebFileImportModal({
 								showsVerticalScrollIndicator
 							>
 								{previewEntries
-									.slice(0, 50)
+									.slice(0, MAX_PREVIEW_ENTRIES)
 									.map((entry, idx) => {
 										const isWork =
 											entry.type === "WORK";
@@ -632,7 +634,7 @@ export function WebFileImportModal({
 											</View>
 										);
 									})}
-								{previewEntries.length > 50 && (
+								{previewEntries.length > MAX_PREVIEW_ENTRIES && (
 									<Text
 										style={[
 											styles.previewMeta,
@@ -645,7 +647,7 @@ export function WebFileImportModal({
 										]}
 									>
 										…and{" "}
-										{previewEntries.length - 50} more
+										{previewEntries.length - MAX_PREVIEW_ENTRIES} more
 									</Text>
 								)}
 							</ScrollView>

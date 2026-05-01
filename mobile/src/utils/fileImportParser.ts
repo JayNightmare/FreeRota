@@ -28,6 +28,9 @@ export interface ParsedCalendarEvent {
 	recurrenceRule: string | null;
 }
 
+const ONE_HOUR_MS = 3_600_000;
+const MS_PER_MINUTE = 60_000;
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────────────
@@ -200,13 +203,13 @@ export function parseIcs(text: string): ParsedCalendarEvent[] {
 						(parseInt((/(\d+)D/.exec(dur) ?? [])[1] ?? "0") || 0) * 24 +
 						(parseInt((/(\d+)W/.exec(dur) ?? [])[1] ?? "0") || 0) * 168;
 					const minutes = parseInt((/(\d+)M/.exec(dur) ?? [])[1] ?? "0") || 0;
-					const totalMs = (hours * 60 + minutes) * 60_000;
+					const totalMs = (hours * 60 + minutes) * MS_PER_MINUTE;
 					if (totalMs > 0 && current._dtStartRaw) {
 						const start = parseIcalDate(current._dtStartRaw);
 						if (start) {
 							current._dtEndRaw = new Date(
 								new Date(start).getTime() + totalMs,
-							).toISOString().replace(/[-:.]/g, "").replace("Z", "Z").slice(0, 16).replace("T", "T") + "00Z";
+							).toISOString();
 						}
 					}
 				}
@@ -227,8 +230,8 @@ export function parseIcs(text: string): ParsedCalendarEvent[] {
 // .csv
 // ─────────────────────────────────────────────────────────────────────────────
 
-/** Returns the first field in a papaparse row that looks like a date, or null. */
-function findDateField(
+/** Returns the value of the first CSV column whose header matches one of the given keywords, or null. */
+function findField(
 	headers: string[],
 	row: Record<string, string>,
 	keywords: string[],
@@ -255,18 +258,18 @@ export function parseCsv(text: string): ParsedCalendarEvent[] {
 
 	for (const row of result.data) {
 		const startRaw =
-			findDateField(headers, row, ["start", "begin", "from", "date"]) ??
-			findDateField(headers, row, ["date"]);
+			findField(headers, row, ["start", "begin", "from", "date"]) ??
+			findField(headers, row, ["date"]);
 		const endRaw =
-			findDateField(headers, row, ["end", "finish", "to"]) ?? startRaw;
+			findField(headers, row, ["end", "finish", "to"]) ?? startRaw;
 		const title =
-			findDateField(headers, row, ["title", "subject", "summary", "event", "name", "shift"]) ?? null;
-		const notes = findDateField(headers, row, ["notes", "description", "note", "detail"]) ?? null;
+			findField(headers, row, ["title", "subject", "summary", "event", "name", "shift"]) ?? null;
+		const notes = findField(headers, row, ["notes", "description", "note", "detail"]) ?? null;
 
 		const startUtc = toUtcIso(startRaw);
 		if (!startUtc) continue;
 
-		const endUtc = toUtcIso(endRaw) ?? new Date(new Date(startUtc).getTime() + 3_600_000).toISOString();
+		const endUtc = toUtcIso(endRaw) ?? new Date(new Date(startUtc).getTime() + ONE_HOUR_MS).toISOString();
 
 		events.push({
 			eventId: nextEventId("csv"),
@@ -408,15 +411,15 @@ export function parseTxt(text: string): ParsedCalendarEvent[] {
 					),
 				);
 			} else {
-				endDate = new Date(startDate.getTime() + 3_600_000);
+				endDate = new Date(startDate.getTime() + ONE_HOUR_MS);
 			}
 		} else {
-			endDate = new Date(startDate.getTime() + 3_600_000);
+			endDate = new Date(startDate.getTime() + ONE_HOUR_MS);
 		}
 
-		// Extract a title from the remainder of the line
-		const title = line
-			.replace(DATE_PATTERNS.reduce((s, p) => s.replace(p, ""), line), "")
+		// Extract a title from the remainder of the line (strip dates and times)
+		const stripped = DATE_PATTERNS.reduce((s, p) => s.replace(p, ""), line);
+		const title = stripped
 			.replace(/\d{1,2}:\d{2}(?::\d{2})?(?:\s*[ap]m)?/gi, "")
 			.replace(/[-–—to]+/g, " ")
 			.trim() || null;
@@ -443,13 +446,20 @@ export function parseTxt(text: string): ParsedCalendarEvent[] {
 
 /**
  * Excel stores dates as serial numbers (days since 1899-12-30).
- * This converts a serial number to a Date.
+ * Excel incorrectly treats 1900 as a leap year: serial 60 represents the
+ * fictional 1900-02-29.  For any serial > 60 we subtract 1 to account for
+ * this off-by-one error and maintain compatibility with Excel date values.
  */
 function excelSerialToDate(serial: number): Date {
 	// Excel serial date 1 = 1900-01-01, but Excel has a leap-year bug for 1900
 	// so we subtract 1 for serials > 60.
 	const offsetDays = serial > 60 ? serial - 1 : serial;
-	return new Date(Date.UTC(1899, 11, 30) + offsetDays * 86_400_000);
+	const wholeDays = Math.floor(offsetDays);
+	const fractionalDay = offsetDays - wholeDays;
+	const baseMs = Date.UTC(1899, 11, 30);
+	const dayMs = wholeDays * 86_400_000;
+	const fracMs = Math.round(fractionalDay * 86_400_000);
+	return new Date(baseMs + dayMs + fracMs);
 }
 
 /** True when a value looks like an Excel date serial (positive integer or decimal). */
@@ -478,7 +488,7 @@ export function parseXlsx(buffer: ArrayBuffer): ParsedCalendarEvent[] {
 	try {
 		files = unzipSync(new Uint8Array(buffer));
 	} catch {
-		throw new Error("Unable to read .xlsx file: it may be corrupt or password-protected.");
+		throw new Error("Unable to read .xlsx file: it may be corrupt, password-protected, or in an older Excel format (.xls is not supported — please re-save as .xlsx).");
 	}
 
 	const decoder = new TextDecoder("utf-8");
@@ -628,7 +638,7 @@ export function parseXlsx(buffer: ArrayBuffer): ParsedCalendarEvent[] {
 					endUtc = toUtcIso(endRaw);
 				}
 			}
-			endUtc ??= new Date(new Date(startUtc).getTime() + 3_600_000).toISOString();
+			endUtc ??= new Date(new Date(startUtc).getTime() + ONE_HOUR_MS).toISOString();
 
 			events.push({
 				eventId: nextEventId("xlsx"),
