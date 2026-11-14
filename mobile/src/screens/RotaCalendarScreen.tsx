@@ -3,6 +3,7 @@ import {
 	Alert,
 	Modal,
 	PanResponder,
+	Platform,
 	Pressable,
 	ScrollView,
 	StyleSheet,
@@ -15,6 +16,7 @@ import * as ImagePicker from "expo-image-picker";
 import * as Calendar from "expo-calendar";
 import { ScreenScaffold } from "../components/ScreenScaffold";
 import { ActionButton } from "../components/ActionButton";
+import { WebFileImportModal } from "../components/WebFileImportModal";
 
 import { DateTimePickerField } from "../components/DateTimePickerField";
 import { FormField } from "../components/FormField";
@@ -356,6 +358,8 @@ export function RotaScreen() {
 	const [note, setNote] = useState("");
 	const [formError, setFormError] = useState<string | null>(null);
 	const [importNotice, setImportNotice] = useState<string | null>(null);
+	const [isWebImportModalVisible, setWebImportModalVisible] =
+		useState(false);
 
 	const weekStartDate = useMemo(
 		() => startOfSundayWeek(selectedDate),
@@ -1396,6 +1400,10 @@ export function RotaScreen() {
 	};
 
 	const openImportOptions = (): void => {
+		if (Platform.OS === "web") {
+			setWebImportModalVisible(true);
+			return;
+		}
 		Alert.alert("Import Rota", "Choose an import source.", [
 			{
 				text: "Cancel",
@@ -2409,6 +2417,19 @@ export function RotaScreen() {
 					</View>
 				</View>
 			</Modal>
+
+			<WebFileImportModal
+				visible={isWebImportModalVisible}
+				timezone={timezone}
+				onClose={() => setWebImportModalVisible(false)}
+				onImportComplete={(notice) => {
+					setImportNotice(notice);
+				}}
+				onError={(message) => {
+					setFormError(message);
+				}}
+				onRefetch={refetch}
+			/>
 		</ScreenScaffold>
 	);
 }
